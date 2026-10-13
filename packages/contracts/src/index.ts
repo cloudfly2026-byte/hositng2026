@@ -56,3 +56,59 @@ export interface PaymentProvider {
   verifyWebhookSignature(payload: unknown, headers: Record<string, string>): boolean;
   parseWebhookEvent(payload: unknown): WebhookPaymentEvent;
 }
+
+export interface DeploymentCapabilities {
+  supportsCustomDomains: boolean;
+  supportsSslLetEncrypt: boolean;
+  supportsDatabases: boolean;
+  supportsLiveLogs: boolean;
+  supportsScale: boolean;
+}
+
+export interface ServiceDeploymentSpec {
+  serviceId: string;
+  name: string;
+  domain?: string;
+  runtime: string;
+  database?: {
+    name: string;
+    type: 'MYSQL' | 'POSTGRES';
+  };
+  env?: Record<string, string>;
+}
+
+export interface OperationReceipt {
+  operationId: string;
+  status: 'SUCCESS' | 'QUEUED' | 'FAILED';
+  resourceIdentifier?: string;
+  message?: string;
+  executedAt: Date;
+}
+
+export interface ObservedState {
+  status: DeploymentStatus;
+  activeDeploymentId?: string;
+  lastCheckedAt: Date;
+  details?: Record<string, unknown>;
+}
+
+export interface LogQuery {
+  lines?: number;
+  since?: Date;
+}
+
+export interface LogPage {
+  lines: string[];
+  hasMore: boolean;
+}
+
+export interface DeploymentProvider {
+  readonly name: string;
+  capabilities(): Promise<DeploymentCapabilities>;
+  deploy(spec: ServiceDeploymentSpec, context: AuthorizedContext): Promise<OperationReceipt>;
+  stop(serviceId: string, context: AuthorizedContext): Promise<OperationReceipt>;
+  restart(serviceId: string, context: AuthorizedContext): Promise<OperationReceipt>;
+  status(serviceId: string, context: AuthorizedContext): Promise<ObservedState>;
+  logs(serviceId: string, context: AuthorizedContext, opts?: LogQuery): Promise<LogPage>;
+}
+
