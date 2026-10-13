@@ -527,9 +527,20 @@ cloud-platform/
 - **Repositorio de código**:
   - Remoto: `https://github.com/cloudfly2026-byte/hositng2026.git`
   - Rama por defecto: `main`
-- **Primer nodo del pool (`shared-node-01`)**:
+
+- **Servidor HestiaCP (Hosting PHP / WordPress / DNS & Nameservers)**:
+  - **Host / FQDN**: `cloudfly.com.co`
+  - **Rol**: Servidor HestiaCP de producción para sitios PHP, WordPress, bases de datos MariaDB y servidor de nombres DNS.
+  - **Servidores de nombres (Nameservers)**:
+    - `ns1.cloudfly.com.co`
+    - `ns2.cloudfly.com.co`
+  - **Dominio principal apuntado**: `velupi.com` (delegado en GoDaddy mediante custom nameservers hacia `ns1.cloudfly.com.co` y `ns2.cloudfly.com.co`).
+  - **Usuario administrativo SSH**: `root`
+  - **Gestión de acceso**: Credenciales y llaves SSH configuradas en el entorno local/servidor seguro (`.env`), protegidas de exposición en el repositorio público.
+
+- **Primer nodo del pool de aplicaciones (`shared-node-01`)**:
   - **IP**: `169.58.220.244`
   - **Tipo de servidor**: `Cloud VPS 4 MP (2026)` (estado inicial: limpio / sin setup)
   - **Ubicación**: `Hub Europe`
-  - **Usuario administrativo**: `root`
+  - **Usuario administrativo SSH**: `root`
   - **Políticas de acceso**: Las credenciales y claves privadas SSH se configuran en el entorno local/CI mediante variables protegidas (`.env`, secret manager o SSH key exchange), garantizando que no se expongan ni se registren en commits públicos.
