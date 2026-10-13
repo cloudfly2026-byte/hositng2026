@@ -1,0 +1,26 @@
+{
+  "name": "@cloudfly/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc -b",
+    "start": "node dist/main.js",
+    "start:dev": "tsx watch src/main.ts"
+  },
+  "dependencies": {
+    "@cloudfly/contracts": "workspace:*",
+    "@cloudfly/deployment-adapters": "workspace:*",
+    "@cloudfly/domain": "workspace:*",
+    "@nestjs/common": "^11.0.9",
+    "@nestjs/core": "^11.0.9",
+    "@nestjs/platform-express": "^11.0.9",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "^11.0.9",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.0",
+    "typescript": "^5.7.3"
+  }
+}

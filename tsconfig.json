@@ -3,6 +3,7 @@
   "references": [
     { "path": "./packages/domain" },
     { "path": "./packages/contracts" },
-    { "path": "./packages/deployment-adapters" }
+    { "path": "./packages/deployment-adapters" },
+    { "path": "./apps/api" }
   ]
 }
