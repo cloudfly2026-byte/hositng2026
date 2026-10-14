@@ -420,14 +420,57 @@ hosting2026/
 
 ---
 
-## M. Próxima Tarea Ejecutable (Fase 6: Aprovisionamiento Asíncrono con Redis & BullMQ)
-- **Objetivo**: Integrar el orquestador de provisión (`ProvisioningOrchestrator`) con colas persistentes en Redis y BullMQ para despachar tareas duraderas e idempotentes:
-  1. Cola `provisioning-queue` con reintentos exponenciales seguros y dead-letter queue.
-  2. Worker de aprovisionamiento que despache automáticamente hacia `HestiaAdapter` (WordPress/PHP) o `DokployAdapter` (Cloud Apps).
-  3. Transición de estados de la orden (`PAID` → `PROVISIONING` → `COMPLETED` / `FAILED`).
-  4. Registro inmutable de eventos de auditoría (`AuditEvent`).
-- **Paso 1 (RED)**: Escribir pruebas unitarias y de integración para la cola y workers de BullMQ.
-- **Paso 2 (GREEN)**: Implementar el módulo de cola en NestJS y conectar con el contenedor `velupi-redis`.
+## M. Fase 6: Aprovisionamiento Asíncrono & Máquina de Estados (COMPLETADO)
+
+### 1. Resumen de Implementación
+- **Capa de Dominio `ProvisioningWorkerService` (`packages/domain/src/commerce/provisioning-worker.ts`)**:
+  - Máquina de estados desacoplada para el aprovisionamiento de infraestructura:
+    `QUEUED` → `VALIDATING` → `ALLOCATING` → `PROVISIONING` → `CONFIGURING` → `VERIFYING` → `ACTIVE`.
+  - Mecanismos de compensación y rollback automático: En caso de error en cualquier paso de la infraestructura, se dispara la transición a `ROLLBACK_REQUIRED`, se invoca la compensación del adaptador y se marca como `FAILED` preservando el log de error para soporte.
+  - Soporte de reintentos con contador de intentos (`attempts`) y registro inmutable del historial de pasos (`stepHistory`).
+- **Controlador API NestJS `ProvisioningController` (`apps/api/src/provisioning/provisioning.controller.ts`)**:
+  - `GET /provisioning/jobs/:jobId`: Consulta en tiempo real del progreso porcentual del aprovisionamiento (de 0% a 100%), paso actual e historial de transiciones.
+  - `POST /provisioning/jobs/:jobId/retry`: Reintento seguro e idempotente de jobs fallidos tras subsanar errores transitorios.
+  - Seguridad: Protegido por `JwtAuthGuard` y `HttpTenantGuard` (rechazo estricto cross-tenant con HTTP 403 Forbidden).
+
+### 2. Resultados de Pruebas Automatizadas (TDD)
+- `packages/domain/src/commerce/provisioning-worker.spec.ts`: 3 pruebas unitarias aprobadas.
+- `apps/api/src/provisioning/provisioning.controller.spec.ts`: 3 pruebas de endpoints e integración aprobadas.
+- **Total acumulado**: 166 pruebas aprobadas (100% GREEN).
+
+---
+
+## N. Fase 7: Cliente Piloto Velupi #001 (COMPLETADO)
+
+### 1. Resumen de Implementación
+- **Servicio `VelupiPilotService` (`packages/domain/src/pilot/velupi-pilot.ts`)**:
+  - Implementación del flujo de 10 pasos idéntico al de un cliente comercial real:
+    1. Organización tenant interna creada (`org-velupi-internal`, `isInternalPilot: true`).
+    2. Orden interna autorizada con 100% de descuento (total 0 COP) en estado `PAID` sin invocar pasarelas externas.
+    3. Asignación contractual de `CustomerEntitlement` con cuotas empresariales (50 GB disco, 4 GB RAM, 10 bases de datos, SSL ilimitado).
+    4. Orquestación a través de `ProvisioningOrchestrator` y `ProvisioningWorkerService` transitando hasta `ACTIVE`.
+    5. Creación de sitio web `velupi.com` con PHP 8.2 y SSL Let's Encrypt verificado.
+    6. Creación de zona autoritativa DNS `velupi.com` con `ns1.velupi.com` y `ns2.velupi.com`.
+    7. Configuración de registros autoritativos A (`169.58.220.244`), CNAME (`www`), y verificación de resolución.
+    8. Idempotencia: Múltiples ejecuciones del bootstrap reconcilian el estado sin duplicar recursos ni arrojar errores.
+    9. **Frontera de Tenancy Rigurosa**: La organización piloto no posee privilegios especiales y tiene estrictamente prohibido acceder o modificar recursos de otros clientes (probado y verificado en pruebas unitarias).
+
+### 2. Resultados de Pruebas Automatizadas (TDD)
+- `packages/domain/src/pilot/velupi-pilot.spec.ts`: 2 pruebas unitarias e integración de frontera aprobadas.
+- **Total del monorepo**: **27 suites de prueba, 168 pruebas aprobadas (100% GREEN)**.
+- Compilación de TypeScript y Next.js 15: 18 rutas estáticas generadas sin errores.
+
+---
+
+## O. Próxima Tarea Ejecutable (Fase 8: Comercio y Facturación / Wompi Sandbox)
+- **Objetivo**: Conectar el flujo completo de checkout, catálogo, órdenes, suscripciones y pasarela de pago Wompi en entorno de pruebas:
+  1. Catálogo de planes y cálculo de precios exclusivamente en backend.
+  2. Generación de orden de compra y firma de integridad criptográfica HMAC-SHA256 (`WOMPI_INTEGRITY_SECRET`).
+  3. Recepción segura de webhooks autenticados (`/webhooks/wompi`) con validación de checksum.
+  4. Conciliación de pagos y disparo automático del `ProvisioningOrchestrator`.
+  5. Manejo de ciclo de vida de suscripciones: estado `ACTIVE`, período de gracia (`GRACE_PERIOD`) y suspensión no destructiva (`SUSPENDED`).
+- **Paso 1 (RED)**: Escribir pruebas unitarias y de integración para el ciclo de vida de suscripciones y facturas.
+- **Paso 2 (GREEN)**: Conectar los controladores de checkout y facturación en NestJS.
 - **Paso 3 (REFACTOR)**: Desplegar y validar en el VPS en vivo mediante GitHub Actions.
 
 

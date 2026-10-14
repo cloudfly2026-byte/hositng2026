@@ -8,6 +8,7 @@ import { AuthController } from './auth/auth.controller';
 import { HostingController } from './hosting/hosting.controller';
 import { DnsController } from './dns/dns.controller';
 import { CloudAppsController } from './cloud-apps/cloud-apps.controller';
+import { ProvisioningController } from './provisioning/provisioning.controller';
 import {
   ProductCatalogService,
   OnboardingService,
@@ -22,6 +23,7 @@ import {
   HostingManagementService,
   DnsManagerService,
   CloudAppsService,
+  ProvisioningWorkerService,
 } from '@cloudfly/domain';
 import { HestiaDnsAdapter, DokployAdapter, DokployApiClient } from '@cloudfly/deployment-adapters';
 
@@ -37,6 +39,7 @@ import { HestiaDnsAdapter, DokployAdapter, DokployApiClient } from '@cloudfly/de
     HostingController,
     DnsController,
     CloudAppsController,
+    ProvisioningController,
   ],
   providers: [
     {
@@ -148,8 +151,22 @@ import { HestiaDnsAdapter, DokployAdapter, DokployApiClient } from '@cloudfly/de
         return new CloudAppsService(dokploy);
       },
     },
+    {
+      provide: ProvisioningWorkerService,
+      useFactory: () => {
+        const engine = {
+          provision: async (job: any) => ({
+            success: true,
+            output: `Provisioned successfully for engine ${job.targetEngine}`,
+          }),
+          rollback: async (_job: any) => {},
+        };
+        return new ProvisioningWorkerService(engine);
+      },
+    },
   ],
 })
 export class AppModule {}
+
 
 

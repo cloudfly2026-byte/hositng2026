@@ -13,6 +13,7 @@ export interface CustomerOrganization {
   name: string;
   slug: string;
   ownerUserId: string;
+  isInternalPilot?: boolean;
   createdAt: Date;
 }
 
