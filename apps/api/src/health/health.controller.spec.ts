@@ -9,6 +9,7 @@ describe('HealthController (API Health & Node Discovery)', () => {
     expect(health.status).toBe('ok');
     expect(health.service).toBe('velupi-control-plane');
     expect(health.nodes.hestiaHost).toBe('cloudfly.com.co');
+    expect(health.nodes.hestiaIp).toBe('89.117.147.134');
     expect(health.nodes.sharedNode01Ip).toBe('169.58.220.244');
     expect(health.timestamp).toBeDefined();
   });

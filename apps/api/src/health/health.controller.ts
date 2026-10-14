@@ -7,6 +7,7 @@ export interface HealthResponse {
   timestamp: string;
   nodes: {
     hestiaHost: string;
+    hestiaIp: string;
     sharedNode01Ip: string;
   };
 }
@@ -22,6 +23,7 @@ export class HealthController {
       timestamp: new Date().toISOString(),
       nodes: {
         hestiaHost: process.env.HESTIACP_HOST || 'cloudfly.com.co',
+        hestiaIp: process.env.HESTIACP_IP || '89.117.147.134',
         sharedNode01Ip: process.env.INITIAL_NODE_IP || '169.58.220.244',
       },
     };

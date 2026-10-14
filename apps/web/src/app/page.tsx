@@ -88,10 +88,10 @@ export default function DashboardPage() {
               <Chip label="ONLINE" size="small" color="success" sx={{ fontWeight: 700, fontSize: '0.7rem' }} />
             </Box>
             <Typography variant="body2" sx={{ color: '#9ca3af', mb: 2 }}>
-              Host: <Box component="span" sx={{ color: '#e5e7eb', fontWeight: 600 }}>cloudfly.com.co</Box>
+              Host: <Box component="span" sx={{ color: '#e5e7eb', fontWeight: 600 }}>cloudfly.com.co</Box> (<code>89.117.147.134</code>)
             </Typography>
             <Typography variant="caption" sx={{ color: '#6b7280', display: 'block', mb: 1 }}>
-              Nameservers activos: <code>ns1.cloudfly.com.co</code>, <code>ns2.cloudfly.com.co</code>
+              Nameservers: <code>ns1/ns2.cloudfly.com.co</code> | Glue: <code>ns1/ns2.velupi.com</code>
             </Typography>
             <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
               <Typography variant="caption" sx={{ color: '#9ca3af' }}>Cargas activas:</Typography>

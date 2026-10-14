@@ -530,10 +530,13 @@ cloud-platform/
 
 - **Servidor HestiaCP (Hosting PHP / WordPress / DNS & Nameservers)**:
   - **Host / FQDN**: `cloudfly.com.co`
+  - **IP**: `89.117.147.134`
   - **Rol**: Servidor HestiaCP de producción para sitios PHP, WordPress, bases de datos MariaDB y servidor de nombres DNS.
-  - **Servidores de nombres (Nameservers)**:
-    - `ns1.cloudfly.com.co`
-    - `ns2.cloudfly.com.co`
+  - **Servidores de nombres (Nameservers) y Glue Records (Hostnames en GoDaddy)**:
+    - Nameservers asignados en GoDaddy: `ns1.cloudfly.com.co`, `ns2.cloudfly.com.co`
+    - Hostnames / Glue Records propios registrados:
+      - `ns1` (`ns1.velupi.com`) → `89.117.147.134`
+      - `ns2` (`ns2.velupi.com`) → `89.117.147.134`
   - **Dominio principal apuntado**: `velupi.com` (delegado en GoDaddy mediante custom nameservers hacia `ns1.cloudfly.com.co` y `ns2.cloudfly.com.co`).
   - **Usuario administrativo SSH**: `root`
   - **Gestión de acceso**: Credenciales y llaves SSH configuradas en el entorno local/servidor seguro (`.env`), protegidas de exposición en el repositorio público.

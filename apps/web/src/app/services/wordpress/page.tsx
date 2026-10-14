@@ -41,7 +41,7 @@ export default function WordPressSiteToolsPage() {
             <Chip label="ACTIVO" size="small" color="success" sx={{ fontWeight: 700 }} />
           </Box>
           <Typography variant="body2" sx={{ color: '#9ca3af' }}>
-            Servidor: <strong>cloudfly.com.co</strong> (HestiaCP) | IP: <code>169.58.220.244</code> | Nameservers: <code>ns1/ns2.cloudfly.com.co</code>
+            Servidor: <strong>cloudfly.com.co</strong> (HestiaCP) | IP: <code>89.117.147.134</code> | Nameservers: <code>ns1/ns2.cloudfly.com.co</code>
           </Typography>
         </Box>
 
@@ -184,9 +184,9 @@ export default function WordPressSiteToolsPage() {
           Ruta del sitio: <code>/home/u_velupi/web/velupi.com/public_html</code>
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          <Chip label="DNS A: 169.58.220.244" variant="outlined" sx={{ color: '#e5e7eb' }} />
-          <Chip label="Nameserver 1: ns1.cloudfly.com.co" variant="outlined" sx={{ color: '#e5e7eb' }} />
-          <Chip label="Nameserver 2: ns2.cloudfly.com.co" variant="outlined" sx={{ color: '#e5e7eb' }} />
+          <Chip label="DNS A: 89.117.147.134" variant="outlined" sx={{ color: '#e5e7eb' }} />
+          <Chip label="Nameservers: ns1/ns2.cloudfly.com.co" variant="outlined" sx={{ color: '#e5e7eb' }} />
+          <Chip label="Glue Hostnames: ns1/ns2.velupi.com → 89.117.147.134" variant="outlined" sx={{ color: '#06b6d4', borderColor: 'rgba(6, 182, 212, 0.4)' }} />
         </Box>
       </Paper>
     </Box>
