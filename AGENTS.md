@@ -562,3 +562,34 @@ cloud-platform/
 >    - **Paso 3 (Build de imágenes en GitHub)**: El action `.github/workflows/deploy.yml` compila las imágenes multi-stage de la API y el portal Web en los runners de GitHub y las publica en GitHub Container Registry (`ghcr.io`).
 >    - **Paso 4 (Descarga y montaje en VPS con Docker)**: El action se conecta por SSH a `169.58.220.244`, descarga las imágenes de `ghcr.io` y levanta los contenedores con `docker-compose.prod.yml`.
 >    - **Paso 5 (Verificación remota)**: Monitorear el resultado del workflow y comprobar que los contenedores estén saludables en el VPS.
+
+---
+
+## 19. Arquitectura White-Label y Dashboard Modular de Velupi Cloud
+
+### 19.1 Regla de Oro White-Label (Marca 100% Propietaria)
+Los proveedores de infraestructura (HestiaCP, Dokploy, Traefik, BIND9, Contabo) son motores de ejecución estrictamente internos.
+
+**Prohibido terminantemente mostrar al cliente final:**
+- Marcas, nombres, logotipos o interfaces de HestiaCP, Dokploy o Traefik.
+- URLs o puertos administrativos internos (ej. puerto `8083`, paneles de control de proveedores).
+- Credenciales administrativas de infraestructura o usuarios de sistema operativo.
+- Comandos CLI de bajo nivel (ej. `v-add-web-domain`, `docker exec`) o rutas de archivos internas (ej. `/usr/local/hestia`).
+- Enlaces de redirección o acceso directo a consolas de terceros.
+
+El usuario final interactúa **exclusiva y transparentemente con la marca y el diseño de Velupi Cloud Platform**. Esta regla se valida mediante pruebas automatizadas de integridad (`checkWhiteLabelIntegrity`).
+
+### 19.2 Registro Central de Módulos (`apps/web/src/modules/module-registry.ts`)
+La navegación lateral y las rutas se generan dinámicamente desde un registro central tipado estructurado en 5 categorías:
+1. **General**: Dashboard (`/`).
+2. **Hosting Web**: Hosting Web (`/hosting`), File Manager (`/files`), Databases (`/databases`), Email Manager (`/emails`).
+3. **Red y Dominios**: DNS Manager (`/dns`), SSL Manager (`/ssl`), Application Gateway (`/gateway`).
+4. **Servicios Cloud**: Backups (`/backups`), Cloud Apps (`/services/apps`), Microservices Studio (`/studio`).
+5. **Administración y Seguridad**: Billing & Invoices (`/billing`), Account & Security (`/account`).
+
+### 19.3 Componentes del Shell
+- `Sidebar.tsx`: Drawer de navegación persistente en escritorio y responsive para móviles con submenús expandibles e indicadores de ruta activa.
+- `Topbar.tsx`: Barra superior con selector de organización, indicador de Hermes AI (Read-Only), notificaciones y menú de usuario.
+- `Breadcrumbs.tsx`: Ruta de navegación contextual derivada del registro de módulos.
+- `ModuleStateContainer.tsx`: Manejo uniforme de estados de carga (`loading`), ausencia de datos (`empty`), errores con reintento (`error`) y contenido renderizado (`success`).
+

@@ -47,7 +47,7 @@ export default function DashboardPage() {
             color="secondary"
             startIcon={<CodeIcon />}
           >
-            Cloud Apps (Dokploy)
+            Cloud Apps (Contenedores)
           </Button>
         </Box>
       </Box>
@@ -58,7 +58,7 @@ export default function DashboardPage() {
       </Typography>
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        {/* HestiaCP Node */}
+        {/* Web Hosting Node */}
         <Grid item xs={12} md={6}>
           <Paper
             sx={{
@@ -82,7 +82,7 @@ export default function DashboardPage() {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <DnsIcon sx={{ color: '#06b6d4' }} />
                 <Typography variant="h6" sx={{ color: '#fff' }}>
-                  HestiaCP Node (PHP / DNS)
+                  Nodo de Hosting Web (PHP / DNS)
                 </Typography>
               </Box>
               <Chip label="ONLINE" size="small" color="success" sx={{ fontWeight: 700, fontSize: '0.7rem' }} />
@@ -103,7 +103,7 @@ export default function DashboardPage() {
           </Paper>
         </Grid>
 
-        {/* Dokploy Node */}
+        {/* Cloud Apps Node */}
         <Grid item xs={12} md={6}>
           <Paper
             sx={{
@@ -127,7 +127,7 @@ export default function DashboardPage() {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <RocketLaunchIcon sx={{ color: '#818cf8' }} />
                 <Typography variant="h6" sx={{ color: '#fff' }}>
-                  Dokploy Node (shared-node-01)
+                  Nodo de Aplicaciones Cloud (shared-node-01)
                 </Typography>
               </Box>
               <Chip label="ONLINE" size="small" color="success" sx={{ fontWeight: 700, fontSize: '0.7rem' }} />
@@ -136,7 +136,7 @@ export default function DashboardPage() {
               IP: <Box component="span" sx={{ color: '#e5e7eb', fontWeight: 600 }}>169.58.220.244</Box> (Cloud VPS 4 MP)
             </Typography>
             <Typography variant="caption" sx={{ color: '#6b7280', display: 'block', mb: 1 }}>
-              Ubicación: Hub Europe | Motor: Docker / Traefik
+              Ubicación: Hub Europe | Motor: Contenedores Cloud & Proxy Perimetral
             </Typography>
             <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
               <Typography variant="caption" sx={{ color: '#9ca3af' }}>Capacidad de memoria reservada:</Typography>

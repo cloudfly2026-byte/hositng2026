@@ -1,8 +1,7 @@
 import * as React from 'react';
 import type { Metadata } from 'next';
 import ThemeRegistry from '../theme/ThemeRegistry';
-import { Navbar } from '../components/Navbar';
-import Box from '@mui/material/Box';
+import { AppShell } from '../components/AppShell';
 
 export const metadata: Metadata = {
   title: 'Velupi Cloud Platform — Portal de Clientes',
@@ -26,12 +25,7 @@ export default function RootLayout({
       </head>
       <body style={{ margin: 0, padding: 0, backgroundColor: '#090d16' }}>
         <ThemeRegistry>
-          <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <Navbar />
-            <Box component="main" sx={{ flexGrow: 1, p: { xs: 2, md: 4 } }}>
-              {children}
-            </Box>
-          </Box>
+          <AppShell>{children}</AppShell>
         </ThemeRegistry>
       </body>
     </html>

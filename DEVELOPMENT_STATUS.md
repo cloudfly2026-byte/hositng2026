@@ -242,10 +242,42 @@ hosting2026/
 
 ---
 
-## H. Próxima tarea ejecutable inmediata (Siguiendo TDD)
+## H. Fase 1: Velupi Cloud Dashboard Modular & White-Label Hosting (COMPLETADO)
 
-### **Tarea Única**: Controladores y Endpoints de DNS Manager en NestJS API
-- **Objetivo**: Conectar `DnsManager` con el controlador de API NestJS (`DnsController`) asegurado por `JwtAuthGuard`, `HttpTenantGuard` y `HttpRolesGuard`, permitiendo crear y listar zonas y registros DNS para organizaciones con rol `ADMIN` o `OWNER`.
-- **Paso 1 (RED)**: Escribir la suite de pruebas unitarias/integración para `DnsController`.
-- **Paso 2 (GREEN)**: Implementar el módulo y controlador en `apps/api`.
-- **Paso 3 (REFACTOR)**: Validar las 78 pruebas actuales sin regresiones y realizar push a `main` para despliegue automatizado.
+### 1. Resumen de Implementación
+- **Arquitectura White-Label Estricta**: Ningún módulo, vista o componente expone marcas, URLs, puertos (ej. 8083), nombres o herramientas internas de infraestructura (HestiaCP, Dokploy, Traefik). La suite de pruebas incluye un validador automatizado (`checkWhiteLabelIntegrity`) que asegura que ningún término prohibido se filtre en el frontend.
+- **Registro Tipado de Módulos (`module-registry.ts`)**: Los 13 módulos oficiales de la plataforma se definen de manera centralizada en 5 categorías de negocio:
+  1. **Dashboard** (`/`)
+  2. **Hosting Web** (`/hosting`)
+  3. **File Manager** (`/files`)
+  4. **Databases** (`/databases`)
+  5. **Email Manager** (`/emails`)
+  6. **DNS Manager** (`/dns`)
+  7. **SSL Manager** (`/ssl`)
+  8. **Backups** (`/backups`)
+  9. **Cloud Apps** (`/services/apps`)
+  10. **Application Gateway** (`/gateway`)
+  11. **Microservices Studio** (`/studio`)
+  12. **Billing & Invoices** (`/billing`)
+  13. **Account & Security** (`/account`)
+- **App Shell & Navegación Responsive (`AppShell.tsx`, `Sidebar.tsx`, `Topbar.tsx`, `Breadcrumbs.tsx`)**:
+  - Sidebar izquierdo persistente en escritorio (ancho 270px) y drawer temporal táctil para dispositivos móviles.
+  - Submenús colapsables (`Collapse`), chips indicadores y badges de estado.
+  - Breadcrumbs dinámicos basados en la ruta activa y jerarquía del módulo.
+  - Barra superior con selector de organización (`org-velupi-internal`), estado de Hermes AI (Read-Only), notificaciones y menú de cuenta de usuario.
+  - Contenedor de estados reutilizable (`ModuleStateContainer.tsx`) con soporte para `loading`, `empty`, `error` (con botón de reintento) y `success`.
+- **Compilación y Prerenderizado Next.js 15**: 18 rutas estáticas compiladas exitosamente sin errores de TypeScript ni linter.
+
+### 2. Resultados de Pruebas Automatizadas
+- **Total suites de prueba**: 17 archivos de prueba ejecutados con Vitest y Happy-DOM.
+- **Total pruebas unitarias y de componentes**: 90 pruebas ejecutadas y 90 aprobadas (100% GREEN).
+- **Cobertura de Fase 1**:
+  - `apps/web/src/modules/module-registry.spec.ts` (7 pruebas)
+  - `apps/web/src/components/Navigation.spec.tsx` (5 pruebas)
+
+---
+
+## I. Próxima Tarea Ejecutable (Fase 2 & 3: Métricas Reales y HostingManagementService)
+- **Fase 2 (Dashboard Real)**: Conectar métricas en vivo y estados de servicio consumiendo la API de NestJS, eliminando cualquier valor no conectado.
+- **Fase 3 (Hosting Web & HostingManagementService)**: Implementar la capa `HostingManagementService` en NestJS (`apps/api`), con endpoints de listado y gestión de sitios web protegidos por JWT, RBAC y verificación de tenencia.
+
