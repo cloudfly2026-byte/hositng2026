@@ -6,6 +6,7 @@ import { CheckoutController } from './checkout/checkout.controller';
 import { WebhooksController } from './webhooks/webhooks.controller';
 import { AuthController } from './auth/auth.controller';
 import { HostingController } from './hosting/hosting.controller';
+import { DnsController } from './dns/dns.controller';
 import {
   ProductCatalogService,
   OnboardingService,
@@ -18,7 +19,9 @@ import {
   Argon2PasswordHasher,
   JwtSecurityService,
   HostingManagementService,
+  DnsManagerService,
 } from '@cloudfly/domain';
+import { HestiaDnsAdapter } from '@cloudfly/deployment-adapters';
 
 @Module({
   imports: [],
@@ -30,6 +33,7 @@ import {
     WebhooksController,
     AuthController,
     HostingController,
+    DnsController,
   ],
   providers: [
     {
@@ -98,6 +102,15 @@ import {
       useFactory: (catalog: ProductCatalogService) => new ProvisioningOrchestrator(catalog),
       inject: [ProductCatalogService],
     },
+    {
+      provide: DnsManagerService,
+      useFactory: () => new DnsManagerService(),
+    },
+    {
+      provide: HestiaDnsAdapter,
+      useFactory: () => new HestiaDnsAdapter(),
+    },
   ],
 })
 export class AppModule {}
+

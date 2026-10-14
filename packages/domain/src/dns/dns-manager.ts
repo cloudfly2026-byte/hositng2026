@@ -132,9 +132,33 @@ export class DnsManagerService {
       }
     }
 
+    if (input.type === 'AAAA') {
+      const isIpv6 = /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/i.test(
+        input.value.trim()
+      );
+      if (!isIpv6) {
+        throw new DnsValidationError(`Invalid IPv6 address for AAAA record: '${input.value}'`);
+      }
+    }
+
     if (input.type === 'MX') {
       if (input.priority === undefined || input.priority < 0 || input.priority > 65535) {
         throw new DnsValidationError(`MX records require a valid priority between 0 and 65535.`);
+      }
+    }
+
+    if (input.type === 'CAA') {
+      const isCaa = /^\d+\s+(issue|issuewild|iodef)\s+"?[^"]+"?$/i.test(input.value.trim());
+      if (!isCaa) {
+        throw new DnsValidationError(
+          `Invalid CAA record format: '${input.value}'. Expected format: '<flags> <tag> "<value>"' (e.g. '0 issue "letsencrypt.org"')`
+        );
+      }
+    }
+
+    if (input.type === 'SRV') {
+      if (input.priority === undefined || input.priority < 0 || input.priority > 65535) {
+        throw new DnsValidationError(`SRV records require a valid priority between 0 and 65535.`);
       }
     }
 
@@ -153,11 +177,80 @@ export class DnsManagerService {
     return record;
   }
 
+  deleteRecord(zoneId: string, recordId: string): boolean {
+    const zone = this.zones.get(zoneId);
+    if (!zone) {
+      throw new DnsValidationError(`Zone with ID '${zoneId}' not found.`);
+    }
+
+    const index = zone.records.findIndex((r) => r.id === recordId);
+    if (index === -1) {
+      return false;
+    }
+
+    zone.records.splice(index, 1);
+    return true;
+  }
+
+  assertZoneOwnership(zoneId: string, organizationId: string): DnsZone {
+    const zone = this.zones.get(zoneId);
+    if (!zone) {
+      throw new DnsValidationError(`Zone with ID '${zoneId}' not found.`);
+    }
+
+    if (zone.organizationId !== organizationId) {
+      throw new DnsConflictError(`Access denied: Zone '${zoneId}' does not belong to organization '${organizationId}'.`);
+    }
+
+    return zone;
+  }
+
+  reconcileWithProvider(
+    zoneId: string,
+    providerRecords: DnsRecord[]
+  ): { added: number; updated: number; unchanged: number } {
+    const zone = this.zones.get(zoneId);
+    if (!zone) {
+      throw new DnsValidationError(`Zone with ID '${zoneId}' not found.`);
+    }
+
+    let added = 0;
+    let updated = 0;
+    let unchanged = 0;
+
+    for (const provRec of providerRecords) {
+      const match = zone.records.find((r) => r.name === provRec.name && r.type === provRec.type);
+      if (!match) {
+        zone.records.push({
+          ...provRec,
+          zoneId,
+          createdAt: new Date(),
+        });
+        added++;
+      } else if (match.value !== provRec.value || match.ttl !== provRec.ttl || match.priority !== provRec.priority) {
+        match.value = provRec.value;
+        match.ttl = provRec.ttl;
+        match.priority = provRec.priority;
+        updated++;
+      } else {
+        unchanged++;
+      }
+    }
+
+    return { added, updated, unchanged };
+  }
+
   getZone(zoneId: string): DnsZone | null {
     return this.zones.get(zoneId) || null;
+  }
+
+  findZoneByDomain(domain: string): DnsZone | null {
+    const norm = domain.toLowerCase().trim();
+    return Array.from(this.zones.values()).find((z) => z.domain === norm) || null;
   }
 
   listZonesByOrganization(organizationId: string): DnsZone[] {
     return Array.from(this.zones.values()).filter((z) => z.organizationId === organizationId);
   }
 }
+

@@ -344,10 +344,48 @@ hosting2026/
 
 ---
 
-## K. Próxima Tarea Ejecutable (Fase 4: DNS Manager Completo con BIND9)
-- **Objetivo**: Conectar el servicio `DnsManager` con endpoints NestJS (`DnsController`) asegurados por JWT, RBAC y multi-tenant, permitiendo gestionar zonas y registros (A, AAAA, CNAME, MX, TXT, CAA, SRV) con validación sintáctica, prevención de registros conflictivos, sincronización con BIND9 en Hestia y nameservers comerciales `ns1.velupi.com` y `ns2.velupi.com`.
-- **Paso 1 (RED)**: Escribir suite de pruebas para `DnsController`.
-- **Paso 2 (GREEN)**: Implementar controlador y servicio en `apps/api`.
-- **Paso 3 (REFACTOR)**: Desplegar vía GitOps al VPS `169.58.220.244`.
+## K. Fase 4: DNS Manager Completo con BIND9 & Adaptador Hestia (COMPLETADO)
+
+### 1. Resumen de Implementación
+- **Capa de Dominio `DnsManagerService` (`packages/domain/src/dns/dns-manager.ts`)**:
+  - Creación autoritativa de zonas DNS con nameservers comerciales por defecto (`ns1.velupi.com` y `ns2.velupi.com`).
+  - Validación sintáctica y semántica para registros `A` (IPv4), `AAAA` (IPv6), `CNAME`, `MX` (prioridad obligatoria 0-65535), `TXT` (cadenas y SPF), `CAA` (`flags tag "value"` para autoridades de certificación como Let's Encrypt), y `SRV` (prioridad, puerto y target).
+  - Prevención estricta de conflictos RFC 1912: Un host con CNAME no puede convivir con ningún otro tipo de registro (ni viceversa).
+  - Eliminación segura de registros (`deleteRecord`) y verificación de pertenencia del tenant a la zona (`assertZoneOwnership`).
+  - Algoritmo de reconciliación idempotente con el proveedor BIND9 (`reconcileWithProvider`) que previene duplicación y detecta cambios de valor o TTL.
+- **Controlador API NestJS `DnsController` (`apps/api/src/dns/dns.controller.ts`)**:
+  - `GET /dns/zones`: Listado seguro de zonas del tenant autenticado.
+  - `POST /dns/zones`: Creación de zona DNS con validación sintáctica de FQDN y asignación de nameservers.
+  - `GET /dns/zones/:zoneId`: Consulta de zona y todos sus registros DNS.
+  - `POST /dns/zones/:zoneId/records`: Adición de registro DNS con validaciones de tipo, TTL y verificación de conflictos RFC 1912.
+  - `DELETE /dns/zones/:zoneId/records/:recordId`: Eliminación de registro DNS.
+  - `POST /dns/zones/:zoneId/reconcile`: Sincronización y reconciliación contra el estado autoritativo de BIND9.
+  - Seguridad: Asegurado mediante `JwtAuthGuard` y `HttpTenantGuard` (cualquier intento cross-tenant es rechazado con HTTP 403 Forbidden).
+- **Interfaz de Usuario Web (`apps/web/src/app/dns/page.tsx`)**:
+  - Panel interactivo con buscador en tiempo real y filtro por tipo de registro (A, AAAA, CNAME, MX, TXT, CAA, SRV).
+  - Diálogo modal de creación con campos dinámicos (Prioridad para MX/SRV, validación en vivo de IPv4/IPv6).
+  - Botón de sincronización autoritativa y eliminación de registros con badges visuales por tipo.
+  - Banner informativo con nameservers autoritativos: `ns1.velupi.com` y `ns2.velupi.com`.
+  - Cero exposición de nombres de proveedores (100% marca Velupi).
+
+### 2. Resultados de Pruebas Automatizadas (TDD)
+- `packages/domain/src/dns/dns-manager.spec.ts`: 13 pruebas unitarias aprobadas (+6 pruebas añadidas en TDD).
+- `apps/api/src/dns/dns.controller.spec.ts`: 8 pruebas de endpoints e integración aprobadas.
+- `packages/deployment-adapters/src/hestia/hestia-dns.spec.ts`: 4 pruebas de comandos BIND9 aprobadas.
+- **Total del monorepo**: **22 suites de prueba, 145 pruebas aprobadas (100% GREEN)**.
+- Compilación de TypeScript y Next.js 15: 18 rutas estáticas generadas sin errores.
+
+---
+
+## L. Próxima Tarea Ejecutable (Fase 5: Cloud Apps con Dokploy y Traefik)
+- **Objetivo**: Conectar el adaptador de despliegue de aplicaciones cloud (`DokployAdapter` / Traefik) con el portal de Velupi para permitir:
+  1. Despliegue de aplicaciones Node.js, Python, Docker y workers sobre el VPS `shared-node-01` (`169.58.220.244`).
+  2. Gestión de variables de entorno y referencias a secretos.
+  3. Comandos de ciclo de vida (`deploy`, `stop`, `restart`, `logs`).
+  4. Enrutamiento automático HTTPS y proxy inverso mediante Traefik.
+  5. Controlador `CloudAppsController` en NestJS con autenticación JWT y tenant guard.
+- **Paso 1 (RED)**: Escribir pruebas unitarias y de endpoints para `CloudAppsController`.
+- **Paso 2 (GREEN)**: Implementar el controlador y conectar con `DokployAdapter`.
+- **Paso 3 (REFACTOR)**: Desplegar y validar en el VPS en vivo mediante GitHub Actions.
 
 
