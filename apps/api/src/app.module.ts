@@ -4,6 +4,7 @@ import { CatalogController } from './catalog/catalog.controller';
 import { OnboardingController } from './onboarding/onboarding.controller';
 import { CheckoutController } from './checkout/checkout.controller';
 import { WebhooksController } from './webhooks/webhooks.controller';
+import { AuthController } from './auth/auth.controller';
 import {
   ProductCatalogService,
   OnboardingService,
@@ -12,6 +13,9 @@ import {
   PaymentProcessorService,
   ProvisioningOrchestrator,
   Order,
+  AuthenticationService,
+  Argon2PasswordHasher,
+  JwtSecurityService,
 } from '@cloudfly/domain';
 
 @Module({
@@ -22,8 +26,24 @@ import {
     OnboardingController,
     CheckoutController,
     WebhooksController,
+    AuthController,
   ],
   providers: [
+    {
+      provide: Argon2PasswordHasher,
+      useFactory: () => new Argon2PasswordHasher(),
+    },
+    {
+      provide: JwtSecurityService,
+      useFactory: () =>
+        new JwtSecurityService(process.env.JWT_SECRET || 'velupi_jwt_secure_key_2026_super_secret'),
+    },
+    {
+      provide: AuthenticationService,
+      useFactory: (hasher: Argon2PasswordHasher, jwt: JwtSecurityService) =>
+        new AuthenticationService(hasher, jwt),
+      inject: [Argon2PasswordHasher, JwtSecurityService],
+    },
     {
       provide: ProductCatalogService,
       useFactory: () => new ProductCatalogService(),

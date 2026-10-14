@@ -82,6 +82,7 @@ export interface JwtTokenPayload {
   organizationId: string;
   roles: Role[];
   permissions?: string[];
+  isOperator?: boolean;
   exp: number;
   iat: number;
 }
@@ -96,6 +97,7 @@ export class JwtSecurityService {
       ...payload,
       roles: payload.roles || ['VIEWER'],
       permissions: payload.permissions || [],
+      isOperator: payload.isOperator ?? false,
       iat,
       exp,
     };
@@ -142,6 +144,8 @@ export class JwtSecurityService {
       organizationId: decodedPayload.organizationId,
       roles: decodedPayload.roles || ['VIEWER'],
       permissions: decodedPayload.permissions || [],
+      isOperator: decodedPayload.isOperator ?? false,
     };
   }
 }
+

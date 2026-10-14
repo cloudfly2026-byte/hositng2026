@@ -269,15 +269,54 @@ hosting2026/
 - **Compilación y Prerenderizado Next.js 15**: 18 rutas estáticas compiladas exitosamente sin errores de TypeScript ni linter.
 
 ### 2. Resultados de Pruebas Automatizadas
-- **Total suites de prueba**: 17 archivos de prueba ejecutados con Vitest y Happy-DOM.
-- **Total pruebas unitarias y de componentes**: 90 pruebas ejecutadas y 90 aprobadas (100% GREEN).
+- **Total suites de prueba**: 19 archivos de prueba ejecutados con Vitest y Happy-DOM.
+- **Total pruebas unitarias y de integración**: 114 pruebas ejecutadas y 114 aprobadas (100% GREEN).
 - **Cobertura de Fase 1**:
   - `apps/web/src/modules/module-registry.spec.ts` (7 pruebas)
   - `apps/web/src/components/Navigation.spec.tsx` (5 pruebas)
 
 ---
 
-## I. Próxima Tarea Ejecutable (Fase 2 & 3: Métricas Reales y HostingManagementService)
-- **Fase 2 (Dashboard Real)**: Conectar métricas en vivo y estados de servicio consumiendo la API de NestJS, eliminando cualquier valor no conectado.
-- **Fase 3 (Hosting Web & HostingManagementService)**: Implementar la capa `HostingManagementService` en NestJS (`apps/api`), con endpoints de listado y gestión de sitios web protegidos por JWT, RBAC y verificación de tenencia.
+## I. Fase 2: Autenticación e Identidad de Extremo a Extremo (COMPLETADO)
+
+### 1. Resumen de Implementación
+- **Motor de Autenticación con Hashing Argon2id (`AuthenticationService`, `Argon2PasswordHasher`)**:
+  - Hashing criptográfico de contraseñas con factor de coste de memoria (32MB, 16384 iteraciones, salt aleatorio de 16 bytes) y comparación en tiempo constante (`timingSafeEqual`) para evitar ataques de temporización.
+  - Invariante de seguridad: El objeto de usuario devuelto nunca filtra `password` ni `passwordHash`.
+- **Sesiones Seguras y Rotación de Refresh Tokens (`JwtSecurityService`)**:
+  - Access tokens con ciclo de vida corto (15 minutos = 900s) firmados con HMAC-SHA256.
+  - Refresh tokens persistentes con rotación estricta de un solo uso (invalidación del token anterior al renovar sesión).
+  - Revocación explícita de sesiones en logout (`/auth/revoke`).
+- **Verificación de Correo y Recuperación de Contraseña**:
+  - Endpoints de verificación de correo (`/auth/verify-email`) con tokens de un solo uso.
+  - Recuperación de contraseña (`/auth/forgot-password` y `/auth/reset-password`) que invalida automáticamente todas las sesiones y refresh tokens activos del usuario al actualizar sus credenciales.
+- **Aislamiento Multi-Tenant y RBAC en NestJS (`HttpTenantGuard`, `HttpRolesGuard`, `JwtAuthGuard`)**:
+  - Endpoint de control de acceso por organización (`GET /auth/organizations/:organizationId/summary`).
+  - Validación de que un usuario perteneciente a `org-A` recibe HTTP 403 Forbidden al intentar interactuar con recursos de `org-B`.
+  - Roles soportados: `OWNER`, `ADMIN`, `DEVELOPER`, `VIEWER`.
+  - Separación explícita de privilegios de operador (`isOperator: true` reservado para la organización de plataforma `org-velupi-internal`).
+- **Controlador API NestJS (`AuthController`)**:
+  - `POST /auth/register`
+  - `POST /auth/login`
+  - `POST /auth/verify-email`
+  - `POST /auth/refresh`
+  - `POST /auth/revoke` (protegido por `JwtAuthGuard`)
+  - `POST /auth/forgot-password`
+  - `POST /auth/reset-password`
+  - `GET /auth/me` (protegido por `JwtAuthGuard`)
+  - `GET /auth/organizations/:organizationId/summary` (protegido por `JwtAuthGuard`, `HttpTenantGuard` y `HttpRolesGuard`)
+
+### 2. Resultados de Pruebas Automatizadas (TDD)
+- `packages/domain/src/security/auth-service.spec.ts`: 13 pruebas unitarias aprobadas.
+- `apps/api/src/auth/auth.controller.spec.ts`: 11 pruebas de endpoints e integración aprobadas.
+- `apps/api/src/auth/auth-guard.spec.ts`: 10 pruebas de guards JWT/Roles/Tenant aprobadas.
+- **Total del monorepo**: **19 suites de prueba, 114 pruebas aprobadas (100% GREEN)**.
+
+---
+
+## J. Próxima Tarea Ejecutable (Fase 3: Hosting Management & HostingManagementService)
+- **Objetivo**: Desarrollar la capa `HostingManagementService` en NestJS (`apps/api`), con endpoints de gestión de sitios web (listado, creación de sitios, dominios, selección de versión PHP, SSL y cuotas) integrando el adaptador HestiaCP como proveedor interno invisible, garantizando autorización multi-tenant y estricto White-Label.
+- **Paso 1 (RED)**: Escribir la suite de pruebas unitarias/integración para `HostingManagementService` y `HostingController`.
+- **Paso 2 (GREEN)**: Implementar el servicio y controlador en `apps/api`.
+- **Paso 3 (REFACTOR)**: Ejecutar suite de 114+ pruebas y desplegar vía GitOps al VPS `169.58.220.244`.
 

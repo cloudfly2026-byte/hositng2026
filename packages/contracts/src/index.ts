@@ -19,6 +19,14 @@ export interface AuthorizedContext {
   organizationId: string;
   roles: Role[];
   permissions: string[];
+  isOperator?: boolean;
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+  tokenType: string;
 }
 
 export type PaymentStatus =
