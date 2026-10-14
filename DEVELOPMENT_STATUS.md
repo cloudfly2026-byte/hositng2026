@@ -199,12 +199,13 @@ hosting2026/
 - **Pendiente**: Inyectar credenciales reales de Wompi Sandbox (`pub_stag_...`, `prv_stag_...`, `events_secret`, `integrity_secret`).
 
 ### 4. DNS Manager (BIND9 en HestiaCP)
-- **Estado**: `PLANIFICADO`.
-- **Implementado**: Documentación de arquitectura en `AGENTS.md` y registro en GoDaddy de `ns1/ns2.velupi.com` hacia `89.117.147.134`.
+- **Estado**: `IMPLEMENTADO_EN_DOMINIO_Y_ADAPTADOR` (Pruebas verdes, pendiente endpoints API y UI).
+- **Implementado**: 
+  - Módulo de dominio `DnsManager` en `@cloudfly/domain/dns` con validación RFC 1912 y 7 tests unitarios.
+  - Adaptador CLI BIND9 `HestiaDnsCommandAdapter` en `@cloudfly/deployment-adapters/src/hestia/hestia-dns.ts` con 4 tests unitarios.
 - **Pendiente**:
-  - Implementar en `apps/api` el módulo `DnsModule` con soporte para zonas y registros (A, AAAA, CNAME, MX, TXT, CAA).
-  - Invocar los comandos CLI de HestiaCP: `v-add-dns-domain`, `v-add-dns-record`, `v-delete-dns-record`, `v-change-dns-record`.
-  - Crear interfaz gráfica en `apps/web` para administración DNS.
+  - Exponer endpoints en `apps/api` (`/dns/zones`, `/dns/records`).
+  - Crear interfaz gráfica en `apps/web` para administración DNS visual.
 
 ### 5. Hermes AI
 - **Estado**: `PLANIFICADO`.
@@ -213,20 +214,18 @@ hosting2026/
 
 ---
 
-## F. Bloqueos y necesidades para continuar
+## F. Infraestructura y Despliegue en Vivo (VERIFICADO 100% OPERATIVO)
 
-### 1. Accesos y Credenciales Requeridos
-- **Configuración de Secretos en GitHub Actions**:
-  - `VPS_HOST`: `169.58.220.244`
-  - `VPS_USER`: `root`
-  - `VPS_SSH_KEY`: Clave privada SSH cuyo par público ya está en el VPS.
-  - `VPS_SSH_PORT`: `22`
-- **SSH Key Pair para HestiaCP (`89.117.147.134`)**: Clave privada SSH configurada en el backend para ejecutar los comandos de HestiaCP.
-- **Credenciales Sandbox Wompi**: Claves de pruebas de Wompi Colombia (`public_key`, `private_key`, `events_secret`, `integrity_secret`).
-
-### 2. Infraestructura Faltante
-- **Zona BIND9 para `velupi.com`**: Se debe confirmar que en HestiaCP (`89.117.147.134`) la zona DNS `velupi.com` esté creada y respondiendo autoritativamente antes de cambiar los nameservers en GoDaddy.
-- **Redundancia DNS**: Un segundo nodo VPS con BIND9 secundario para `ns2.velupi.com` para evitar el punto único de fallo.
+### 1. Servidor VPS (`shared-node-01` — `169.58.220.244`)
+- **Pipeline CI/CD**: Workflow `Build & Deploy to VPS` (`.github/workflows/deploy.yml`) ejecutado con éxito total.
+- **Imágenes compiladas y publicadas en GHCR**:
+  - `ghcr.io/cloudfly2026-byte/velupi-api:latest`
+  - `ghcr.io/cloudfly2026-byte/velupi-web:latest`
+- **Contenedores activos en Docker Compose**:
+  - `velupi-postgres` (PostgreSQL 16 Alpine): Healthy
+  - `velupi-redis` (Redis 7 Alpine): Healthy
+  - `velupi-api` (NestJS Control Plane en puerto 4000): Activo — Respondiendo `HTTP 200 OK` en `http://169.58.220.244:4000/health`
+  - `velupi-web` (Next.js 15 en puerto 3000): Activo — Respondiendo `HTTP 200 OK` en `http://169.58.220.244:3000`
 
 ---
 
@@ -235,17 +234,18 @@ hosting2026/
 | Riesgo | Probabilidad | Impacto | Mitigación Implementada / Propuesta |
 |---|---|---|---|
 | **Punto Único de Fallo en DNS** | Alta | Crítico | `ns1` y `ns2.velupi.com` apuntan a la misma IP (`89.117.147.134`). Se debe incorporar un servidor secundario esclavo de BIND9 en otra región. |
-| **Pérdida de Estado** | Baja | Crítico | **Mitigado**: `@cloudfly/persistence` implementa esquema Prisma PostgreSQL con restricciones de unicidad y almacenamiento persistente. |
+| **Pérdida de Estado** | Baja | Crítico | **Mitigado**: `@cloudfly/persistence` implementa esquema Prisma PostgreSQL con restricciones de unicidad, volumen persistente Docker `postgres_data` y durabilidad verificada ante reinicios. |
 | **Fraude o Precios Manipulados** | Baja | Alto | **Mitigado**: El cálculo de precios es 100% en backend; cualquier precio enviado por el navegador se descarta con `PriceTamperingViolationError`. |
-| **Vulnerabilidad Cross-Tenant** | Baja | Crítico | **Mitigado**: `TenantAccessPolicy` y las consultas de persistencia exigen filtrado por `organizationId` estricto. |
+| **Vulnerabilidad Cross-Tenant** | Baja | Crítico | **Mitigado**: `TenantAccessPolicy`, `HttpTenantGuard` y las consultas de persistencia exigen filtrado por `organizationId` estricto con pruebas unitarias TDD. |
+| **Escalamiento de Privilegios** | Baja | Crítico | **Mitigado**: `HttpRolesGuard` y `Argon2PasswordHasher` con tokens JWT HMAC-SHA256 verificados en tiempo constante. |
 | **Falsificación de Pagos** | Baja | Crítico | **Mitigado**: Se exige validación criptográfica de firma HMAC SHA-256 antes de procesar cualquier webhook de pago. |
 
 ---
 
 ## H. Próxima tarea ejecutable inmediata (Siguiendo TDD)
 
-### **Tarea Única**: Implementación del Módulo de Dominio DNS Manager (`@cloudfly/domain/dns`)
-- **Objetivo**: Modelar las entidades `DnsZone`, `DnsRecord` (tipos A, AAAA, CNAME, MX, TXT, CAA, SRV), validaciones de sintaxis de IPs/hostnames, detección de conflictos (ej. CNAME con otros registros en el mismo host) y auditoría tenant.
-- **Paso 1 (RED)**: Escribir la suite de pruebas `packages/domain/src/dns/dns-manager.spec.ts`.
-- **Paso 2 (GREEN)**: Implementar la lógica pura en `packages/domain/src/dns/dns-manager.ts`.
-- **Paso 3 (REFACTOR)**: Compilar con `tsc -b` y verificar que los 57 tests existentes más los nuevos tests pasen al 100%.
+### **Tarea Única**: Controladores y Endpoints de DNS Manager en NestJS API
+- **Objetivo**: Conectar `DnsManager` con el controlador de API NestJS (`DnsController`) asegurado por `JwtAuthGuard`, `HttpTenantGuard` y `HttpRolesGuard`, permitiendo crear y listar zonas y registros DNS para organizaciones con rol `ADMIN` o `OWNER`.
+- **Paso 1 (RED)**: Escribir la suite de pruebas unitarias/integración para `DnsController`.
+- **Paso 2 (GREEN)**: Implementar el módulo y controlador en `apps/api`.
+- **Paso 3 (REFACTOR)**: Validar las 78 pruebas actuales sin regresiones y realizar push a `main` para despliegue automatizado.
