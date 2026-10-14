@@ -5,3 +5,4 @@ export * from './commerce/catalog';
 export * from './commerce/onboarding-order';
 export * from './commerce/wompi-payments';
 export * from './commerce/provisioning-orchestrator';
+export * from './repositories/interfaces';
