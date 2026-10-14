@@ -29,6 +29,9 @@ importers:
       '@cloudfly/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@cloudfly/persistence':
+        specifier: workspace:*
+        version: link:../../packages/persistence
       '@nestjs/common':
         specifier: ^11.0.9
         version: 11.2.7(reflect-metadata@0.2.2)(rxjs@7.8.2)
