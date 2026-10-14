@@ -13,6 +13,8 @@ COPY apps/web/ ./apps/web/
 RUN pnpm install --no-frozen-lockfile
 RUN pnpm --filter @cloudfly/contracts run build
 RUN pnpm --filter @cloudfly/domain run build
+RUN pnpm --filter @cloudfly/deployment-adapters run build
+RUN pnpm --filter @cloudfly/persistence run prisma:generate || true
 RUN pnpm --filter @cloudfly/web run build
 
 FROM base AS runner
