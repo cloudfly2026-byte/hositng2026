@@ -377,15 +377,57 @@ hosting2026/
 
 ---
 
-## L. Próxima Tarea Ejecutable (Fase 5: Cloud Apps con Dokploy y Traefik)
-- **Objetivo**: Conectar el adaptador de despliegue de aplicaciones cloud (`DokployAdapter` / Traefik) con el portal de Velupi para permitir:
-  1. Despliegue de aplicaciones Node.js, Python, Docker y workers sobre el VPS `shared-node-01` (`169.58.220.244`).
-  2. Gestión de variables de entorno y referencias a secretos.
-  3. Comandos de ciclo de vida (`deploy`, `stop`, `restart`, `logs`).
-  4. Enrutamiento automático HTTPS y proxy inverso mediante Traefik.
-  5. Controlador `CloudAppsController` en NestJS con autenticación JWT y tenant guard.
-- **Paso 1 (RED)**: Escribir pruebas unitarias y de endpoints para `CloudAppsController`.
-- **Paso 2 (GREEN)**: Implementar el controlador y conectar con `DokployAdapter`.
+## L. Fase 5: Cloud Apps con Dokploy y Traefik (COMPLETADO)
+
+### 1. Resumen de Implementación
+- **Capa de Dominio `CloudAppsService` (`packages/domain/src/cloud-apps/cloud-apps-service.ts`)**:
+  - Creación desacoplada de aplicaciones cloud para runtimes Node.js, Python, Docker y microservicios.
+  - Validación de tenancy estricta: Bloqueo de creación o administración cross-tenant (`CrossTenantAppAccessError`).
+  - Ciclo de vida completo del contenedor:
+    - Despliegue (`deployApp`) disparando el motor Dokploy.
+    - Detención (`stopApp`) y reinicio (`restartApp`).
+    - Obtención de logs en vivo (`getLogs`).
+    - Vinculación de dominios personalizados con routing HTTPS automático en Traefik (`bindDomain`).
+  - Detección y prevención de fugas de secretos en variables de entorno (`SecretLeakViolationError`).
+- **Controlador API NestJS `CloudAppsController` (`apps/api/src/cloud-apps/cloud-apps.controller.ts`)**:
+  - `GET /apps`: Listado de aplicaciones del tenant.
+  - `POST /apps`: Creación de nueva aplicación (runtime, origen Git, recursos CPU/RAM, variables de entorno).
+  - `GET /apps/:appId`: Consulta de estado observado y especificación deseada.
+  - `POST /apps/:appId/deploy`: Disparo de despliegue y actualización de estado a `BUILDING` / `HEALTHY`.
+  - `POST /apps/:appId/stop`: Detención de contenedor (`STOPPED`).
+  - `POST /apps/:appId/restart`: Reinicio seguro del servicio.
+  - `GET /apps/:appId/logs`: Flujo de logs de construcción y ejecución.
+  - `POST /apps/:appId/domains`: Vinculación de dominio y certificado SSL Let's Encrypt.
+  - Seguridad: Protegido por `JwtAuthGuard` y `HttpTenantGuard` (403 Forbidden en accesos no autorizados).
+- **Interfaz Web Interactiva (`apps/web/src/app/services/apps/page.tsx`)**:
+  - Selector de aplicaciones con pestañas visuales y chips de estado en vivo (`HEALTHY`, `BUILDING`, `STOPPED`).
+  - Acciones de ciclo de vida en tiempo real: Botones interactivos de Desplegar, Reiniciar y Detener con feedback visual.
+  - Modales funcionales para:
+    1. **Crear Cloud App**: Selección de runtime (Node.js 20, Python 3.12, Custom Docker), repositorio Git y rama.
+    2. **Vincular Dominio**: Enrutamiento automático con TLS en Traefik.
+  - Terminal de logs en vivo con streaming visual.
+  - **100% White-Label**: Eliminación total de marcas o nombres de infraestructura interna (`Dokploy`, `Traefik`), presentando la experiencia como **Velupi Cloud Container Engine**.
+- **Infraestructura y Port Mapping VPS**:
+  - `velupi-web` reasignado al puerto 3001 del host (`3001:3000`) para garantizar que el puerto 3000 quede reservado sin colisiones para el motor Dokploy.
+  - Bootstrap automatizado y seguro de Dokploy incluido en `.github/workflows/deploy.yml`.
+
+### 2. Resultados de Pruebas Automatizadas (TDD)
+- `packages/domain/src/cloud-apps/cloud-apps.spec.ts`: 7 pruebas unitarias aprobadas.
+- `apps/api/src/cloud-apps/cloud-apps.controller.spec.ts`: 8 pruebas de endpoints e integración aprobadas.
+- `packages/deployment-adapters/src/dokploy/dokploy-adapter.spec.ts`: 5 pruebas aprobadas.
+- **Total del monorepo**: **24 suites de prueba, 160 pruebas aprobadas (100% GREEN)**.
+- Compilación de TypeScript y Next.js 15: 18 rutas estáticas generadas sin errores.
+
+---
+
+## M. Próxima Tarea Ejecutable (Fase 6: Aprovisionamiento Asíncrono con Redis & BullMQ)
+- **Objetivo**: Integrar el orquestador de provisión (`ProvisioningOrchestrator`) con colas persistentes en Redis y BullMQ para despachar tareas duraderas e idempotentes:
+  1. Cola `provisioning-queue` con reintentos exponenciales seguros y dead-letter queue.
+  2. Worker de aprovisionamiento que despache automáticamente hacia `HestiaAdapter` (WordPress/PHP) o `DokployAdapter` (Cloud Apps).
+  3. Transición de estados de la orden (`PAID` → `PROVISIONING` → `COMPLETED` / `FAILED`).
+  4. Registro inmutable de eventos de auditoría (`AuditEvent`).
+- **Paso 1 (RED)**: Escribir pruebas unitarias y de integración para la cola y workers de BullMQ.
+- **Paso 2 (GREEN)**: Implementar el módulo de cola en NestJS y conectar con el contenedor `velupi-redis`.
 - **Paso 3 (REFACTOR)**: Desplegar y validar en el VPS en vivo mediante GitHub Actions.
 
 

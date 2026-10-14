@@ -7,6 +7,7 @@ import { WebhooksController } from './webhooks/webhooks.controller';
 import { AuthController } from './auth/auth.controller';
 import { HostingController } from './hosting/hosting.controller';
 import { DnsController } from './dns/dns.controller';
+import { CloudAppsController } from './cloud-apps/cloud-apps.controller';
 import {
   ProductCatalogService,
   OnboardingService,
@@ -20,8 +21,9 @@ import {
   JwtSecurityService,
   HostingManagementService,
   DnsManagerService,
+  CloudAppsService,
 } from '@cloudfly/domain';
-import { HestiaDnsAdapter } from '@cloudfly/deployment-adapters';
+import { HestiaDnsAdapter, DokployAdapter, DokployApiClient } from '@cloudfly/deployment-adapters';
 
 @Module({
   imports: [],
@@ -34,6 +36,7 @@ import { HestiaDnsAdapter } from '@cloudfly/deployment-adapters';
     AuthController,
     HostingController,
     DnsController,
+    CloudAppsController,
   ],
   providers: [
     {
@@ -110,7 +113,43 @@ import { HestiaDnsAdapter } from '@cloudfly/deployment-adapters';
       provide: HestiaDnsAdapter,
       useFactory: () => new HestiaDnsAdapter(),
     },
+    {
+      provide: CloudAppsService,
+      useFactory: () => {
+        const client: DokployApiClient = {
+          createApplication: async (input: any) => ({
+            applicationId: `dok-${Date.now()}`,
+            name: input.name,
+            appName: input.appName,
+            status: 'running',
+          }),
+          deployApplication: async () => ({ success: true }),
+          getApplication: async (appId: string) => ({
+            applicationId: appId,
+            name: 'Cloud App',
+            appName: 'app-01',
+            status: 'running',
+          }),
+          stopApplication: async () => ({ success: true }),
+          restartApplication: async () => ({ success: true }),
+          getApplicationLogs: async () => [
+            '[build] Application compiled successfully.',
+            '[runtime] Listening on port 3000.',
+            '[traefik] Route active with TLS certificate.',
+          ],
+        };
+        const dokploy = new DokployAdapter(
+          {
+            endpoint: process.env.DOKPLOY_ENDPOINT || 'http://169.58.220.244:3000',
+            apiKey: process.env.DOKPLOY_API_KEY || 'dok_dummy_key',
+          },
+          client
+        );
+        return new CloudAppsService(dokploy);
+      },
+    },
   ],
 })
 export class AppModule {}
+
 

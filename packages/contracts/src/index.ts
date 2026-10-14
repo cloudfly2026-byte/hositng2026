@@ -10,6 +10,7 @@ export type DeploymentStatus =
   | 'BUILDING'
   | 'DEPLOYING'
   | 'HEALTHY'
+  | 'STOPPED'
   | 'FAILED'
   | 'CANCELLED'
   | 'PENDING_CAPACITY';
