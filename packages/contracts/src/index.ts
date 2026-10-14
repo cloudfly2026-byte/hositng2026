@@ -1,5 +1,7 @@
 export type Role = 'OWNER' | 'ADMIN' | 'DEVELOPER' | 'VIEWER';
 
+export type DnsRecordType = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT' | 'CAA' | 'SRV';
+
 export type InfrastructureMode = 'SHARED' | 'DEDICATED';
 
 export type DeploymentStatus =

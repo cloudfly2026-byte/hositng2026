@@ -2,44 +2,52 @@
 **Proyecto**: Velupi Cloud Platform / Microservices Studio & Commerce Engine  
 **Fecha de actualización**: 13 de Octubre de 2026  
 **Auditor**: Principal Software Architect, Technical Lead, Senior DevOps Engineer & QA Lead  
-**Estado del repositorio**: Rama `main` | Commit `2ec75f6` | Árbol limpio | Sincronizado con GitHub (`cloudfly2026-byte/hositng2026.git`)
+**Estado del repositorio**: Rama `main` | Árbol limpio | Sincronizado con GitHub (`cloudfly2026-byte/hositng2026.git`)
 
 ---
 
 ## A. Resumen ejecutivo
 
 ### 1. Estado general
-Velupi Cloud Platform cuenta con una **fundación arquitectónica modular sólida en monorepo**, con contratos compartidos, lógica de dominio pura verificada al 100% mediante **TDD (57 pruebas unitarias e integración pasando sin fallos)**, una capa de persistencia relacional implementada mediante Prisma ORM para PostgreSQL (`@cloudfly/persistence`), un pipeline completo de CI/CD con GitHub Actions que construye imágenes en GHCR y despliega automáticamente por SSH hacia el VPS nuevo, y un nuevo servidor de aplicaciones con **Docker Engine 29.9.0 y Docker Compose v5.6.0 en ejecución activa**.
+Velupi Cloud Platform cuenta con una **fundación arquitectónica modular sólida en monorepo**, con contratos compartidos, lógica de dominio pura verificada al 100% mediante **TDD (78 pruebas unitarias e integración pasando sin fallos en 15 suites)**, una capa de persistencia relacional implementada mediante Prisma ORM para PostgreSQL (`@cloudfly/persistence`), un pipeline completo de CI/CD con GitHub Actions que construye imágenes en GHCR y despliega automáticamente por SSH hacia el VPS nuevo (`169.58.220.244`), y un servidor de aplicaciones con **Docker Engine 29.9.0 y Docker Compose v5.6.0 en ejecución activa**.
 
-El entorno local y WSL se mantienen limpios sin bases de datos locales residentes, centralizando el ciclo de despliegue sobre el VPS productivo.
+El entorno local y WSL se mantienen limpios sin bases de datos locales residentes, cumpliendo la **regla mandatoria de AGENTS.md (Sección 18.1)**: *"Codificas → Push a `main` → Deploy automatizado por GitHub Actions al VPS con Docker"*.
 
 ### 2. Qué está funcionando (VERIFICADO con código, pruebas e infraestructura)
-1. **Capa de Persistencia Relacional (`@cloudfly/persistence`)**:
-   - Esquema Prisma PostgreSQL (`schema.prisma`) con las 8 entidades requeridas: `User`, `Organization`, `Membership`, `Product`, `Plan`, `PlanVersion`, `Order`, `OrderItem`, `CustomerEntitlement`, `Project` y `Service`.
-   - Restricciones de unicidad (email de usuario, slug de organización, slug de proyecto por organización, clave de idempotencia de orden, código de producto/plan).
-   - Aislamiento multi-tenant validado mediante pruebas (las consultas por organización no filtran recursos de otros tenants).
-   - Durabilidad verificada ante reinicio simulado del proceso (`cloneForNewProcess`).
-   - Soporte de transacciones ACID con rollback atómico en `PrismaUnitOfWork`.
-2. **Infraestructura del VPS Nuevo (`shared-node-01` — `169.58.220.244`)**:
+1. **Seguridad y Control de Acceso (TDD - 10 pruebas específicas)**:
+   - Hashing de contraseñas con **Argon2id** (`Argon2PasswordHasher`) con salt criptográfico seguro y verificación en tiempo constante.
+   - Generación y validación de tokens **JWT HMAC-SHA256** (`JwtSecurityService`) con expiración y verificación criptográfica.
+   - Guards de autorización en NestJS:
+     - `JwtAuthGuard`: Rechazo 401 a peticiones no autenticadas o tokens manipulados/expirados.
+     - `HttpTenantGuard`: Prevención 403 de acceso cross-tenant entre organizaciones.
+     - `HttpRolesGuard`: Prevención 403 de escalamiento de privilegios contra la jerarquía RBAC.
+2. **Capa de Persistencia Relacional y Migraciones Reales (`@cloudfly/persistence`)**:
+   - Esquema Prisma PostgreSQL (`schema.prisma`) con las entidades requeridas: `User`, `Organization`, `Membership`, `Product`, `Plan`, `PlanVersion`, `Order`, `OrderItem`, `CustomerEntitlement`, `Project` y `Service`.
+   - **Verificación real en VPS**: Migración DDL completa ejecutada sobre PostgreSQL 16 en el VPS `169.58.220.244` (11 tablas, 23 índices y 13 claves foráneas).
+   - **Prueba de durabilidad confirmada**: Inserción de entidades y reinicio del contenedor (`docker restart velupi-postgres-test`), con 100% de integridad y persistencia de datos comprobada.
+3. **Módulo DNS Manager y Adaptador HestiaCP BIND9**:
+   - `DnsManager` en `@cloudfly/domain`: Validación de tipos A, AAAA, CNAME, MX, TXT, CAA, SRV; validación de sintaxis IPv4/IPv6; rango de TTL (60 - 86400s); prevención de colisiones RFC 1912 para registros CNAME.
+   - `HestiaDnsCommandAdapter` en `@cloudfly/deployment-adapters`: Generación declarativa e idempotente de comandos HestiaCP CLI (`v-add-dns-domain`, `v-add-dns-record`, `v-delete-dns-record`, `v-list-dns-records`) sin tocar prematuremente los DNS públicos en vivo.
+4. **Infraestructura del VPS Nuevo (`shared-node-01` — `169.58.220.244`)**:
    - Ubuntu 24.04.5 LTS (Noble Numbat), 8 GB RAM, 96 GB SSD.
    - **Docker Engine `v29.9.0`** instalado y habilitado como servicio del sistema.
    - **Docker Compose `v5.6.0`** instalado y operativo.
    - Llave pública SSH inyectada y autorizada en `/root/.ssh/authorized_keys` para despliegues desatendidos.
-3. **CI/CD y Despliegue Automatizado**:
+5. **CI/CD y Despliegue Automatizado**:
    - `.github/workflows/ci.yml`: Validación de tipos (`tsc -b`) y ejecución de pruebas en cada push/PR.
-   - `.github/workflows/deploy.yml`: Compilación de imágenes Docker multi-stage (`api` y `web`), publicación en GitHub Container Registry (`ghcr.io`), conexión SSH al VPS y actualización desatendida mediante Docker Compose.
+   - `.github/workflows/deploy.yml`: Compilación de imágenes Docker multi-stage (`api` y `web`), publicación en GitHub Container Registry (`ghcr.io`), conexión SSH al VPS y actualización desatendida mediante Docker Compose con soporte de clave SSH y fallback.
    - `docker-compose.prod.yml`: Orquestación productiva en el VPS con PostgreSQL 16 Alpine, Redis 7 Alpine, API NestJS y Web Next.js 15.
-4. **Reglas de aislamiento Multi-Tenant y RBAC** (`@cloudfly/domain`): Verificación contra accesos cross-tenant, matriz de 4 roles (`OWNER`, `ADMIN`, `DEVELOPER`, `VIEWER`), y regla de seguridad estricta para cuentas vinculadas de HestiaCP.
-5. **Catálogo comercial versionado (`PlanVersion`)**: Inmutabilidad de contratos pasados, soporte para cuotas y precios multidivisa (`COP`, `USD`).
-6. **Flujo de Onboarding y Carrito**: Validación de emails, tokens de verificación, cálculo autoritativo de precios en backend (con IVA 19% Colombia), prevención de alteración de precios por clientes y claves de idempotencia.
-7. **Pasarela Wompi**: Generación de sesiones de pago con firma de integridad SHA-256 y validación criptográfica estricta de webhooks HMAC SHA-256 (`x-event-checksum`).
-8. **Provisioning Orchestrator**: Máquina de estados de aprovisionamiento, creación de `CustomerEntitlements`, enrutamiento hacia `HESTIA` / `DOKPLOY` / `CONTABO`, e idempotencia en reintentos.
-9. **Flujo Piloto Velupi #001**: Creación de orden interna autorizada a costo $0 para `velupi.com` que transita el mismo pipeline de provisión estándar.
-10. **Adaptadores de despliegue**:
+6. **Reglas de aislamiento Multi-Tenant y RBAC** (`@cloudfly/domain`): Verificación contra accesos cross-tenant, matriz de 4 roles (`OWNER`, `ADMIN`, `DEVELOPER`, `VIEWER`), y regla de seguridad estricta para cuentas vinculadas de HestiaCP.
+7. **Catálogo comercial versionado (`PlanVersion`)**: Inmutabilidad de contratos pasados, soporte para cuotas y precios multidivisa (`COP`, `USD`).
+8. **Flujo de Onboarding y Carrito**: Validación de emails, tokens de verificación, cálculo autoritativo de precios en backend (con IVA 19% Colombia), prevención de alteración de precios por clientes y claves de idempotencia.
+9. **Pasarela Wompi**: Generación de sesiones de pago con firma de integridad SHA-256 y validación criptográfica estricta de webhooks HMAC SHA-256 (`x-event-checksum`).
+10. **Provisioning Orchestrator**: Máquina de estados de aprovisionamiento, creación de `CustomerEntitlements`, enrutamiento hacia `HESTIA` / `DOKPLOY` / `CONTABO`, e idempotencia en reintentos.
+11. **Flujo Piloto Velupi #001**: Creación de orden interna autorizada a costo $0 para `velupi.com` que transita el mismo pipeline de provisión estándar.
+12. **Adaptadores de despliegue**:
     - `HestiaAdapter`: Generación secuencial e idempotente de comandos Hestia (`v-add-user`, `v-add-web-domain`, `v-add-letsencrypt-domain`, `v-add-database`).
     - `DokployAdapter`: Configuración de aplicaciones, variables de entorno, dominio y ciclos de vida (`stop`, `restart`, `logs`).
-11. **Control Plane API (`apps/api`)**: Endpoints funcionales para `/health`, `/catalog`, `/onboarding`, `/checkout/order` y `/webhooks/wompi`.
-12. **Portal Web (`apps/web`)**: Next.js 15 compilando estáticamente con tema dark obsidian, dashboard, Site Tools para WordPress, consola de logs de Dokploy y página de checkout interactiva.
+13. **Control Plane API (`apps/api`)**: Endpoints funcionales para `/health`, `/catalog`, `/onboarding`, `/checkout/order` y `/webhooks/wompi`.
+14. **Portal Web (`apps/web`)**: Next.js 15 compilando estáticamente con tema dark obsidian, dashboard, Site Tools para WordPress, consola de logs de Dokploy y página de checkout interactiva.
 
 ### 3. Qué NO está funcionando (Brechas técnicas actuales)
 1. **Conector de red real con HestiaCP**: El transporte SSH / API HTTPS de HestiaCP en `89.117.147.134` opera con simulador en pruebas unitarias; falta inyectar la clave privada SSH en el backend para invocar comandos reales.

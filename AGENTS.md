@@ -1,6 +1,11 @@
 # AGENTS.md — Velupi Cloud Platform / Microservices Studio & Commerce Engine
 
 > Documento rector para agentes de IA y desarrolladores. **Todo desarrollo se realiza con TDD (Red → Green → Refactor)**. Estado: especificación técnica y funcional; no asumir que los módulos ya están implementados.
+>
+> ⚠️ **REGLA MANDATORIA DE DESPLIEGUE Y OPERACIÓN (PROHIBIDO TRABAJAR EN LOCAL / WSL):**
+> - **Prohibido trabajar o desplegar en local/WSL**: No levantar servicios residentes, bases de datos ni entornos de ejecución en máquinas locales ni WSL.
+> - **Entorno de ejecución exclusivo en VPS**: Toda la infraestructura en vivo y servicios corren exclusivamente en el VPS `169.58.220.244` (SSH `root` / `Elian20200916`).
+> - **Flujo de trabajo obligatorio**: **Codificas → Haces push a `main` → Esperas el deploy por el Action de GitHub**, el cual compila las imágenes Docker en GitHub, las publica en GHCR, las descarga por SSH al nuevo VPS y monta/actualiza los contenedores en Docker.
 
 ---
 
@@ -547,3 +552,13 @@ cloud-platform/
   - **Ubicación**: `Hub Europe`
   - **Usuario administrativo SSH**: `root`
   - **Políticas de acceso**: Las credenciales y claves privadas SSH se configuran en el entorno local/CI mediante variables protegidas (`.env`, secret manager o SSH key exchange), garantizando que no se expongan ni se registren en commits públicos.
+
+### 18.1 Regla obligatoria de entorno y ciclo de despliegue en VPS
+> **REGLA CARDINAL DE OPERACIÓN Y DESPLIEGUE (PROHIBIDO TRABAJAR EN LOCAL):**
+> 1. **Prohibición de ejecución local/WSL**: No se deben levantar servicios residentes, bases de datos ni despliegues en máquinas locales ni WSL. Toda la infraestructura en vivo corre exclusivamente en el nuevo VPS (`shared-node-01` — `169.58.220.244`, SSH `root`).
+> 2. **Ciclo obligatorio de entrega y despliegue (GitOps / CI/CD)**:
+>    - **Paso 1 (Codificar)**: Desarrollar con TDD estricto en el monorepo (contratos, lógica de dominio, persistencia y controladores).
+>    - **Paso 2 (Push a `main`)**: Enviar los commits validados a la rama `main` en GitHub (`https://github.com/cloudfly2026-byte/hositng2026.git`).
+>    - **Paso 3 (Build de imágenes en GitHub)**: El action `.github/workflows/deploy.yml` compila las imágenes multi-stage de la API y el portal Web en los runners de GitHub y las publica en GitHub Container Registry (`ghcr.io`).
+>    - **Paso 4 (Descarga y montaje en VPS con Docker)**: El action se conecta por SSH a `169.58.220.244`, descarga las imágenes de `ghcr.io` y levanta los contenedores con `docker-compose.prod.yml`.
+>    - **Paso 5 (Verificación remota)**: Monitorear el resultado del workflow y comprobar que los contenedores estén saludables en el VPS.

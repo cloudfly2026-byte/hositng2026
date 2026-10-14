@@ -6,3 +6,5 @@ export * from './commerce/onboarding-order';
 export * from './commerce/wompi-payments';
 export * from './commerce/provisioning-orchestrator';
 export * from './repositories/interfaces';
+export * from './security/password-hasher';
+export * from './dns/dns-manager';

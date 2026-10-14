@@ -11,6 +11,7 @@
     "@cloudfly/contracts": "workspace:*",
     "@cloudfly/deployment-adapters": "workspace:*",
     "@cloudfly/domain": "workspace:*",
+    "@cloudfly/persistence": "workspace:*",
     "@nestjs/common": "^11.0.9",
     "@nestjs/core": "^11.0.9",
     "@nestjs/platform-express": "^11.0.9",
