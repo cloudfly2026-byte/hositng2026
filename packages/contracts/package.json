@@ -11,7 +11,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -b --force",
     "clean": "rimraf dist"
   },
   "devDependencies": {

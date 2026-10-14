@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -b --force",
     "start": "node dist/main.js",
     "start:dev": "tsx watch src/main.ts"
   },
