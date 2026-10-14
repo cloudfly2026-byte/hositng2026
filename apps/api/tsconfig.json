@@ -9,7 +9,9 @@
   "references": [
     { "path": "../../packages/contracts" },
     { "path": "../../packages/domain" },
-    { "path": "../../packages/deployment-adapters" }
+    { "path": "../../packages/deployment-adapters" },
+    { "path": "../../packages/persistence" }
   ],
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts"]
 }

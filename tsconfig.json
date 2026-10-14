@@ -1,8 +1,8 @@
 {
   "files": [],
   "references": [
-    { "path": "./packages/domain" },
     { "path": "./packages/contracts" },
+    { "path": "./packages/domain" },
     { "path": "./packages/deployment-adapters" },
     { "path": "./packages/persistence" },
     { "path": "./apps/api" }
