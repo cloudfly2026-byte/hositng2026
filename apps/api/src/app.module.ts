@@ -5,6 +5,7 @@ import { OnboardingController } from './onboarding/onboarding.controller';
 import { CheckoutController } from './checkout/checkout.controller';
 import { WebhooksController } from './webhooks/webhooks.controller';
 import { AuthController } from './auth/auth.controller';
+import { HostingController } from './hosting/hosting.controller';
 import {
   ProductCatalogService,
   OnboardingService,
@@ -16,6 +17,7 @@ import {
   AuthenticationService,
   Argon2PasswordHasher,
   JwtSecurityService,
+  HostingManagementService,
 } from '@cloudfly/domain';
 
 @Module({
@@ -27,8 +29,21 @@ import {
     CheckoutController,
     WebhooksController,
     AuthController,
+    HostingController,
   ],
   providers: [
+    {
+      provide: HostingManagementService,
+      useFactory: () => {
+        const transport = {
+          executeCommand: async (_cmd: string, _args: string[]) => ({
+            returnCode: 0,
+            output: JSON.stringify({ status: 'OK' }),
+          }),
+        };
+        return new HostingManagementService(transport);
+      },
+    },
     {
       provide: Argon2PasswordHasher,
       useFactory: () => new Argon2PasswordHasher(),

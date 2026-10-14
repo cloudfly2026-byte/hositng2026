@@ -9,3 +9,4 @@ export * from './repositories/interfaces';
 export * from './security/password-hasher';
 export * from './security/auth-service';
 export * from './dns/dns-manager';
+export * from './hosting/hosting-management';

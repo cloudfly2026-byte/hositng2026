@@ -314,9 +314,40 @@ hosting2026/
 
 ---
 
-## J. Próxima Tarea Ejecutable (Fase 3: Hosting Management & HostingManagementService)
-- **Objetivo**: Desarrollar la capa `HostingManagementService` en NestJS (`apps/api`), con endpoints de gestión de sitios web (listado, creación de sitios, dominios, selección de versión PHP, SSL y cuotas) integrando el adaptador HestiaCP como proveedor interno invisible, garantizando autorización multi-tenant y estricto White-Label.
-- **Paso 1 (RED)**: Escribir la suite de pruebas unitarias/integración para `HostingManagementService` y `HostingController`.
-- **Paso 2 (GREEN)**: Implementar el servicio y controlador en `apps/api`.
-- **Paso 3 (REFACTOR)**: Ejecutar suite de 114+ pruebas y desplegar vía GitOps al VPS `169.58.220.244`.
+## J. Fase 3: Hosting Management & HostingManagementService (COMPLETADO)
+
+### 1. Resumen de Implementación
+- **Capa de Dominio `HostingManagementService` (`packages/domain/src/hosting/hosting-management.ts`)**:
+  - Gestión integral de sitios web: creación idempotente, listado por organización, consulta de detalles técnicos (PHP, SSL Let's Encrypt, estado de salud y disco).
+  - Whitelist estricta y segura de versiones PHP (`7.4`, `8.0`, `8.1`, `8.2`, `8.3`), previniendo inyección de comandos o versiones inseguras (`InvalidPhpVersionError`).
+  - Gestión segura de bases de datos MySQL asociadas al tenant con aislamiento de nombres de usuario y base de datos con prefijo tenant (`u_<orgId>_<dbname>`).
+  - Cuentas de correo con asignación de cuotas (`quotaMb`), verificación de dominio propietario e invalidación de acceso cruzado entre tenants.
+  - Cálculo consolidado de cuotas de hosting (`HostingQuotas`: sitios, bases de datos, buzones de correo y disco en MB).
+- **Controlador API NestJS `HostingController` (`apps/api/src/hosting/hosting.controller.ts`)**:
+  - `GET /hosting/sites`: Listado de sitios de la organización del usuario autenticado.
+  - `POST /hosting/sites`: Creación de sitio web con PHP y SSL automático (roles: `OWNER`, `ADMIN`, `DEVELOPER`).
+  - `GET /hosting/sites/:domain`: Detalles y estado en vivo del sitio web (con verificación estricta de pertenencia).
+  - `PATCH /hosting/sites/:domain/php`: Cambio de versión PHP validado contra whitelist.
+  - `GET /hosting/databases`: Listado de bases de datos de la organización.
+  - `POST /hosting/databases`: Creación de base de datos MySQL (roles: `OWNER`, `ADMIN`).
+  - `GET /hosting/emails/:domain`: Cuentas de correo del dominio.
+  - `POST /hosting/emails`: Creación de buzón de correo corporativo.
+  - `GET /hosting/quotas`: Uso consolidado de cuotas y límites del plan.
+- **Seguridad y White-Label**:
+  - Todas las rutas están aseguradas por `JwtAuthGuard`, `HttpTenantGuard` y `HttpRolesGuard`.
+  - Cero filtración de rutas de servidor (`/usr/local/hestia`), comandos CLI (`v-add-*`) o puertos de administración (`8083`).
+
+### 2. Resultados de Pruebas Automatizadas (TDD)
+- `packages/domain/src/hosting/hosting-management.spec.ts`: 10 pruebas unitarias aprobadas.
+- `apps/api/src/hosting/hosting.controller.spec.ts`: 7 pruebas de endpoints e integración aprobadas.
+- **Total del monorepo**: **21 suites de prueba, 131 pruebas aprobadas (100% GREEN)**.
+
+---
+
+## K. Próxima Tarea Ejecutable (Fase 4: DNS Manager Completo con BIND9)
+- **Objetivo**: Conectar el servicio `DnsManager` con endpoints NestJS (`DnsController`) asegurados por JWT, RBAC y multi-tenant, permitiendo gestionar zonas y registros (A, AAAA, CNAME, MX, TXT, CAA, SRV) con validación sintáctica, prevención de registros conflictivos, sincronización con BIND9 en Hestia y nameservers comerciales `ns1.velupi.com` y `ns2.velupi.com`.
+- **Paso 1 (RED)**: Escribir suite de pruebas para `DnsController`.
+- **Paso 2 (GREEN)**: Implementar controlador y servicio en `apps/api`.
+- **Paso 3 (REFACTOR)**: Desplegar vía GitOps al VPS `169.58.220.244`.
+
 

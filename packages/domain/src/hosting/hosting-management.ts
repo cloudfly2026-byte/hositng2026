@@ -1,0 +1,339 @@
+import { AuthorizedContext, OperationReceipt } from '@cloudfly/contracts';
+import { CrossTenantViolationError } from '../identity/rbac';
+
+export class InvalidPhpVersionError extends Error {
+  constructor(version: string) {
+    super(`Unsupported or invalid PHP version '${version}'. Allowed versions: 7.4, 8.0, 8.1, 8.2, 8.3`);
+    this.name = 'InvalidPhpVersionError';
+  }
+}
+
+export class WebSiteNotFoundError extends Error {
+  constructor(domain: string) {
+    super(`Website '${domain}' was not found.`);
+    this.name = 'WebSiteNotFoundError';
+  }
+}
+
+export interface CreateWebSiteSpec {
+  domain: string;
+  type?: string;
+  phpVersion?: string;
+  sslEnabled?: boolean;
+}
+
+export interface WebSiteDetail {
+  domain: string;
+  organizationId: string;
+  type: string;
+  phpVersion: string;
+  sslStatus: 'ACTIVE' | 'PENDING' | 'DISABLED';
+  status: 'HEALTHY' | 'WARNING' | 'ERROR' | 'SUSPENDED';
+  diskUsedMb: number;
+  ip: string;
+  createdAt: Date;
+}
+
+export interface CreateDatabaseSpec {
+  databaseName: string;
+  dbUser: string;
+  password: string;
+  type?: 'MYSQL' | 'POSTGRES';
+}
+
+export interface DatabaseDetail {
+  id: string;
+  organizationId: string;
+  databaseName: string;
+  dbUser: string;
+  type: string;
+  host: string;
+  port: number;
+  charset: string;
+  createdAt: Date;
+}
+
+export interface CreateEmailAccountSpec {
+  domain: string;
+  account: string;
+  password: string;
+  quotaMb?: number;
+}
+
+export interface EmailAccountSummary {
+  email: string;
+  domain: string;
+  organizationId: string;
+  quotaMb: number;
+  usedMb: number;
+  createdAt: Date;
+}
+
+export interface HostingQuotas {
+  organizationId: string;
+  sitesCount: number;
+  maxSites: number;
+  databasesCount: number;
+  maxDatabases: number;
+  emailsCount: number;
+  maxEmails: number;
+  diskUsedMb: number;
+  diskLimitMb: number;
+}
+
+export interface HestiaTransport {
+  executeCommand(command: string, args: string[]): Promise<{ returnCode: number; output: string }>;
+}
+
+const SUPPORTED_PHP_VERSIONS = ['7.4', '8.0', '8.1', '8.2', '8.3'];
+
+export class HostingManagementService {
+  private websites: Map<string, WebSiteDetail> = new Map(); // domain -> WebSiteDetail
+  private databases: Map<string, DatabaseDetail> = new Map(); // dbId -> DatabaseDetail
+  private emailAccounts: Map<string, EmailAccountSummary> = new Map(); // email -> EmailAccountSummary
+
+  constructor(private readonly transport: HestiaTransport) {}
+
+  async createWebSite(spec: CreateWebSiteSpec, context: AuthorizedContext): Promise<WebSiteDetail> {
+    const domain = spec.domain.toLowerCase().trim();
+    const phpVersion = spec.phpVersion || '8.3';
+
+    if (!SUPPORTED_PHP_VERSIONS.includes(phpVersion)) {
+      throw new InvalidPhpVersionError(phpVersion);
+    }
+
+    const orgUser = this.sanitizeUser(context.organizationId);
+
+    // 1. Create tenant user in hosting provider if not present
+    await this.runIdempotent('v-add-user', [
+      orgUser,
+      'SecPass_' + Math.random().toString(36).substring(2, 10),
+      `${orgUser}@velupi.com`,
+      'default',
+    ]);
+
+    // 2. Create web domain
+    await this.runIdempotent('v-add-web-domain', [orgUser, domain]);
+
+    // 3. Issue SSL if requested or default true
+    if (spec.sslEnabled !== false) {
+      await this.runIdempotent('v-add-letsencrypt-domain', [orgUser, domain]);
+    }
+
+    const site: WebSiteDetail = {
+      domain,
+      organizationId: context.organizationId,
+      type: spec.type || 'WordPress Pro',
+      phpVersion,
+      sslStatus: spec.sslEnabled !== false ? 'ACTIVE' : 'DISABLED',
+      status: 'HEALTHY',
+      diskUsedMb: 120,
+      ip: '89.117.147.134',
+      createdAt: new Date(),
+    };
+
+    this.websites.set(domain, site);
+    return site;
+  }
+
+  async listWebSites(organizationId: string): Promise<WebSiteDetail[]> {
+    return Array.from(this.websites.values()).filter(
+      (s) => s.organizationId === organizationId
+    );
+  }
+
+  async getWebSiteDetail(domain: string, context: AuthorizedContext): Promise<WebSiteDetail> {
+    const site = this.websites.get(domain.toLowerCase().trim());
+    if (!site) {
+      throw new WebSiteNotFoundError(domain);
+    }
+
+    if (site.organizationId !== context.organizationId) {
+      throw new CrossTenantViolationError(context.organizationId, site.organizationId);
+    }
+
+    // Refresh live status from underlying engine if available
+    try {
+      const orgUser = this.sanitizeUser(context.organizationId);
+      const res = await this.transport.executeCommand('v-list-web-domain', [orgUser, domain, 'json']);
+      if (res.returnCode === 0) {
+        const parsed = JSON.parse(res.output);
+        const data = parsed[domain];
+        if (data) {
+          site.sslStatus = data.SSL === 'yes' ? 'ACTIVE' : 'DISABLED';
+          if (data.U_DISK) site.diskUsedMb = parseInt(data.U_DISK, 10) || site.diskUsedMb;
+        }
+      }
+    } catch {
+      // Keep cached state
+    }
+
+    return site;
+  }
+
+  async updatePhpVersion(
+    domain: string,
+    phpVersion: string,
+    context: AuthorizedContext
+  ): Promise<OperationReceipt> {
+    const cleanDomain = domain.toLowerCase().trim();
+    const site = this.websites.get(cleanDomain);
+    if (!site) {
+      throw new WebSiteNotFoundError(cleanDomain);
+    }
+
+    if (site.organizationId !== context.organizationId) {
+      throw new CrossTenantViolationError(context.organizationId, site.organizationId);
+    }
+
+    if (!SUPPORTED_PHP_VERSIONS.includes(phpVersion)) {
+      throw new InvalidPhpVersionError(phpVersion);
+    }
+
+    const orgUser = this.sanitizeUser(context.organizationId);
+    const tpl = `PHP-${phpVersion.replace('.', '_')}`;
+    await this.transport.executeCommand('v-change-web-domain-backend-tpl', [orgUser, cleanDomain, tpl]);
+
+    site.phpVersion = phpVersion;
+
+    return {
+      operationId: `op-php-${Date.now()}`,
+      status: 'SUCCESS',
+      resourceIdentifier: cleanDomain,
+      message: `Versión de PHP actualizada a ${phpVersion} para ${cleanDomain}`,
+      executedAt: new Date(),
+    };
+  }
+
+  async createDatabase(spec: CreateDatabaseSpec, context: AuthorizedContext): Promise<DatabaseDetail> {
+    const orgUser = this.sanitizeUser(context.organizationId);
+    const fullDbName = `${orgUser}_${spec.databaseName.toLowerCase().replace(/[^a-z0-9_]/g, '')}`;
+    const fullDbUser = `${orgUser}_${spec.dbUser.toLowerCase().replace(/[^a-z0-9_]/g, '')}`;
+
+    await this.runIdempotent('v-add-database', [
+      orgUser,
+      spec.databaseName,
+      spec.dbUser,
+      spec.password,
+      'mysql',
+    ]);
+
+    const dbDetail: DatabaseDetail = {
+      id: `db-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      organizationId: context.organizationId,
+      databaseName: fullDbName,
+      dbUser: fullDbUser,
+      type: spec.type || 'MYSQL',
+      host: 'localhost',
+      port: 3306,
+      charset: 'utf8mb4',
+      createdAt: new Date(),
+    };
+
+    this.databases.set(dbDetail.id, dbDetail);
+    return dbDetail;
+  }
+
+  async listDatabases(organizationId: string): Promise<DatabaseDetail[]> {
+    return Array.from(this.databases.values()).filter(
+      (d) => d.organizationId === organizationId
+    );
+  }
+
+  async createEmailAccount(
+    spec: CreateEmailAccountSpec,
+    context: AuthorizedContext
+  ): Promise<OperationReceipt> {
+    const cleanDomain = spec.domain.toLowerCase().trim();
+    const site = this.websites.get(cleanDomain);
+    if (!site) {
+      throw new WebSiteNotFoundError(cleanDomain);
+    }
+
+    if (site.organizationId !== context.organizationId) {
+      throw new CrossTenantViolationError(context.organizationId, site.organizationId);
+    }
+
+    const orgUser = this.sanitizeUser(context.organizationId);
+    const account = spec.account.toLowerCase().replace(/[^a-z0-9._-]/g, '');
+    const email = `${account}@${cleanDomain}`;
+
+    await this.runIdempotent('v-add-mail-account', [
+      orgUser,
+      cleanDomain,
+      account,
+      spec.password,
+      (spec.quotaMb || 1024).toString(),
+    ]);
+
+    this.emailAccounts.set(email, {
+      email,
+      domain: cleanDomain,
+      organizationId: context.organizationId,
+      quotaMb: spec.quotaMb || 1024,
+      usedMb: 0,
+      createdAt: new Date(),
+    });
+
+    return {
+      operationId: `op-mail-${Date.now()}`,
+      status: 'SUCCESS',
+      resourceIdentifier: email,
+      message: `Cuenta de correo ${email} creada exitosamente`,
+      executedAt: new Date(),
+    };
+  }
+
+  async listEmailAccounts(domain: string, context: AuthorizedContext): Promise<EmailAccountSummary[]> {
+    const cleanDomain = domain.toLowerCase().trim();
+    const site = this.websites.get(cleanDomain);
+    if (!site) {
+      throw new WebSiteNotFoundError(cleanDomain);
+    }
+
+    if (site.organizationId !== context.organizationId) {
+      throw new CrossTenantViolationError(context.organizationId, site.organizationId);
+    }
+
+    return Array.from(this.emailAccounts.values()).filter(
+      (e) => e.domain === cleanDomain && e.organizationId === context.organizationId
+    );
+  }
+
+  async getHostingQuotas(organizationId: string): Promise<HostingQuotas> {
+    const sites = await this.listWebSites(organizationId);
+    const dbs = await this.listDatabases(organizationId);
+    const emails = Array.from(this.emailAccounts.values()).filter(
+      (e) => e.organizationId === organizationId
+    );
+
+    const diskUsedMb = sites.reduce((sum, s) => sum + s.diskUsedMb, 0);
+
+    return {
+      organizationId,
+      sitesCount: sites.length,
+      maxSites: 10,
+      databasesCount: dbs.length,
+      maxDatabases: 20,
+      emailsCount: emails.length,
+      maxEmails: 50,
+      diskUsedMb,
+      diskLimitMb: 10240, // 10 GB
+    };
+  }
+
+  private sanitizeUser(orgId: string): string {
+    const clean = orgId.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return `u_${clean.slice(-10)}`;
+  }
+
+  private async runIdempotent(command: string, args: string[]): Promise<void> {
+    const result = await this.transport.executeCommand(command, args);
+    // returnCode 0 = OK, returnCode 4 = already exists
+    if (result.returnCode !== 0 && result.returnCode !== 4) {
+      if (!result.output.toLowerCase().includes('already exists')) {
+        throw new Error(`Command failed with code ${result.returnCode}: ${result.output}`);
+      }
+    }
+  }
+}
