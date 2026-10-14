@@ -118,6 +118,28 @@ describe('HostingManagementService (White-Label Hosting Management)', () => {
       const site = await service.getWebSiteDetail('valid-php.com', tenantAContext);
       expect(site.phpVersion).toBe('8.3');
     });
+
+    it('imports an existing website idempotently and prevents cross-tenant takeover', async () => {
+      const imported = await service.importExistingWebSite(
+        { domain: 'cloudfly.com.co', phpVersion: '8.3' },
+        tenantAContext
+      );
+      expect(imported.domain).toBe('cloudfly.com.co');
+      expect(imported.organizationId).toBe('org-tenant-a');
+      expect(imported.sslStatus).toBe('ACTIVE');
+
+      // Re-importing returns same record
+      const reimported = await service.importExistingWebSite(
+        { domain: 'cloudfly.com.co' },
+        tenantAContext
+      );
+      expect(reimported.domain).toBe('cloudfly.com.co');
+
+      // Tenant B cannot import or take over Tenant A's domain
+      await expect(
+        service.importExistingWebSite({ domain: 'cloudfly.com.co' }, tenantBContext)
+      ).rejects.toThrow(CrossTenantViolationError);
+    });
   });
 
   describe('Databases Management', () => {

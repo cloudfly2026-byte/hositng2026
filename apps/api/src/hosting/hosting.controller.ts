@@ -79,6 +79,23 @@ export class HostingController {
     }
   }
 
+  @Post('sites/import')
+  @UseGuards(HttpRolesGuard)
+  @Roles('OWNER', 'ADMIN')
+  async importSite(
+    @Body() body: { domain: string; type?: string; phpVersion?: string },
+    @Req() req: any
+  ) {
+    try {
+      return await this.hostingService.importExistingWebSite(body, req.user);
+    } catch (error: any) {
+      if (error instanceof CrossTenantViolationError || error?.name === 'CrossTenantViolationError') {
+        throw new ForbiddenException(error.message);
+      }
+      throw new BadRequestException(error.message || 'Error al importar sitio web.');
+    }
+  }
+
   @Get('sites/:domain')
   async getSite(@Param('domain') domain: string, @Req() req: any) {
     try {

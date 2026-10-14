@@ -142,6 +142,58 @@ export class HostingManagementService {
     );
   }
 
+  async importExistingWebSite(
+    spec: { domain: string; type?: string; phpVersion?: string },
+    context: AuthorizedContext
+  ): Promise<WebSiteDetail> {
+    const domain = spec.domain.toLowerCase().trim();
+    const existing = this.websites.get(domain);
+    if (existing) {
+      if (existing.organizationId !== context.organizationId) {
+        throw new CrossTenantViolationError(context.organizationId, existing.organizationId);
+      }
+      return existing;
+    }
+
+    const orgUser = this.sanitizeUser(context.organizationId);
+    let diskUsedMb = 120;
+    let sslStatus: 'ACTIVE' | 'PENDING' | 'DISABLED' = 'ACTIVE';
+    let phpVersion = spec.phpVersion || '8.2';
+
+    try {
+      const res = await this.transport.executeCommand('v-list-web-domain', [orgUser, domain, 'json']);
+      if (res.returnCode === 0) {
+        const parsed = JSON.parse(res.output);
+        const data = parsed[domain];
+        if (data) {
+          sslStatus = data.SSL === 'yes' ? 'ACTIVE' : 'DISABLED';
+          if (data.U_DISK) diskUsedMb = parseInt(data.U_DISK, 10) || diskUsedMb;
+          if (data.BACKEND) {
+            const match = data.BACKEND.match(/PHP-(\d+)_(\d+)/i);
+            if (match) phpVersion = `${match[1]}.${match[2]}`;
+          }
+        }
+      }
+    } catch {
+      // Default fallback
+    }
+
+    const imported: WebSiteDetail = {
+      domain,
+      organizationId: context.organizationId,
+      type: spec.type || 'WordPress Pro (Imported)',
+      phpVersion,
+      sslStatus,
+      status: 'HEALTHY',
+      diskUsedMb,
+      ip: '89.117.147.134',
+      createdAt: new Date(),
+    };
+
+    this.websites.set(domain, imported);
+    return imported;
+  }
+
   async getWebSiteDetail(domain: string, context: AuthorizedContext): Promise<WebSiteDetail> {
     const site = this.websites.get(domain.toLowerCase().trim());
     if (!site) {

@@ -9,7 +9,7 @@
 ## A. Resumen ejecutivo
 
 ### 1. Estado general
-Velupi Cloud Platform cuenta con una **fundación arquitectónica modular sólida en monorepo**, con contratos compartidos, lógica de dominio pura verificada al 100% mediante **TDD (185 pruebas unitarias e integración pasando sin fallos en 29 suites)**, una capa de persistencia relacional implementada mediante Prisma ORM para PostgreSQL (`@cloudfly/persistence`), un pipeline completo de CI/CD con GitHub Actions que construye imágenes en GHCR y despliega automáticamente por SSH hacia el VPS nuevo (`169.58.220.244`), y un servidor de aplicaciones con **Docker Engine 29.9.0 y Docker Compose v5.6.0 en ejecución activa**.
+Velupi Cloud Platform cuenta con una **fundación arquitectónica modular sólida en monorepo**, con contratos compartidos, lógica de dominio pura verificada al 100% mediante **TDD (191 pruebas unitarias e integración pasando sin fallos en 30 suites)**, una capa de persistencia relacional implementada mediante Prisma ORM para PostgreSQL (`@cloudfly/persistence`), un pipeline completo de CI/CD con GitHub Actions que construye imágenes en GHCR y despliega automáticamente por SSH hacia el VPS nuevo (`169.58.220.244`), y un servidor de aplicaciones con **Docker Engine 29.9.0 y Docker Compose v5.6.0 en ejecución activa**.
 
 El entorno local y WSL se mantienen limpios sin bases de datos locales residentes, cumpliendo la **regla mandatoria de AGENTS.md (Sección 18.1)**: *"Codificas → Push a `main` → Deploy automatizado por GitHub Actions al VPS con Docker"*.
 

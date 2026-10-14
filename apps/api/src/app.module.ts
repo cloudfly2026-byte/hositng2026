@@ -10,6 +10,7 @@ import { DnsController } from './dns/dns.controller';
 import { CloudAppsController } from './cloud-apps/cloud-apps.controller';
 import { ProvisioningController } from './provisioning/provisioning.controller';
 import { BillingController } from './billing/billing.controller';
+import { DashboardController } from './dashboard/dashboard.controller';
 import {
   ProductCatalogService,
   OnboardingService,
@@ -43,6 +44,7 @@ import { HestiaDnsAdapter, DokployAdapter, DokployApiClient } from '@cloudfly/de
     CloudAppsController,
     ProvisioningController,
     BillingController,
+    DashboardController,
   ],
   providers: [
     {

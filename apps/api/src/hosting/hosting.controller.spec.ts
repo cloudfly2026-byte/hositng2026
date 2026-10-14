@@ -66,6 +66,15 @@ describe('HostingController (Hosting API & Tenant Guards)', () => {
       );
       expect(res.status).toBe('SUCCESS');
     });
+
+    it('imports an existing site using authenticated user context', async () => {
+      const imported = await controller.importSite(
+        { domain: 'cloudfly.com.co', phpVersion: '8.2' },
+        userContext as any
+      );
+      expect(imported.domain).toBe('cloudfly.com.co');
+      expect(imported.organizationId).toBe('org-tenant-101');
+    });
   });
 
   describe('Databases Management', () => {
