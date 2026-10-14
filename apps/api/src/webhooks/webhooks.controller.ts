@@ -1,7 +1,8 @@
-import { Controller, Post, Body, Headers, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, Headers, HttpCode, Optional } from '@nestjs/common';
 import {
   PaymentProcessorService,
   ProvisioningOrchestrator,
+  SubscriptionService,
   Order,
   OrderStatus,
 } from '@cloudfly/domain';
@@ -10,7 +11,8 @@ import {
 export class WebhooksController {
   constructor(
     private paymentProcessor: PaymentProcessorService,
-    private orchestrator: ProvisioningOrchestrator
+    private orchestrator: ProvisioningOrchestrator,
+    @Optional() private subscriptionService?: SubscriptionService
   ) {}
 
   @Post('wompi')
@@ -21,9 +23,14 @@ export class WebhooksController {
   ): { status: string; orderId: string } {
     const updatedOrder: Order = this.paymentProcessor.processWebhook(payload, headers);
 
-    // If order transitioned to PAID, trigger provisioning orchestration
+    // If order transitioned to PAID, trigger provisioning orchestration and commerce lifecycle
     if (updatedOrder.status === OrderStatus.PAID) {
       this.orchestrator.orchestratePaidOrder(updatedOrder);
+
+      if (this.subscriptionService) {
+        const sub = this.subscriptionService.createSubscriptionFromPaidOrder(updatedOrder);
+        this.subscriptionService.generateInvoiceForOrder(updatedOrder, sub.id);
+      }
     }
 
     return {

@@ -13,3 +13,4 @@ export * from './hosting/hosting-management';
 export * from './cloud-apps/cloud-apps-service';
 export * from './commerce/provisioning-worker';
 export * from './pilot/velupi-pilot';
+export * from './commerce/subscription-service';

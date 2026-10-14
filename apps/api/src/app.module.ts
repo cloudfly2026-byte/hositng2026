@@ -9,6 +9,7 @@ import { HostingController } from './hosting/hosting.controller';
 import { DnsController } from './dns/dns.controller';
 import { CloudAppsController } from './cloud-apps/cloud-apps.controller';
 import { ProvisioningController } from './provisioning/provisioning.controller';
+import { BillingController } from './billing/billing.controller';
 import {
   ProductCatalogService,
   OnboardingService,
@@ -24,6 +25,7 @@ import {
   DnsManagerService,
   CloudAppsService,
   ProvisioningWorkerService,
+  SubscriptionService,
 } from '@cloudfly/domain';
 import { HestiaDnsAdapter, DokployAdapter, DokployApiClient } from '@cloudfly/deployment-adapters';
 
@@ -40,6 +42,7 @@ import { HestiaDnsAdapter, DokployAdapter, DokployApiClient } from '@cloudfly/de
     DnsController,
     CloudAppsController,
     ProvisioningController,
+    BillingController,
   ],
   providers: [
     {
@@ -109,6 +112,10 @@ import { HestiaDnsAdapter, DokployAdapter, DokployApiClient } from '@cloudfly/de
       inject: [ProductCatalogService],
     },
     {
+      provide: SubscriptionService,
+      useFactory: () => new SubscriptionService(),
+    },
+    {
       provide: DnsManagerService,
       useFactory: () => new DnsManagerService(),
     },
@@ -167,6 +174,3 @@ import { HestiaDnsAdapter, DokployAdapter, DokployApiClient } from '@cloudfly/de
   ],
 })
 export class AppModule {}
-
-
-

@@ -241,4 +241,25 @@ export class OrderService {
   getOrderCount(): number {
     return this.orders.size;
   }
+
+  getOrderById(orderId: string): Order | undefined {
+    return this.orders.get(orderId);
+  }
+
+  getOrderByNumber(orderNumber: string): Order | undefined {
+    return Array.from(this.orders.values()).find((o) => o.orderNumber === orderNumber);
+  }
+
+  getOrdersByOrganization(orgId: string): Order[] {
+    return Array.from(this.orders.values()).filter((o) => o.organizationId === orgId);
+  }
+
+  updateOrderStatus(orderId: string, status: OrderStatus): Order {
+    const order = this.orders.get(orderId);
+    if (!order) {
+      throw new Error(`Order '${orderId}' not found.`);
+    }
+    order.status = status;
+    return order;
+  }
 }
