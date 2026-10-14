@@ -4,11 +4,12 @@
   "private": true,
   "description": "Cloud Platform & Microservices Studio SaaS",
   "scripts": {
-    "build": "pnpm --recursive run build",
+    "build:packages": "pnpm --filter @cloudfly/contracts run build && pnpm --filter @cloudfly/domain run build && pnpm --filter @cloudfly/deployment-adapters run build && pnpm --filter @cloudfly/persistence run build",
+    "build": "pnpm run build:packages && pnpm --filter @cloudfly/api run build && pnpm --filter @cloudfly/web run build",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "typecheck": "tsc -b",
+    "typecheck": "pnpm run build:packages && pnpm --filter @cloudfly/api run build",
     "lint": "pnpm --recursive run lint"
   },
   "devDependencies": {

@@ -29,8 +29,13 @@ jobs:
       - name: Generate Prisma Client
         run: pnpm --filter @cloudfly/persistence run prisma:generate
 
-      - name: Build and Typecheck
-        run: pnpm build
+      - name: Build Packages in Dependency Order
+        run: |
+          pnpm --filter @cloudfly/contracts run build
+          pnpm --filter @cloudfly/domain run build
+          pnpm --filter @cloudfly/deployment-adapters run build
+          pnpm --filter @cloudfly/persistence run build
+          pnpm --filter @cloudfly/api run build
 
       - name: Run Tests
         run: pnpm test
