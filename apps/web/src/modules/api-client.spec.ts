@@ -84,4 +84,42 @@ describe('ApiClient (apps/web)', () => {
       ApiClientError
     );
   });
+
+  it('sends GET /dns/zones with x-tenant-id header', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => [{ id: 'zn-1', domain: 'velupi.com' }],
+    });
+
+    const zones = await client.listDnsZones('org-velupi');
+    expect(zones).toHaveLength(1);
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://test-api:4000/dns/zones?organizationId=org-velupi',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'x-tenant-id': 'org-velupi',
+        }),
+      })
+    );
+  });
+
+  it('sends POST /apps/:id/restart with x-tenant-id header', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ success: true, message: 'App restarted' }),
+    });
+
+    const res = await client.restartCloudApp('app-1', 'org-velupi');
+    expect(res.success).toBe(true);
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://test-api:4000/apps/app-1/restart',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          'x-tenant-id': 'org-velupi',
+        }),
+      })
+    );
+  });
 });
+

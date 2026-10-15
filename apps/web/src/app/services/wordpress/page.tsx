@@ -17,9 +17,27 @@ import SpeedIcon from '@mui/icons-material/Speed';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
+import { defaultApiClient } from '../../../modules/api-client';
+
 export default function WordPressSiteToolsPage() {
   const [phpVersion, setPhpVersion] = React.useState('8.2');
   const [backupStatus, setBackupStatus] = React.useState<'idle' | 'running' | 'success'>('idle');
+  const [activeSite, setActiveSite] = React.useState<{ domain: string; phpVersion: string; sslEnabled: boolean } | null>(null);
+
+  React.useEffect(() => {
+    defaultApiClient
+      .listHostingSites()
+      .then((sites) => {
+        if (Array.isArray(sites) && sites.length > 0) {
+          const s = sites[0];
+          setActiveSite(s);
+          if (s.phpVersion) setPhpVersion(s.phpVersion);
+        }
+      })
+      .catch(() => {
+        // Fallback for offline/unauthenticated preview
+      });
+  }, []);
 
   const triggerBackup = () => {
     setBackupStatus('running');
@@ -35,13 +53,13 @@ export default function WordPressSiteToolsPage() {
         <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
             <Typography variant="h4" sx={{ fontWeight: 800, color: '#fff' }}>
-              velupi.com
+              {activeSite?.domain || 'velupi.com'}
             </Typography>
             <Chip label="WordPress 6.7" size="small" sx={{ backgroundColor: 'rgba(6, 182, 212, 0.15)', color: '#67e8f9', fontWeight: 600 }} />
             <Chip label="ACTIVO" size="small" color="success" sx={{ fontWeight: 700 }} />
           </Box>
           <Typography variant="body2" sx={{ color: '#9ca3af' }}>
-            Servidor: <strong>cloudfly.com.co</strong> (HestiaCP) | IP: <code>89.117.147.134</code> | Nameservers: <code>ns1/ns2.cloudfly.com.co</code>
+            Servidor: <strong>shared-node-01</strong> | IP: <code>89.117.147.134</code> | Nameservers: <code>ns1/ns2.velupi.com</code>
           </Typography>
         </Box>
 
@@ -50,18 +68,10 @@ export default function WordPressSiteToolsPage() {
             variant="contained"
             color="primary"
             endIcon={<OpenInNewIcon />}
-            href="https://velupi.com"
+            href={`https://${activeSite?.domain || 'velupi.com'}`}
             target="_blank"
           >
             Visitar Sitio Web
-          </Button>
-          <Button
-            variant="outlined"
-            color="secondary"
-            href="https://cloudfly.com.co:8083"
-            target="_blank"
-          >
-            Panel HestiaCP
           </Button>
         </Box>
       </Box>

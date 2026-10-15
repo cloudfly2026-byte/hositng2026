@@ -126,6 +126,65 @@ export class ApiClient {
       body: JSON.stringify({ orderId }),
     });
   }
+
+  async listDnsZones(organizationId: string): Promise<any> {
+    return this.request<any>(`/dns/zones?organizationId=${encodeURIComponent(organizationId)}`, {
+      headers: {
+        'x-tenant-id': organizationId,
+      },
+    });
+  }
+
+  async reconcileDnsZone(zoneId: string, organizationId: string): Promise<any> {
+    return this.request<any>(`/dns/zones/${encodeURIComponent(zoneId)}/reconcile`, {
+      method: 'POST',
+      headers: {
+        'x-tenant-id': organizationId,
+      },
+    });
+  }
+
+  async listHostingSites(organizationId?: string): Promise<any> {
+    const headers: Record<string, string> = {};
+    if (organizationId) {
+      headers['x-tenant-id'] = organizationId;
+    }
+    return this.request<any>('/hosting/sites', { headers });
+  }
+
+  async listCloudApps(organizationId: string): Promise<any> {
+    return this.request<any>(`/apps?organizationId=${encodeURIComponent(organizationId)}`, {
+      headers: {
+        'x-tenant-id': organizationId,
+      },
+    });
+  }
+
+  async restartCloudApp(appId: string, organizationId: string): Promise<any> {
+    return this.request<any>(`/apps/${encodeURIComponent(appId)}/restart`, {
+      method: 'POST',
+      headers: {
+        'x-tenant-id': organizationId,
+      },
+    });
+  }
+
+  async stopCloudApp(appId: string, organizationId: string): Promise<any> {
+    return this.request<any>(`/apps/${encodeURIComponent(appId)}/stop`, {
+      method: 'POST',
+      headers: {
+        'x-tenant-id': organizationId,
+      },
+    });
+  }
+
+  async getCloudAppLogs(appId: string, organizationId: string): Promise<any> {
+    return this.request<any>(`/apps/${encodeURIComponent(appId)}/logs`, {
+      headers: {
+        'x-tenant-id': organizationId,
+      },
+    });
+  }
 }
 
 export const defaultApiClient = new ApiClient();

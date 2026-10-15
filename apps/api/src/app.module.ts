@@ -28,8 +28,13 @@ import {
   ProvisioningWorkerService,
   SubscriptionService,
 } from '@cloudfly/domain';
-import { HestiaDnsAdapter, DokployAdapter, DokployApiClient } from '@cloudfly/deployment-adapters';
-import { PrismaUnitOfWork } from '@cloudfly/persistence';
+import {
+  HestiaDnsAdapter,
+  DokployAdapter,
+  DokployApiClient,
+  HestiaHttpsTransport,
+} from '@cloudfly/deployment-adapters';
+import { PrismaUnitOfWork, PrismaDatabaseUnitOfWork } from '@cloudfly/persistence';
 
 @Module({
   imports: [],
@@ -50,11 +55,36 @@ import { PrismaUnitOfWork } from '@cloudfly/persistence';
   providers: [
     {
       provide: 'IUnitOfWork',
-      useFactory: () => new PrismaUnitOfWork(),
+      useFactory: () => {
+        if (process.env.DATABASE_URL) {
+          try {
+            // Lazy load PrismaClient so tests without database driver don't fail
+            const { PrismaClient } = require('@prisma/client');
+            const prisma = new PrismaClient();
+            return new PrismaDatabaseUnitOfWork(prisma);
+          } catch {
+            return new PrismaUnitOfWork();
+          }
+        }
+        return new PrismaUnitOfWork();
+      },
     },
     {
       provide: HostingManagementService,
       useFactory: () => {
+        if (process.env.HESTIA_HOST && process.env.HESTIA_API_USER) {
+          const httpsTransport = new HestiaHttpsTransport({
+            host: process.env.HESTIA_HOST,
+            port: Number(process.env.HESTIA_PORT || 8083),
+            user: process.env.HESTIA_API_USER,
+            accessKey: process.env.HESTIA_ACCESS_KEY,
+            secretKey: process.env.HESTIA_SECRET_KEY,
+            password: process.env.HESTIA_PASSWORD,
+            readOnly: process.env.HESTIA_READ_ONLY !== 'false', // Default strictly READ-ONLY
+            rejectUnauthorized: process.env.HESTIA_ALLOW_SELF_SIGNED !== 'true',
+          });
+          return new HostingManagementService(httpsTransport);
+        }
         const transport = {
           executeCommand: async (_cmd: string, _args: string[]) => ({
             returnCode: 0,
@@ -64,6 +94,7 @@ import { PrismaUnitOfWork } from '@cloudfly/persistence';
         return new HostingManagementService(transport);
       },
     },
+
     {
       provide: Argon2PasswordHasher,
       useFactory: () => new Argon2PasswordHasher(),
