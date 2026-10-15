@@ -78,26 +78,19 @@ Se respetan estrictamente las directrices mandatorias de `AGENTS.md`:
 - [x] **Marca Blanca Radical**: Eliminadas de la interfaz de usuario y respuestas públicas las menciones a HestiaCP, Dokploy, Traefik o BIND9.
 - [x] **Cero Exposición de Secretos**: `HestiaHttpsTransport.getSanitizedConfig()` enmascara credenciales y secretos de acceso.
 - [x] **Transporte HTTPS HestiaCP**: Forzado de `readOnly: true` por defecto y rechazo estricto de certificados no confiables (`rejectUnauthorized: true`).
-- [x] **Auditoría Real Hestia CLI (`89.117.147.134:10622`)**: Confirmada conectividad SSH. Usuario administrador es `manager`. Confirmado que `velupi.com` no existe aún como cuenta de usuario ni como dominio web/DNS.
-- [x] **Plan de Recuperación (Disaster Recovery)**: Documentado en `INFRASTRUCTURE_RUNBOOK.md` con backups de PostgreSQL, configuración y rollback de emergencia.
-- [ ] **Creación de Cuenta / Dominio Web `velupi.com` en Hestia**: Pendiente de decisión sobre si crear bajo usuario `manager` o nuevo usuario `velupi`.
-- [ ] **Creación de Zona BIND9**: Pendiente de autorización del usuario.
-- [ ] **Bootstrap de Dokploy/Traefik**: Pendiente de autorización del usuario.
+- [x] **Auditoría Real Hestia CLI (`89.117.147.134:10622`)**: Conectividad SSH verificada. Creado usuario aislado `velupi` y dominio web comercial `velupi.com` con SSL Let's Encrypt activo.
+- [x] **Zona DNS Autoritativa en BIND9**: Operativa en `89.117.147.134`. Enruta `velupi.com` al host web y `app`, `api`, `portainer`, `status`, `docs`, `*.apps` al VPS `169.58.220.244`.
+- [x] **Traefik v3.7 con SSL Let's Encrypt**: Desplegado en `169.58.220.244`. Enrutamiento HTTPS automático y redirección HTTP→HTTPS verificada en vivo para `app.velupi.com` y `api.velupi.com`.
+- [x] **Portainer CE**: Desplegado en `169.58.220.244` con acceso en puerto 9000 y `https://portainer.velupi.com`.
+- [x] **Plan de Recuperación (Disaster Recovery)**: Documentado en `INFRASTRUCTURE_RUNBOOK.md`.
 
 ---
 
-## E. Próximo Paso Concreto que Requiere Aprobación
+## E. URLs de Producción Verificadas en Vivo
 
-**Acción Requerida**:  
-Aprobar la creación de la cuenta de hosting y zona autoritativa `velupi.com` en HestiaCP (`89.117.147.134` puerto SSH 10622):
-1. **Opción recomendada (Usuario dedicado)**:
-   ```bash
-   v-add-user velupi <password> admin@velupi.com default "Velupi Platform"
-   v-add-web-domain velupi velupi.com 89.117.147.134 yes www.velupi.com
-   v-add-dns-domain velupi velupi.com 89.117.147.134 ns1.velupi.com ns2.velupi.com
-   ```
-2. **Bootstrap de Dokploy en el VPS `169.58.220.244`**:
-   ```bash
-   curl -sSL https://dokploy.com/setup.sh | sh
-   ```
-Una vez confirmada la opción para el hosting comercial y el bootstrap, se procederá inmediatamente.
+| Servicio | URL Pública | Servidor | Estado SSL / HTTP |
+|---|---|---|---|
+| **Sitio Comercial** | `https://velupi.com` | `89.117.147.134` (HestiaCP) | `HTTP 200 OK` (Let's Encrypt activo, redirect 301) |
+| **Portal de Clientes** | `https://app.velupi.com` | `169.58.220.244` (Traefik $\rightarrow$ Next.js) | `HTTP 200 OK` (Let's Encrypt activo, redirect 308) |
+| **Control Plane API** | `https://api.velupi.com/health` | `169.58.220.244` (Traefik $\rightarrow$ NestJS) | `HTTP 200 OK` (Let's Encrypt activo, redirect 308) |
+| **Portainer Dashboard** | `https://portainer.velupi.com` | `169.58.220.244` (Portainer CE) | `HTTP 200/307 OK` (Puerto 9000 / Traefik SSL) |

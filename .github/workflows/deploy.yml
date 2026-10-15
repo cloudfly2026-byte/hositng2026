@@ -141,10 +141,5 @@ jobs:
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
             docker compose -f docker-compose.prod.yml ps
 
-            # Safe Dokploy bootstrap check
-            if ! docker ps --format '{{.Names}}' | grep -q "dokploy"; then
-              echo "Bootstrapping Dokploy Engine on VPS..."
-              curl -sSL https://dokploy.com/setup.sh | sh || true
-            else
-              echo "Dokploy Engine is active on VPS."
-            fi
+            # Verify Traefik and Portainer are running
+            docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'

@@ -1,4 +1,42 @@
 services:
+  traefik:
+    image: traefik:latest
+    container_name: velupi-traefik
+    restart: unless-stopped
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=admin@velupi.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_certificates:/letsencrypt
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: velupi-portainer
+    restart: unless-stopped
+    ports:
+      - "9443:9443"
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.velupi.com`)"
+      - "traefik.http.routers.portainer.entrypoints=websecure"
+      - "traefik.http.routers.portainer.tls.certresolver=letsencrypt"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+
   postgres:
     image: postgres:16-alpine
     container_name: velupi-postgres
@@ -38,6 +76,12 @@ services:
     restart: unless-stopped
     ports:
       - "4000:4000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.velupi-api.rule=Host(`api.velupi.com`)"
+      - "traefik.http.routers.velupi-api.entrypoints=websecure"
+      - "traefik.http.routers.velupi-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.velupi-api.loadbalancer.server.port=4000"
     environment:
       NODE_ENV: production
       PORT: 4000
@@ -57,13 +101,21 @@ services:
     restart: unless-stopped
     ports:
       - "3001:3000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.velupi-web.rule=Host(`app.velupi.com`)"
+      - "traefik.http.routers.velupi-web.entrypoints=websecure"
+      - "traefik.http.routers.velupi-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.velupi-web.loadbalancer.server.port=3000"
     environment:
       NODE_ENV: production
       PORT: 3000
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://169.58.220.244:4000}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.velupi.com}
     depends_on:
       - api
 
 volumes:
   postgres_data:
   redis_data:
+  traefik_certificates:
+  portainer_data:
