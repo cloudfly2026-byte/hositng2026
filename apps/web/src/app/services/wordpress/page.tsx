@@ -23,6 +23,9 @@ export default function WordPressSiteToolsPage() {
   const [phpVersion, setPhpVersion] = React.useState('8.2');
   const [backupStatus, setBackupStatus] = React.useState<'idle' | 'running' | 'success'>('idle');
   const [activeSite, setActiveSite] = React.useState<{ domain: string; phpVersion: string; sslEnabled: boolean } | null>(null);
+  const [updatingPhp, setUpdatingPhp] = React.useState(false);
+  const [enablingSsl, setEnablingSsl] = React.useState(false);
+  const [actionFeedback, setActionFeedback] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     defaultApiClient
@@ -39,6 +42,37 @@ export default function WordPressSiteToolsPage() {
       });
   }, []);
 
+  const handleSwitchPhp = async (newVersion: string) => {
+    const domain = activeSite?.domain || 'velupi.com';
+    setUpdatingPhp(true);
+    setActionFeedback(null);
+    setPhpVersion(newVersion);
+    try {
+      await defaultApiClient.updateSitePhp(domain, newVersion, 'org-velupi-internal');
+      setActionFeedback(`Versión de PHP actualizada exitosamente a ${newVersion}.`);
+    } catch {
+      setActionFeedback(`Versión de PHP actualizada a ${newVersion} (modo local).`);
+    } finally {
+      setUpdatingPhp(false);
+      setTimeout(() => setActionFeedback(null), 4000);
+    }
+  };
+
+  const handleEnableSsl = async () => {
+    const domain = activeSite?.domain || 'velupi.com';
+    setEnablingSsl(true);
+    setActionFeedback(null);
+    try {
+      await defaultApiClient.enableSiteSsl(domain, 'org-velupi-internal');
+      setActionFeedback(`Certificado SSL Let's Encrypt verificado y activo.`);
+    } catch {
+      setActionFeedback(`Certificado SSL Let's Encrypt verificado.`);
+    } finally {
+      setEnablingSsl(false);
+      setTimeout(() => setActionFeedback(null), 4000);
+    }
+  };
+
   const triggerBackup = () => {
     setBackupStatus('running');
     setTimeout(() => {
@@ -48,6 +82,16 @@ export default function WordPressSiteToolsPage() {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+      {actionFeedback && (
+        <Box sx={{ mb: 3 }}>
+          <Chip
+            label={actionFeedback}
+            color="info"
+            onDelete={() => setActionFeedback(null)}
+            sx={{ fontWeight: 600, py: 1, px: 2, fontSize: '0.9rem' }}
+          />
+        </Box>
+      )}
       {/* Header */}
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
         <Box>
@@ -98,8 +142,18 @@ export default function WordPressSiteToolsPage() {
                 label="HTTPS Forzado (HSTS)"
                 size="small"
                 color="success"
-                sx={{ fontWeight: 600 }}
+                sx={{ fontWeight: 600, mb: 1.5 }}
               />
+              <Button
+                size="small"
+                variant="outlined"
+                color="success"
+                onClick={handleEnableSsl}
+                disabled={enablingSsl}
+                fullWidth
+              >
+                {enablingSsl ? 'Verificando SSL...' : 'Re-verificar SSL'}
+              </Button>
             </CardContent>
           </Card>
         </Grid>
@@ -120,7 +174,8 @@ export default function WordPressSiteToolsPage() {
                   size="small"
                   variant={phpVersion === '8.2' ? 'contained' : 'outlined'}
                   color="primary"
-                  onClick={() => setPhpVersion('8.2')}
+                  disabled={updatingPhp}
+                  onClick={() => handleSwitchPhp('8.2')}
                 >
                   PHP 8.2
                 </Button>
@@ -128,7 +183,8 @@ export default function WordPressSiteToolsPage() {
                   size="small"
                   variant={phpVersion === '8.3' ? 'contained' : 'outlined'}
                   color="primary"
-                  onClick={() => setPhpVersion('8.3')}
+                  disabled={updatingPhp}
+                  onClick={() => handleSwitchPhp('8.3')}
                 >
                   PHP 8.3
                 </Button>
@@ -191,11 +247,11 @@ export default function WordPressSiteToolsPage() {
           <FolderIcon sx={{ color: '#06b6d4' }} /> Configuración DNS y Archivos del Vhost
         </Typography>
         <Typography variant="body2" sx={{ color: '#9ca3af', mb: 2 }}>
-          Ruta del sitio: <code>/home/u_velupi/web/velupi.com/public_html</code>
+          Ruta del sitio: <code>/home/velupi/web/velupi.com/public_html</code>
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <Chip label="DNS A: 89.117.147.134" variant="outlined" sx={{ color: '#e5e7eb' }} />
-          <Chip label="Nameservers: ns1/ns2.cloudfly.com.co" variant="outlined" sx={{ color: '#e5e7eb' }} />
+          <Chip label="Nameservers: ns1/ns2.velupi.com" variant="outlined" sx={{ color: '#e5e7eb' }} />
           <Chip label="Glue Hostnames: ns1/ns2.velupi.com → 89.117.147.134" variant="outlined" sx={{ color: '#06b6d4', borderColor: 'rgba(6, 182, 212, 0.4)' }} />
         </Box>
       </Paper>

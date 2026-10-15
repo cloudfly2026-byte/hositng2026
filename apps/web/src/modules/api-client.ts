@@ -185,6 +185,78 @@ export class ApiClient {
       },
     });
   }
+
+  async addDnsRecord(
+    zoneId: string,
+    record: { name: string; type: string; value: string; ttl?: number; priority?: number },
+    organizationId: string
+  ): Promise<any> {
+    return this.request<any>(`/dns/zones/${encodeURIComponent(zoneId)}/records`, {
+      method: 'POST',
+      headers: {
+        'x-tenant-id': organizationId,
+      },
+      body: JSON.stringify(record),
+    });
+  }
+
+  async deleteDnsRecord(
+    zoneId: string,
+    recordId: string,
+    organizationId: string
+  ): Promise<any> {
+    return this.request<any>(
+      `/dns/zones/${encodeURIComponent(zoneId)}/records/${encodeURIComponent(recordId)}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'x-tenant-id': organizationId,
+        },
+      }
+    );
+  }
+
+  async updateSitePhp(
+    domain: string,
+    phpVersion: string,
+    organizationId?: string
+  ): Promise<any> {
+    const headers: Record<string, string> = {};
+    if (organizationId) {
+      headers['x-tenant-id'] = organizationId;
+    }
+    return this.request<any>(`/hosting/sites/${encodeURIComponent(domain)}/php`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ phpVersion }),
+    });
+  }
+
+  async enableSiteSsl(domain: string, organizationId?: string): Promise<any> {
+    const headers: Record<string, string> = {};
+    if (organizationId) {
+      headers['x-tenant-id'] = organizationId;
+    }
+    return this.request<any>(`/hosting/sites/${encodeURIComponent(domain)}/ssl`, {
+      method: 'POST',
+      headers,
+    });
+  }
+
+  async importSite(
+    payload: { domain: string; type?: string; phpVersion?: string },
+    organizationId?: string
+  ): Promise<any> {
+    const headers: Record<string, string> = {};
+    if (organizationId) {
+      headers['x-tenant-id'] = organizationId;
+    }
+    return this.request<any>('/hosting/sites/import', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+  }
 }
 
 export const defaultApiClient = new ApiClient();

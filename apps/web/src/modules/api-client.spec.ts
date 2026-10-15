@@ -121,5 +121,79 @@ describe('ApiClient (apps/web)', () => {
       })
     );
   });
+
+  it('sends POST /dns/zones/:id/records with tenant header', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ id: 'rec-1', name: 'staging', type: 'A', value: '1.2.3.4' }),
+    });
+
+    const record = await client.addDnsRecord(
+      'zn-10',
+      { name: 'staging', type: 'A', value: '1.2.3.4', ttl: 300 },
+      'org-pilot'
+    );
+    expect(record.name).toBe('staging');
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://test-api:4000/dns/zones/zn-10/records',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ 'x-tenant-id': 'org-pilot' }),
+        body: JSON.stringify({ name: 'staging', type: 'A', value: '1.2.3.4', ttl: 300 }),
+      })
+    );
+  });
+
+  it('sends DELETE /dns/zones/:id/records/:recId with tenant header', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ success: true }),
+    });
+
+    const res = await client.deleteDnsRecord('zn-10', 'rec-1', 'org-pilot');
+    expect(res.success).toBe(true);
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://test-api:4000/dns/zones/zn-10/records/rec-1',
+      expect.objectContaining({
+        method: 'DELETE',
+        headers: expect.objectContaining({ 'x-tenant-id': 'org-pilot' }),
+      })
+    );
+  });
+
+  it('sends PATCH /hosting/sites/:domain/php with tenant header', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ status: 'SUCCESS', message: 'PHP updated' }),
+    });
+
+    const res = await client.updateSitePhp('velupi.com', '8.3', 'org-pilot');
+    expect(res.status).toBe('SUCCESS');
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://test-api:4000/hosting/sites/velupi.com/php',
+      expect.objectContaining({
+        method: 'PATCH',
+        headers: expect.objectContaining({ 'x-tenant-id': 'org-pilot' }),
+        body: JSON.stringify({ phpVersion: '8.3' }),
+      })
+    );
+  });
+
+  it('sends POST /hosting/sites/:domain/ssl with tenant header', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ status: 'SUCCESS', message: 'SSL enabled' }),
+    });
+
+    const res = await client.enableSiteSsl('velupi.com', 'org-pilot');
+    expect(res.status).toBe('SUCCESS');
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://test-api:4000/hosting/sites/velupi.com/ssl',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ 'x-tenant-id': 'org-pilot' }),
+      })
+    );
+  });
 });
 

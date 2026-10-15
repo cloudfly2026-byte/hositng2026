@@ -136,6 +136,23 @@ export class HostingController {
     }
   }
 
+  @Post('sites/:domain/ssl')
+  @UseGuards(HttpRolesGuard)
+  @Roles('OWNER', 'ADMIN')
+  async enableSsl(@Param('domain') domain: string, @Req() req: any) {
+    try {
+      return await this.hostingService.enableSsl(domain, req.user);
+    } catch (error: any) {
+      if (error instanceof WebSiteNotFoundError) {
+        throw new NotFoundException(error.message);
+      }
+      if (error instanceof CrossTenantViolationError) {
+        throw new ForbiddenException(error.message);
+      }
+      throw new BadRequestException(error.message || 'Error al habilitar SSL.');
+    }
+  }
+
   @Get('databases')
   async listDatabases(@Req() req: any) {
     const orgId = req.user.organizationId;

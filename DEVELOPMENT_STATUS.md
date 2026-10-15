@@ -18,7 +18,7 @@ Se respetan estrictamente las directrices mandatorias de `AGENTS.md`:
 - **TDD Riguroso**: Red → Green → Refactor aplicado en cada módulo.
 
 ### 2. Métricas de verificación operativa (Auditoría Real)
-- **Vitest**: **37 suites de prueba, 246 pruebas aprobadas (100% GREEN, 0 fallidas, 0 omitidas)**.
+- **Vitest**: **37 suites de prueba, 251 pruebas aprobadas (100% GREEN, 0 fallidas, 0 omitidas)**.
 - **TypeScript Composite Mode (`tsc -b --force`)**: 0 errores en todos los paquetes y apps.
 - **URLs de Producción Verificadas con HTTPS y Let's Encrypt**:
   - `https://velupi.com`: `HTTP 200 OK` (Nginx + Let's Encrypt YR2 en `89.117.147.134`, redirect 301).
@@ -57,23 +57,23 @@ Para eliminar cualquier ambigüedad técnica, se desglosa la evolución cronoló
 | 4 | **Transporte HTTPS Seguro a HestiaCP** | **Conectado a proveedor real en Modo Lectura** | `packages/deployment-adapters/src/hestia/hestia-https-transport.ts` | `hestia-https-transport.spec.ts` (4), `controlled-operations.spec.ts` (4) | **Real**: Whitelist en `hestia.conf` y Access Key activa. Bloquea determinísticamente mutaciones no autorizadas. |
 | 5 | **Catálogo Comercial Versionado** (`PlanVersion`, COP/USD) | **Implementado y probado** | `packages/domain/src/commerce/catalog.ts` | `catalog.spec.ts` (4) | **Real**: Inmutable, desacoplado de proveedores. |
 | 6 | **Onboarding y Registro Comercial** | **Implementado y probado** | `packages/domain/src/commerce/onboarding-order.ts`, `apps/api/src/onboarding/` | `onboarding-order.spec.ts` (7) | **Real**: Registro atómico de usuario y organización persistida. |
-| 7 | **Checkout y Creación de Órdenes** (IVA 19% autoritativo) | **Implementado y probado** | `apps/api/src/checkout/`, `apps/web/src/app/checkout/` | `checkout.controller.spec.ts` (1), `api-client.spec.ts` (5) | **Real**: Precios calculados exclusivamente por el backend. |
+| 7 | **Checkout y Creación de Órdenes** (IVA 19% autoritativo) | **Implementado y probado** | `apps/api/src/checkout/`, `apps/web/src/app/checkout/` | `checkout.controller.spec.ts` (1), `api-client.spec.ts` (9) | **Real**: Precios calculados exclusivamente por el backend. |
 | 8 | **Pasarela Wompi** (HMAC SHA-256) | **Staged con adaptador probado** | `packages/domain/src/commerce/wompi-payments.ts`, `apps/api/src/webhooks/` | `wompi-payments.spec.ts` (13), `webhooks.controller.spec.ts` (4) | **Simulado / Staged**: Firmas y webhooks probados. Pendiente inyección de credenciales Sandbox. |
 | 9 | **Conciliación de Pagos** (`reconcilePendingOrder`) | **Implementado y probado** | `wompi-payments.ts`, `billing.controller.ts` | `wompi-payments.spec.ts` (4), `billing.controller.spec.ts` (13) | **Real**: Resuelve órdenes ambiguas contra la API de pagos. |
 | 10 | **Suscripciones y Facturación** (Grace Period 5d, suspensión no destructiva) | **Implementado y probado** | `subscription-service.ts`, `billing.controller.ts` | `subscription-service.spec.ts` (11), `billing.controller.spec.ts` (13) | **Real**: Retención íntegra de bases de datos y archivos en suspensión. |
 | 11 | **Aprovisionamiento Automático (BullMQ)** | **Implementado y probado** | `provisioning-orchestrator.ts`, `provisioning-worker.ts` | `provisioning-orchestrator.spec.ts` (5), `provisioning-worker.spec.ts` (3) | **Real**: Máquina de 7 estados con Redis 7 activo en `127.0.0.1:6379`. |
-| 12 | **Hosting Management & Site Tools** (PHP, WordPress, DB, SSL) | **Conectado a proveedor real** | `packages/domain/src/hosting/`, `apps/api/src/hosting/` | `hosting-management.spec.ts` (12), `hosting.controller.spec.ts` (9) | **Real**: Consulta sitios en vivo de HestiaCP sobre HTTPS con marca blanca radical. |
+| 12 | **Hosting Management & Site Tools** (PHP, WordPress, DB, SSL) | **Conectado a proveedor real** | `packages/domain/src/hosting/`, `apps/api/src/hosting/` | `hosting-management.spec.ts` (12), `hosting.controller.spec.ts` (10) | **Real**: Consulta y mutaciones controladas en vivo de HestiaCP sobre HTTPS con marca blanca radical. |
 | 13 | **Cloud Apps Engine** | **Operativo vía Traefik + Docker** | `dokploy-adapter.ts`, `cloud-apps.controller.ts` | `dokploy-adapter.spec.ts` (5), `cloud-apps.controller.spec.ts` (8) | **Real en Docker Host**: Despliegues gestionados en Docker y enrutados por Traefik. Dokploy UI desacoplada. |
 | 14 | **DNS Manager Centralizado** (Zonas, RFC 1912, BIND9) | **Conectado a proveedor real** | `dns-manager.ts`, `hestia-dns.ts`, `dns.controller.ts` | `dns-manager.spec.ts` (13), `hestia-dns.spec.ts` (6), `dns.controller.spec.ts` (9) | **Real**: Reconciliación bidireccional autoritativa con BIND9 y validación RFC 1912. |
 | 15 | **Motor de Escrituras Controladas** (`ControlledOperationsService`) | **Implementado y probado** | `packages/domain/src/security/controlled-operations.ts` | `controlled-operations.spec.ts` (9) | **Real**: Auditoría (`AuditEvent`), idempotencia estricta y control de permisos en creación de sitios, DNS, BD y SSL. |
 | 16 | **Cliente Piloto Velupi #001** | **Reconciliado e Integrado** | `packages/domain/src/pilot/velupi-pilot.ts` | `velupi-pilot.spec.ts` (3), `e2e-integration.spec.ts` (3) | **Real**: Importa `velupi.com` desde Hestia sin duplicar usuario ni vhost. |
-| 17 | **Portal Web de Clientes** (`apps/web` Next.js 15) | **Conectado a API en vivo** | `apps/web/src/modules/api-client.ts`, `apps/web/src/app/` | `module-registry.spec.ts` (7), `Navigation.spec.tsx` (5) | **Real**: Publicado en `https://app.velupi.com` con Bearer JWT y headers `x-tenant-id`. |
+| 17 | **Portal Web de Clientes** (`apps/web` Next.js 15) | **Conectado a API en vivo** | `apps/web/src/modules/api-client.ts`, `apps/web/src/app/` | `module-registry.spec.ts` (7), `Navigation.spec.tsx` (5) | **Real**: Publicado en `https://app.velupi.com` con Bearer JWT y headers `x-tenant-id`. Formularios DNS y Hosting conectados a API. |
 
 ---
 
 ## D. Lista de Comprobación de Seguridad de Producción
 
-- [x] **TDD Estricto**: 37 suites, 246 pruebas aprobadas al 100% (0 fallos).
+- [x] **TDD Estricto**: 37 suites, 251 pruebas aprobadas al 100% (0 fallos).
 - [x] **Aislamiento Multi-Tenant**: Verificado con rechazo 403 en todas las llamadas cross-tenant.
 - [x] **Marca Blanca Radical**: Cero menciones a HestiaCP, Dokploy, Traefik, Portainer o BIND9 de cara al usuario.
 - [x] **Cero Exposición de Secretos**: `HestiaHttpsTransport.getSanitizedConfig()` enmascara credenciales y claves privadas.

@@ -70,6 +70,6 @@ El objetivo inmediato es permitir que un usuario autenticado complete el ciclo c
 | `@cloudfly/domain` | 15 | 114 | 100% GREEN |
 | `@cloudfly/persistence` | 2 | 13 | 100% GREEN |
 | `@cloudfly/deployment-adapters` | 4 | 19 | 100% GREEN |
-| `apps/api` | 13 | 85 | 100% GREEN |
-| `apps/web` | 3 | 15 | 100% GREEN |
-| **TOTAL** | **37** | **246** | **100% GREEN (0 fallos)** |
+| `apps/api` | 13 | 86 | 100% GREEN |
+| `apps/web` | 3 | 19 | 100% GREEN |
+| **TOTAL** | **37** | **251** | **100% GREEN (0 fallos)** |

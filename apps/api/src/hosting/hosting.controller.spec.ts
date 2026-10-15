@@ -67,6 +67,14 @@ describe('HostingController (Hosting API & Tenant Guards)', () => {
       expect(res.status).toBe('SUCCESS');
     });
 
+    it('enables SSL successfully for site owner', async () => {
+      await controller.createSite({ domain: 'ssl-shop.com' }, userContext as any);
+
+      const res = await controller.enableSsl('ssl-shop.com', userContext as any);
+      expect(res.status).toBe('SUCCESS');
+      expect(res.message).toContain('SSL');
+    });
+
     it('imports an existing site using authenticated user context', async () => {
       const imported = await controller.importSite(
         { domain: 'cloudfly.com.co', phpVersion: '8.2' },

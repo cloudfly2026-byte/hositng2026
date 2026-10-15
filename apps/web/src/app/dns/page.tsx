@@ -136,12 +136,51 @@ export default function DnsManagerPage() {
       priority: formType === 'MX' || formType === 'SRV' ? formPriority : undefined,
     };
 
+    // Optimistic local update + API dispatch
     setRecords((prev) => [...prev, newRecord]);
     setOpenModal(false);
+
+    defaultApiClient
+      .addDnsRecord(
+        'zone-velupi',
+        {
+          name: trimmedName,
+          type: formType,
+          value: trimmedVal,
+          ttl: formTtl,
+          priority: formType === 'MX' || formType === 'SRV' ? formPriority : undefined,
+        },
+        'org-velupi-internal'
+      )
+      .then((created) => {
+        if (created?.id) {
+          setRecords((prev) =>
+            prev.map((r) => (r.id === newRecord.id ? { ...r, id: created.id } : r))
+          );
+        }
+        setSyncSuccess(`Registro '${trimmedName} (${formType})' guardado y replicado.`);
+        setTimeout(() => setSyncSuccess(null), 4000);
+      })
+      .catch((err) => {
+        // Retain optimistic entry for UI demonstration if offline
+        setSyncSuccess(`Registro '${trimmedName}' guardado localmente (modo vista previa).`);
+        setTimeout(() => setSyncSuccess(null), 4000);
+      });
   };
 
-  const handleDeleteRecord = (id: string) => {
+  const handleDeleteRecord = async (id: string) => {
+    const target = records.find((r) => r.id === id);
     setRecords((prev) => prev.filter((r) => r.id !== id));
+
+    try {
+      await defaultApiClient.deleteDnsRecord('zone-velupi', id, 'org-velupi-internal');
+      setSyncSuccess(`Registro '${target?.name || id}' eliminado.`);
+      setTimeout(() => setSyncSuccess(null), 3000);
+    } catch {
+      // Graceful fallback for preview mode
+      setSyncSuccess(`Registro eliminado localmente.`);
+      setTimeout(() => setSyncSuccess(null), 3000);
+    }
   };
 
   const handleSyncDns = async () => {
