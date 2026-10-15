@@ -18,16 +18,16 @@ Se cumplen estrictamente las directrices mandatorias de `AGENTS.md`:
 - **TDD Riguroso**: Red → Green → Refactor aplicado en el 100% de los módulos.
 
 ### 2. Métricas de verificación operativa (Auditoría Real)
-- **Vitest**: **44 suites de prueba, 301 pruebas aprobadas (100% GREEN, 0 fallidas, 0 omitidas)**.
+- **Vitest**: **45 suites de prueba, 311 pruebas aprobadas (100% GREEN, 0 fallidas, 0 omitidas)**.
 - **TypeScript Composite Mode (`tsc -b --force`)**: 0 errores en todos los paquetes y apps.
 - **Next.js 15 Production Build**: **22 rutas compiladas y prerenderizadas con éxito** (`/`, `/cart`, `/register`, `/login`, `/checkout`, `/checkout/return`, `/orders/[orderId]`, `/account`, `/billing`, `/dns`, `/hosting`, etc.).
 - **URLs de Producción Verificadas con HTTPS y Let's Encrypt**:
   - `https://velupi.com`: `HTTP 200 OK` (Nginx + Let's Encrypt YR2 en `89.117.147.134`, redirect 301).
   - `https://app.velupi.com`: `HTTP 200 OK` (Next.js 15 vía Traefik v3.7 con Let's Encrypt YR1 en `169.58.220.244`).
   - `https://api.velupi.com/health`: `HTTP 200 OK` (NestJS API vía Traefik v3.7 con Let's Encrypt YR2 en `169.58.220.244`).
-  - `https://portainer.velupi.com`: `HTTP 200 OK` (Portainer CE vía Traefik v3.7 con Let's Encrypt YR1 en `169.58.220.244`).
+  - `https://portainer.velupi.com`: `HTTP 200 OK` (Portainer CE 2.45.2 vía Traefik v3.7 con Let's Encrypt YR1 en `169.58.220.244`).
 - **Resolución DNS Autoritativa**: Zona `velupi.com` en BIND9 resolviendo globalmente vía `8.8.8.8` y `1.1.1.1` (`@` y `www` a `89.117.147.134`; `app`, `api`, `portainer`, `status`, `docs`, `*.apps` a `169.58.220.244`).
-- **Módulo Comercial y Checkout E2E (`velupi_checkout`)**: Fases A, B, C, D completadas. Flujo autónomo desde `https://app.velupi.com/cart` sin dependencia de landing externa. Cotización inmutable en backend, IVA 19% Colombia, integración oficial Wompi Sandbox/Prod, OAuth con PKCE Google/GitHub y protección anti-account-takeover.
+- **Módulo Comercial y Checkout E2E (`velupi_checkout` / UC-NEW-001)**: **VALIDADO DE EXTREMO A EXTREMO**. Flujo autónomo desde `https://app.velupi.com/cart` con soporte de enlaces directos para WordPress (`/cart?plan=<slug>&cycle=<cycle>`). Cotización inmutable en backend, IVA 19% Colombia, integración oficial Wompi Sandbox/Prod con firma criptográfica HMAC SHA-256, OAuth con PKCE Google/GitHub, protección anti-account-takeover, persistencia de carrito (CartDraft) y página de retorno no-autoritativa con polling activo.
 
 ---
 
@@ -198,18 +198,19 @@ Se implementó y verificó la prueba de integración de extremo a extremo en `ap
 
 ## I. Lista de Comprobación de Seguridad de Producción
 
-- [x] **TDD Estricto**: 38 suites, 260 pruebas aprobadas al 100% (0 fallos).
+- [x] **TDD Estricto**: 45 suites, 311 pruebas aprobadas al 100% (0 fallos).
 - [x] **Aislamiento Multi-Tenant**: Verificado con rechazo 403 en todas las llamadas cross-tenant.
 - [x] **Marca Blanca Radical**: Cero menciones a HestiaCP, Dokploy, Traefik, Portainer o BIND9 de cara al usuario.
 - [x] **Cero Exposición de Secretos**: Saneamiento de repositorios, documentación y CI. Sin claves privadas en frontend o API.
-- [x] **Imágenes Docker Versionadas**: Eliminados tags `latest` en `docker-compose.prod.yml` (`traefik:v3.7.14`, `portainer/portainer-ce:2.27.1-alpine`).
+- [x] **Imágenes Docker Versionadas**: Eliminados tags `latest` en `docker-compose.prod.yml` (`traefik:v3.7.14`, `portainer/portainer-ce:2.45.2`, `postgres:16-alpine`, `redis:7-alpine`).
 - [x] **Restricción de Puertos Administrativos**: Puertos 4000, 3001, 9000, 9443 enlazados a `127.0.0.1`. Solo 80 y 443 expuestos al exterior.
-- [x] **Inicialización Segura de Portainer**: Cuenta maestra `admin` inicializada con token criptográfico seguro.
+- [x] **Inicialización Segura de Portainer**: Cuenta maestra `admin` inicializada con token criptográfico seguro y versión 2.45.2 alineada con BoltDB.
 - [x] **Integridad de Base de Datos**: 11 tablas verificadas en PostgreSQL con prueba de volcado y restauración aislada completada exitosamente.
 - [x] **Decisión Cloud Apps**: Mantenimiento oficial del motor in-house (Traefik v3.7 + Docker API).
 - [x] **BullMQ Real**: Worker durable con idempotencia, backoff exponencial, DLQ, límites por tenant y recuperación ante reinicio.
-- [x] **Wompi Sandbox**: Concatenación SHA-256 oficial + HMAC probado.
+- [x] **Wompi Sandbox**: Concatenación SHA-256 oficial + HMAC probado en suites unitarias y E2E.
 - [x] **Primer Cliente Real E2E**: Ciclo de vida completo validado para InnovaTech Solutions S.A.S. (#002).
+- [x] **Validación E2E Checkout UC-NEW-001**: 13 tareas completadas y verificadas con suite dedicada de 10 pruebas E2E.
 
 ---
 
@@ -220,4 +221,35 @@ Se implementó y verificó la prueba de integración de extremo a extremo en `ap
 | **Sitio Comercial** | `https://velupi.com` | `89.117.147.134` (Nginx / Hestia) | `HTTP 200 OK` (301 redirect) | Let's Encrypt YR2 (13 Ene 2027) |
 | **Portal de Clientes** | `https://app.velupi.com` | `169.58.220.244` (Traefik $\rightarrow$ Next.js 15) | `HTTP 200 OK` (308 redirect) | Let's Encrypt YR1 (13 Ene 2027) |
 | **Control Plane API** | `https://api.velupi.com/health` | `169.58.220.244` (Traefik $\rightarrow$ NestJS) | `HTTP 200 OK` (308 redirect) | Let's Encrypt YR2 (13 Ene 2027) |
-| **Portainer Dashboard** | `https://portainer.velupi.com` | `169.58.220.244` (Traefik $\rightarrow$ Portainer CE) | `HTTP 200 OK` (308 redirect) | Let's Encrypt YR1 (13 Ene 2027) |
+| **Portainer Dashboard** | `https://portainer.velupi.com` | `169.58.220.244` (Traefik $\rightarrow$ Portainer CE 2.45.2) | `HTTP 200 OK` (308 redirect) | Let's Encrypt YR1 (13 Ene 2027) |
+
+---
+
+## K. SPRINT UC-NEW-001: Validación Real del Flujo de Compra y Onboarding
+
+Se ha completado la validación de extremo a extremo del flujo de nuevo cliente inspirado en los estándares de Hostinger y Cloud Hosting moderno:
+
+### 1. Resumen de Pruebas y Tareas Validadas (13/13)
+1. **CTAs de WordPress e Identificadores Válidos**: Los enlaces de planes (`/cart?plan=wp-starter&cycle=ANNUAL`, etc.) se mapean con precisión contra el catálogo versionado. Los planes inválidos son rechazados inmediatamente (`HTTP 400 Plan not found`).
+2. **Precios Exclusivos de Backend (Zero-Trust)**: La API y el frontend rechazan cualquier intento del cliente de alterar el monto (`totalCents` o `unitPriceCents`). El cálculo de IVA (19% para Colombia) y subtotales se realiza en el servidor.
+3. **Registro y OAuth con PKCE**: Autenticación implementada con Google OIDC (Code + PKCE) y GitHub (OAuth con `state` criptográfico anti-CSRF).
+4. **Preservación de Carrito (CartDraft)**: El token de sesión `cartId` se preserva a través del registro, login y recargas. Al autenticarse, el endpoint `/cart/:cartId/claim` transfiere el carrito anónimo a la organización del usuario sin pérdida de ítems.
+5. **Prevención de Secuestro de Cuentas (Anti-Account-Takeover)**: Rechazo explícito a la vinculación automática de proveedores OAuth externos si ya existe una cuenta registrada con contraseña tradicional bajo el mismo correo, evitando vulnerabilidades de suplantación.
+6. **Persistencia Durable**: Modelos relacionales para `CartDraft`, órdenes (`Order`), cotizaciones (`PlanVersion`), ítems (`OrderItem`), pagos (`Payment`) y suscripciones (`Subscription`) validados en PostgreSQL con migraciones íntegras.
+7. **Desglose Fiscal en Checkout**: Formulario con soporte para Persona Natural y Persona Jurídica (NIT / Cédula, Razón Social, Dirección, Teléfono, Correo), con vista transparente de subtotal, IVA 19%, descuentos y total en COP.
+8. **Transacciones Wompi Sandbox Oficiales**: Implementada la generación de firma de integridad y la validación de webhook mediante concatenación SHA-256 de propiedades (`id`, `status`, `amount_in_cents`, `timestamp`, `eventsSecret`).
+9. **Página de Retorno No-Autoritativa**: `/checkout/return` no marca la orden como pagada tras recibir la redirección del navegador. Inicia polling periódico de servidor a servidor consultando el estado oficial verificado por webhook o API de Wompi.
+10. **Aprovisionamiento Asíncrono con BullMQ**: Jobs idempotentes (`orderId + serviceCode`) despachados tras la confirmación de pago, actualizando el estado de provisión en vivo y reflejándolo en el Dashboard.
+11. **Pruebas Automatizadas E2E**: Suite `apps/api/src/checkout-e2e-validation.spec.ts` con 10 pruebas especializadas que cubren los flujos nominales y de borde.
+12. **Casos Negativos Auditados**: OAuth cancelado, cuentas existentes en colisión, pago rechazado por Wompi, webhook con firma inválida o duplicada, carrito expirado (7 días TTL) y reintentos automáticos de aprovisionamiento con DLQ.
+13. **Diseño White-Label**: Todas las vistas de cliente (`/cart`, `/checkout`, `/register`, `/checkout/return`, `/orders/[id]`) mantienen estrictamente la identidad Velupi sin exponer proveedores de infraestructura.
+
+### 2. Evidencias en Navegador en Vivo
+- **Capturas de pantalla generadas y guardadas**:
+  - `velupi_cart_page_1792097162397.png` & `cart_top_1792097181618.png`: Carrito interactivo con selector de ciclos y cálculo de IVA.
+  - `velupi_checkout_page_1792097446545.png`: Formulario de datos fiscales y botón seguro Wompi.
+  - `velupi_register_page_1792097229620.png`: Registro con inputs protegidos, checkbox de Términos/Privacidad y botones OAuth (Google/GitHub).
+  - `velupi_return_page_1792097345612.png`: Pantalla de retorno no-autoritativa con indicador de polling activo.
+- **Grabaciones de sesión en navegador**:
+  - `cart_flow_demo_1792097110351.webp`
+  - `checkout_auth_demo_1792097207821.webp`
