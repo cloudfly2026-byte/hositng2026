@@ -26,6 +26,7 @@ describe('Cliente Piloto Velupi #001 (TDD)', () => {
   let hostingManager: HostingManagementService;
   let dnsManager: DnsManagerService;
   let pilotService: VelupiPilotService;
+  let pilotPlanVersionId: string;
 
   beforeEach(() => {
     catalog = new ProductCatalogService();
@@ -70,12 +71,13 @@ describe('Cliente Piloto Velupi #001 (TDD)', () => {
     hostingManager = new HostingManagementService(transport);
     dnsManager = new DnsManagerService();
 
+    pilotPlanVersionId = version.id;
     pilotService = new VelupiPilotService(
       orchestrator,
       worker,
       hostingManager,
       dnsManager,
-      version.id
+      pilotPlanVersionId
     );
   });
 
@@ -138,7 +140,45 @@ describe('Cliente Piloto Velupi #001 (TDD)', () => {
         permissions: ['*'],
       })
     ).rejects.toThrow();
-
   });
 
+  it('should reconcile existing HestiaCP site velupi.com via import without duplicate create commands', async () => {
+    const executeSpy = vi.fn().mockImplementation(async (cmd: string) => {
+      if (cmd === 'v-list-web-domain') {
+        return {
+          returnCode: 0,
+          output: JSON.stringify({
+            'velupi.com': {
+              SSL: 'yes',
+              LETSENCRYPT: 'yes',
+              BACKEND: 'PHP-8_2',
+              U_DISK: '250',
+            },
+          }),
+        };
+      }
+      return { returnCode: 0, output: 'OK' };
+    });
+
+    const customTransport = { executeCommand: executeSpy };
+    const customHosting = new HostingManagementService(customTransport);
+    const pilot = new VelupiPilotService(
+      orchestrator,
+      worker,
+      customHosting,
+      dnsManager,
+      pilotPlanVersionId
+    );
+
+    const result = await pilot.bootstrapPilot();
+    expect(result.hostingSite.domain).toBe('velupi.com');
+    expect(result.hostingSite.sslStatus).toBe('ACTIVE');
+    expect(result.hostingSite.phpVersion).toBe('8.2');
+
+    // Crucial check: must NOT have called v-add-web-domain or v-add-user
+    const calledCommands = executeSpy.mock.calls.map((c) => c[0]);
+    expect(calledCommands).not.toContain('v-add-web-domain');
+    expect(calledCommands).not.toContain('v-add-user');
+    expect(calledCommands).toContain('v-list-web-domain');
+  });
 });

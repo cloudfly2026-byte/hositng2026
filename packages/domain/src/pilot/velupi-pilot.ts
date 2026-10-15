@@ -100,14 +100,27 @@ export class VelupiPilotService {
       hostingSite = await this.hostingManager.getWebSiteDetail(pilotDomain, context);
     } catch (err: any) {
       if (err instanceof WebSiteNotFoundError || err?.name === 'WebSiteNotFoundError') {
-        hostingSite = await this.hostingManager.createWebSite(
-          {
-            domain: pilotDomain,
-            phpVersion: '8.2',
-            sslEnabled: true,
-          },
-          context
-        );
+        try {
+          // Reconcile pre-existing Hestia resource idempotently without duplicating accounts or sites
+          hostingSite = await this.hostingManager.importExistingWebSite(
+            {
+              domain: pilotDomain,
+              type: 'Velupi Commercial Web Site',
+              phpVersion: '8.2',
+            },
+            { ...context, linkedHestiaUser: 'velupi' } as any
+          );
+        } catch {
+          // If not existing on host, proceed with creation
+          hostingSite = await this.hostingManager.createWebSite(
+            {
+              domain: pilotDomain,
+              phpVersion: '8.2',
+              sslEnabled: true,
+            },
+            context
+          );
+        }
       } else {
         throw err;
       }

@@ -75,6 +75,36 @@ describe('HostingController (Hosting API & Tenant Guards)', () => {
       expect(imported.domain).toBe('cloudfly.com.co');
       expect(imported.organizationId).toBe('org-tenant-101');
     });
+
+    it('lists real websites returned from Hestia transport when linkedHestiaUser is set', async () => {
+      mockTransport.executeCommand = vi.fn().mockResolvedValue({
+        returnCode: 0,
+        output: JSON.stringify({
+          'velupi.com': {
+            IP: '89.117.147.134',
+            SSL: 'yes',
+            LETSENCRYPT: 'yes',
+            BACKEND: 'default',
+            U_DISK: '150',
+            SUSPENDED: 'no',
+          },
+        }),
+      });
+
+      const pilotCtx = {
+        user: {
+          userId: 'usr-pilot-1',
+          organizationId: 'org-velupi-internal',
+          linkedHestiaUser: 'velupi',
+        },
+      };
+
+      const sites = await controller.listSites(pilotCtx as any);
+      expect(sites).toHaveLength(1);
+      expect(sites[0].domain).toBe('velupi.com');
+      expect(sites[0].sslStatus).toBe('ACTIVE');
+      expect(sites[0].ip).toBe('89.117.147.134');
+    });
   });
 
   describe('Databases Management', () => {

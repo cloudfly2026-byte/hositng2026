@@ -136,7 +136,49 @@ export class HostingManagementService {
     return site;
   }
 
-  async listWebSites(organizationId: string): Promise<WebSiteDetail[]> {
+  async listWebSites(organizationId: string, linkedHestiaUser?: string): Promise<WebSiteDetail[]> {
+    const existing = Array.from(this.websites.values()).filter(
+      (s) => s.organizationId === organizationId
+    );
+    if (existing.length > 0 || !this.transport) {
+      return existing;
+    }
+
+    const orgUser = this.sanitizeUser(organizationId, linkedHestiaUser);
+    try {
+      const res = await this.transport.executeCommand('v-list-web-domains', [orgUser, 'json']);
+      if (res.returnCode === 0 && res.output) {
+        const parsed = JSON.parse(res.output);
+        for (const [dom, data] of Object.entries<any>(parsed)) {
+          let phpVersion = '8.3';
+          if (data.BACKEND) {
+            const match = String(data.BACKEND).match(/PHP[_-]?(\d+)[_.](\d+)/i);
+            if (match) {
+              phpVersion = `${match[1]}.${match[2]}`;
+            } else if (String(data.BACKEND).includes('8.2')) {
+              phpVersion = '8.2';
+            } else if (String(data.BACKEND).includes('8.3')) {
+              phpVersion = '8.3';
+            }
+          }
+          const site: WebSiteDetail = {
+            domain: dom,
+            organizationId,
+            type: 'Web Hosting',
+            phpVersion,
+            sslStatus: data.SSL === 'yes' ? 'ACTIVE' : 'DISABLED',
+            status: data.SUSPENDED === 'yes' ? 'SUSPENDED' : 'HEALTHY',
+            diskUsedMb: parseInt(data.U_DISK, 10) || 0,
+            ip: data.IP || '89.117.147.134',
+            createdAt: new Date(),
+          };
+          this.websites.set(dom, site);
+        }
+      }
+    } catch {
+      // Graceful fallback to existing
+    }
+
     return Array.from(this.websites.values()).filter(
       (s) => s.organizationId === organizationId
     );
@@ -155,7 +197,7 @@ export class HostingManagementService {
       return existing;
     }
 
-    const orgUser = this.sanitizeUser(context.organizationId);
+    const orgUser = this.sanitizeUser(context.organizationId, (context as any).linkedHestiaUser);
     let diskUsedMb = 120;
     let sslStatus: 'ACTIVE' | 'PENDING' | 'DISABLED' = 'ACTIVE';
     let phpVersion = spec.phpVersion || '8.2';
@@ -253,6 +295,31 @@ export class HostingManagementService {
       status: 'SUCCESS',
       resourceIdentifier: cleanDomain,
       message: `Versión de PHP actualizada a ${phpVersion} para ${cleanDomain}`,
+      executedAt: new Date(),
+    };
+  }
+
+  async enableSsl(domain: string, context: AuthorizedContext): Promise<OperationReceipt> {
+    const cleanDomain = domain.toLowerCase().trim();
+    const site = this.websites.get(cleanDomain);
+    if (!site) {
+      throw new WebSiteNotFoundError(cleanDomain);
+    }
+
+    if (site.organizationId !== context.organizationId) {
+      throw new CrossTenantViolationError(context.organizationId, site.organizationId);
+    }
+
+    const orgUser = this.sanitizeUser(context.organizationId, (context as any).linkedHestiaUser);
+    await this.runIdempotent('v-add-letsencrypt-domain', [orgUser, cleanDomain]);
+
+    site.sslStatus = 'ACTIVE';
+
+    return {
+      operationId: `op-ssl-${Date.now()}`,
+      status: 'SUCCESS',
+      resourceIdentifier: cleanDomain,
+      message: `Certificado SSL Let's Encrypt activado para ${cleanDomain}`,
       executedAt: new Date(),
     };
   }
@@ -374,7 +441,10 @@ export class HostingManagementService {
     };
   }
 
-  private sanitizeUser(orgId: string): string {
+  private sanitizeUser(orgId: string, linkedHestiaUser?: string): string {
+    if (linkedHestiaUser && linkedHestiaUser.trim().length > 0) {
+      return linkedHestiaUser.trim();
+    }
     const clean = orgId.toLowerCase().replace(/[^a-z0-9]/g, '');
     return `u_${clean.slice(-10)}`;
   }

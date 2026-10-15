@@ -54,7 +54,8 @@ export class HostingController {
   @Get('sites')
   async listSites(@Req() req: any) {
     const orgId = req.user.organizationId;
-    return await this.hostingService.listWebSites(orgId);
+    const linkedHestiaUser = req.user.linkedHestiaUser;
+    return await this.hostingService.listWebSites(orgId, linkedHestiaUser);
   }
 
   @Post('sites')

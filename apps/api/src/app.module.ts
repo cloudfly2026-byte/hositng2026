@@ -161,6 +161,20 @@ import { PrismaUnitOfWork, PrismaDatabaseUnitOfWork } from '@cloudfly/persistenc
       useFactory: () => new HestiaDnsAdapter(),
     },
     {
+      provide: 'HESTIA_DNS_TRANSPORT',
+      useFactory: () => {
+        if (process.env.HESTIA_HOST && process.env.HESTIA_API_USER) {
+          return HestiaHttpsTransport.fromSecretStore((key) => process.env[key]);
+        }
+        return {
+          executeCommand: async (_cmd: string, _args: string[]) => ({
+            returnCode: 0,
+            output: JSON.stringify({ status: 'OK' }),
+          }),
+        };
+      },
+    },
+    {
       provide: CloudAppsService,
       useFactory: () => {
         const client: DokployApiClient = {

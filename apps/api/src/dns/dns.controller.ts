@@ -10,6 +10,9 @@ import {
   UseGuards,
   HttpException,
   HttpStatus,
+  Optional,
+  Inject,
+  Req,
 } from '@nestjs/common';
 import {
   DnsManagerService,
@@ -43,7 +46,8 @@ export interface CreateRecordDto {
 export class DnsController {
   constructor(
     private readonly dnsManager: DnsManagerService,
-    private readonly hestiaDns: HestiaDnsAdapter
+    private readonly hestiaDns: HestiaDnsAdapter,
+    @Optional() @Inject('HESTIA_DNS_TRANSPORT') private readonly transport?: { executeCommand(cmd: string, args: string[]): Promise<{ returnCode: number; output: string }> }
   ) {}
 
   @Get('zones')
@@ -169,7 +173,8 @@ export class DnsController {
   @Post('zones/:zoneId/reconcile')
   async reconcileZone(
     @Param('zoneId') zoneId: string,
-    @Headers('x-tenant-id') tenantId: string
+    @Headers('x-tenant-id') tenantId: string,
+    @Req() req?: any
   ): Promise<{ success: boolean; synced: { added: number; updated: number; unchanged: number } }> {
     const zone = this.dnsManager.getZone(zoneId);
     if (!zone) {
@@ -180,11 +185,22 @@ export class DnsController {
       throw new HttpException('Cross-tenant zone modification forbidden', HttpStatus.FORBIDDEN);
     }
 
-    // Generate command for authoritative BIND9/Hestia reconciliation
-    const syncCommand = this.hestiaDns.generateListRecordsCommand('admin', zone.domain);
-    void syncCommand;
+    let providerRecords: any[] = [];
+    if (this.transport) {
+      const user = req?.user?.linkedHestiaUser || 'velupi';
+      try {
+        providerRecords = await this.hestiaDns.fetchAndMapRecords(
+          user,
+          zone.domain,
+          this.transport,
+          zoneId
+        );
+      } catch {
+        // Fallback to empty if provider query fails
+      }
+    }
 
-    const synced = this.dnsManager.reconcileWithProvider(zoneId, []);
+    const synced = this.dnsManager.reconcileWithProvider(zoneId, providerRecords);
 
     return {
       success: true,

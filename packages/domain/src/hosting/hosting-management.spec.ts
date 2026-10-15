@@ -140,6 +140,37 @@ describe('HostingManagementService (White-Label Hosting Management)', () => {
         service.importExistingWebSite({ domain: 'cloudfly.com.co' }, tenantBContext)
       ).rejects.toThrow(CrossTenantViolationError);
     });
+
+    it('synchronizes real websites from Hestia transport when listing for organization with linked user', async () => {
+      mockHestiaTransport.executeCommand.mockImplementation(async (command: string, args: string[]) => {
+        if (command === 'v-list-web-domains' && args[0] === 'velupi') {
+          return {
+            returnCode: 0,
+            output: JSON.stringify({
+              'velupi.com': {
+                IP: '89.117.147.134',
+                SSL: 'yes',
+                BACKEND: 'php-8.3',
+                U_DISK: '250',
+                SUSPENDED: 'no',
+              },
+            }),
+          };
+        }
+        return { returnCode: 0, output: 'Success' };
+      });
+
+      const sites = await service.listWebSites('org-velupi', 'velupi');
+      expect(sites.length).toBe(1);
+      expect(sites[0].domain).toBe('velupi.com');
+      expect(sites[0].organizationId).toBe('org-velupi');
+      expect(sites[0].sslStatus).toBe('ACTIVE');
+      expect(sites[0].status).toBe('HEALTHY');
+      expect(mockHestiaTransport.executeCommand).toHaveBeenCalledWith(
+        'v-list-web-domains',
+        ['velupi', 'json']
+      );
+    });
   });
 
   describe('Databases Management', () => {

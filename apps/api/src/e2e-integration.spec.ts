@@ -44,9 +44,9 @@ describe('E2E Platform Integration: Auth -> Hosting -> DNS -> Cloud Apps', () =>
     hostingController = new HostingController(hostingService);
 
     // 3. DNS Manager
-    const hestiaDns = new HestiaDnsAdapter(hestiaTransport);
+    const hestiaDns = new HestiaDnsAdapter();
     const dnsManager = new DnsManagerService();
-    dnsController = new DnsController(dnsManager, hestiaDns);
+    dnsController = new DnsController(dnsManager, hestiaDns, hestiaTransport);
 
     // 4. Cloud Apps (Dokploy)
     const mockDokployClient: DokployApiClient = {
@@ -234,5 +234,59 @@ describe('E2E Platform Integration: Auth -> Hosting -> DNS -> Cloud Apps', () =>
 
     // Tenant B attempts to restart Tenant A's app -> 403 Forbidden
     await expect(cloudAppsController.restartApp(appA.id, orgB)).rejects.toThrow(HttpException);
+  });
+
+  it('executes non-destructive E2E lifecycle with provider reconciliation and tenant isolation', async () => {
+    const userRes = await authController.register({
+      email: 'pilot_e2e@velupi.com',
+      password: 'SecurePassword2026!',
+      fullName: 'E2E Pilot User',
+      organizationName: 'Velupi Pilot E2E',
+    });
+
+    const orgId = userRes.organization.id;
+
+    // Simulate Hestia returning live site and DNS records
+    hestiaTransport.executeCommand = vi.fn().mockImplementation(async (cmd: string) => {
+      if (cmd === 'v-list-web-domains') {
+        return {
+          returnCode: 0,
+          output: JSON.stringify({
+            'velupi.com': { IP: '89.117.147.134', SSL: 'yes', LETSENCRYPT: 'yes', U_DISK: '120' },
+          }),
+        };
+      }
+      if (cmd === 'v-list-dns-records') {
+        return {
+          returnCode: 0,
+          output: JSON.stringify({
+            '1': { RECORD: '@', TYPE: 'A', VALUE: '89.117.147.134', TTL: '14400' },
+            '2': { RECORD: 'app', TYPE: 'A', VALUE: '169.58.220.244', TTL: '14400' },
+          }),
+        };
+      }
+      return { returnCode: 0, output: 'OK' };
+    });
+
+    // 1. List sites via Hestia transport
+    const sites = await hostingController.listSites({
+      user: { userId: userRes.user.id, organizationId: orgId, linkedHestiaUser: 'velupi' },
+    } as any);
+    expect(sites).toHaveLength(1);
+    expect(sites[0].domain).toBe('velupi.com');
+
+    // 2. Create DNS zone & reconcile with provider records
+    const zone = await dnsController.createZone(orgId, {
+      organizationId: orgId,
+      domain: 'velupi.com',
+    });
+
+    const reconcileResult = await dnsController.reconcileZone(zone.id, orgId, {
+      user: { linkedHestiaUser: 'velupi' },
+    });
+    expect(reconcileResult.success).toBe(true);
+
+    const fullZone = await dnsController.getZone(zone.id, orgId);
+    expect(fullZone.records.some((r) => r.name === 'app' && r.value === '169.58.220.244')).toBe(true);
   });
 });

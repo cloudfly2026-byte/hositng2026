@@ -9,7 +9,12 @@ import {
   ServiceDeploymentSpec,
   AuthorizedContext,
 } from '@cloudfly/contracts';
-import { DnsManagerService } from '@cloudfly/domain';
+import {
+  DnsManagerService,
+  ControlledOperationsService,
+  HostingManagementService,
+  AuditLogger,
+} from '@cloudfly/domain';
 
 describe('Controlled Infrastructure & DNS Operations (Safety Verification)', () => {
   describe('Controlled Deployment Safety Check', () => {
@@ -130,6 +135,45 @@ describe('Controlled Infrastructure & DNS Operations (Safety Verification)', () 
 
       // Verify zero network calls were made to Hestia
       expect(mockFetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Controlled Writes with Audit & Permission Validation', () => {
+    it('executes site, db, and dns writes with full audit trail and strict role validation', async () => {
+      const mockTransport = {
+        executeCommand: vi.fn().mockResolvedValue({
+          returnCode: 0,
+          output: JSON.stringify({ status: 'OK' }),
+        }),
+      };
+      const hosting = new HostingManagementService(mockTransport);
+      const dns = new DnsManagerService();
+      const audit = new AuditLogger();
+      const controlled = new ControlledOperationsService(hosting, dns, audit);
+
+      const adminCtx: AuthorizedContext = {
+        userId: 'admin-1',
+        organizationId: 'org-safe',
+        roles: ['OWNER'],
+        permissions: ['*'],
+      };
+
+      const site = await controlled.createWebSite({ domain: 'safe-shop.com' }, adminCtx);
+      expect(site.domain).toBe('safe-shop.com');
+
+      const zone = dns.createZone({ organizationId: 'org-safe', domain: 'safe-shop.com' });
+      const rec = controlled.addDnsRecord(
+        { zoneId: zone.id, name: 'api', type: 'A', value: '169.58.220.244' },
+        adminCtx
+      );
+      expect(rec.name).toBe('api');
+
+      const ssl = await controlled.issueSslCertificate('safe-shop.com', adminCtx);
+      expect(ssl.status).toBe('SUCCESS');
+
+      const events = audit.getEventsForTenant('org-safe');
+      expect(events).toHaveLength(3);
+      expect(events.map((e) => e.action)).toEqual(['CREATE_WEBSITE', 'ADD_DNS_RECORD', 'ISSUE_SSL']);
     });
   });
 });

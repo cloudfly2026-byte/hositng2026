@@ -111,4 +111,27 @@ describe('DnsController (TDD & Security)', () => {
     expect(result.success).toBe(true);
     expect(result.synced).toBeDefined();
   });
+
+  it('should reconcile DNS zone with provider records from transport when available', async () => {
+    const mockTransport = {
+      executeCommand: async () => ({
+        returnCode: 0,
+        output: JSON.stringify({
+          '24': { RECORD: 'app', TYPE: 'A', VALUE: '169.58.220.244', TTL: '14400' },
+          '25': { RECORD: 'api', TYPE: 'A', VALUE: '169.58.220.244', TTL: '14400' },
+        }),
+      }),
+    };
+
+    const liveController = new DnsController(dnsManager, hestiaDns, mockTransport);
+    const zone = dnsManager.createZone({ organizationId: orgA, domain: 'velupi.com' });
+
+    const result = await liveController.reconcileZone(zone.id, orgA);
+    expect(result.success).toBe(true);
+    expect(result.synced.added).toBe(2);
+
+    const updatedZone = dnsManager.getZone(zone.id);
+    expect(updatedZone?.records.some((r) => r.name === 'app' && r.value === '169.58.220.244')).toBe(true);
+    expect(updatedZone?.records.some((r) => r.name === 'api' && r.value === '169.58.220.244')).toBe(true);
+  });
 });
