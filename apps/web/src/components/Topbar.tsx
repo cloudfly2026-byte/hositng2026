@@ -56,11 +56,11 @@ export function Topbar({ onDrawerToggle }: TopbarProps) {
       sx={{
         width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
         ml: { md: `${DRAWER_WIDTH}px` },
-        backgroundColor: 'rgba(12, 19, 34, 0.85)',
+        backgroundColor: 'rgba(255, 255, 255, 0.92)',
         backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-        boxShadow: 'none',
-        color: '#f3f4f6',
+        borderBottom: '1px solid #F2E8DC',
+        boxShadow: '0 2px 8px rgba(255, 107, 0, 0.04)',
+        color: '#2D1B17',
       }}
     >
       <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 2, md: 3 }, minHeight: 64 }}>
@@ -71,7 +71,7 @@ export function Topbar({ onDrawerToggle }: TopbarProps) {
             aria-label="Abrir navegación"
             edge="start"
             onClick={onDrawerToggle}
-            sx={{ display: { md: 'none' }, color: '#d1d5db' }}
+            sx={{ display: { md: 'none' }, color: '#2D1B17' }}
           >
             <MenuRoundedIcon />
           </IconButton>

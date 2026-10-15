@@ -50,7 +50,7 @@ get_header();
 
             <div class="sunchi-category-card" style="padding: 28px;">
                 <h3>Ventas y Asesoría Comercial</h3>
-                <p style="color: var(--sunchi-text-muted); margin-top: 6px;">¿Necesitas una infraestructura personalizada o migración de múltiples sitios? Escríbenos a <strong>soporte@sunchi.com</strong>.</p>
+                <p style="color: var(--sunchi-text-muted); margin-top: 6px;">¿Necesitas una infraestructura personalizada o migración de múltiples sitios? Escríbenos a <strong>soporte@velupi.com</strong>.</p>
             </div>
         </div>
     </div>

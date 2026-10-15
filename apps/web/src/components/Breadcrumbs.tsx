@@ -16,7 +16,7 @@ export function Breadcrumbs() {
 
   return (
     <BreadcrumbsMui
-      separator={<NavigateNextIcon fontSize="small" sx={{ color: 'rgba(255, 255, 255, 0.3)' }} />}
+      separator={<NavigateNextIcon fontSize="small" sx={{ color: '#C8A99B' }} />}
       aria-label="breadcrumb"
       sx={{
         '& .MuiBreadcrumbs-ol': {
@@ -34,8 +34,8 @@ export function Breadcrumbs() {
               key={crumb.path}
               variant="body2"
               sx={{
-                color: '#67e8f9',
-                fontWeight: 600,
+                color: '#FF6B00',
+                fontWeight: 700,
                 fontSize: '0.85rem',
               }}
             >
@@ -53,17 +53,17 @@ export function Breadcrumbs() {
               display: 'flex',
               alignItems: 'center',
               gap: 0.5,
-              color: '#9ca3af',
+              color: '#667085',
               textDecoration: 'none',
               fontSize: '0.85rem',
               fontWeight: 500,
               transition: 'color 0.15s ease',
               '&:hover': {
-                color: '#f3f4f6',
+                color: '#2D1B17',
               },
             }}
           >
-            {isFirst && <HomeRoundedIcon sx={{ fontSize: 16 }} />}
+            {isFirst && <HomeRoundedIcon sx={{ fontSize: 16, color: '#FF6B00' }} />}
             {crumb.title}
           </Box>
         );

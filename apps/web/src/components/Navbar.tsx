@@ -15,58 +15,35 @@ export function Navbar() {
     <AppBar
       position="sticky"
       sx={{
-        backgroundColor: 'rgba(17, 24, 39, 0.85)',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-        boxShadow: 'none',
+        borderBottom: '1px solid #F2E8DC',
+        boxShadow: '0 2px 10px rgba(255, 107, 0, 0.05)',
       }}
     >
       <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 2, md: 4 } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 40,
-              height: 40,
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #06b6d4 0%, #6366f1 100%)',
-              color: '#fff',
-            }}
-          >
-            <CloudQueueIcon fontSize="medium" />
-          </Box>
-          <Box>
-            <Typography
-              variant="h6"
-              component={Link}
-              href="/"
+          <Box component={Link} href="/" sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+            <Box
+              component="img"
+              src="/velupi-logo.png"
+              alt="Velupi Cloud Platform"
               sx={{
-                fontWeight: 800,
-                color: '#fff',
-                textDecoration: 'none',
-                letterSpacing: '-0.02em',
+                height: 44,
+                width: 'auto',
+                display: 'block',
               }}
-            >
-              Velupi{' '}
-              <Box component="span" sx={{ color: '#06b6d4', fontWeight: 500, fontSize: '0.9rem' }}>
-                Cloud
-              </Box>
-            </Typography>
-            <Typography variant="caption" sx={{ display: 'block', color: '#9ca3af', mt: -0.5 }}>
-              Tus ideas merecen volar
-            </Typography>
+            />
           </Box>
 
           <Chip
-            label="org-velupi-internal"
+            label="Cloud Platform"
             size="small"
             sx={{
-              ml: 2,
-              backgroundColor: 'rgba(6, 182, 212, 0.12)',
-              color: '#67e8f9',
-              border: '1px solid rgba(6, 182, 212, 0.3)',
+              ml: 1,
+              backgroundColor: 'rgba(255, 107, 0, 0.08)',
+              color: '#FF6B00',
+              border: '1px solid rgba(255, 107, 0, 0.2)',
               fontWeight: 600,
               fontSize: '0.75rem',
             }}
@@ -74,22 +51,34 @@ export function Navbar() {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Button component={Link} href="/" color="inherit" sx={{ color: '#d1d5db' }}>
+          <Button component={Link} href="/" sx={{ color: '#2D1B17', fontWeight: 600 }}>
             Dashboard
           </Button>
-          <Button component={Link} href="/services/wordpress" color="inherit" sx={{ color: '#d1d5db' }}>
-            Site Tools (WordPress)
+          <Button component={Link} href="/services/wordpress" sx={{ color: '#2D1B17', fontWeight: 500 }}>
+            Site Tools
           </Button>
-          <Button component={Link} href="/services/apps" color="inherit" sx={{ color: '#d1d5db' }}>
-            Cloud Apps (Docker)
+          <Button component={Link} href="/services/apps" sx={{ color: '#2D1B17', fontWeight: 500 }}>
+            Cloud Apps
           </Button>
-          <Button component={Link} href="/cart" color="inherit" sx={{ color: '#d1d5db' }}>
+          <Button component={Link} href="/cart" sx={{ color: '#2D1B17', fontWeight: 500 }}>
             Carrito
           </Button>
-          <Button component={Link} href="/login" color="inherit" sx={{ color: '#d1d5db' }}>
+          <Button component={Link} href="/login" sx={{ color: '#2D1B17', fontWeight: 500 }}>
             Acceder
           </Button>
-          <Button component={Link} href="/cart" variant="contained" color="primary">
+          <Button
+            component={Link}
+            href="/cart"
+            variant="contained"
+            sx={{
+              background: 'linear-gradient(135deg, #FF9100 0%, #FF6B00 100%)',
+              color: '#fff',
+              fontWeight: 700,
+              '&:hover': {
+                background: 'linear-gradient(135deg, #FFB800 0%, #E85A00 100%)',
+              },
+            }}
+          >
             Contratar Plan
           </Button>
         </Box>

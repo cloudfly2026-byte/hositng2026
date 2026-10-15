@@ -100,62 +100,39 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: '#0c1322',
-        color: '#f3f4f6',
+        backgroundColor: '#FFFFFF',
+        color: '#2D1B17',
+        borderRight: '1px solid #F2E8DC',
       }}
     >
       {/* Brand Header */}
       <Box
         sx={{
-          p: 2.5,
+          p: 2,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+          borderBottom: '1px solid #F2E8DC',
+          backgroundColor: '#FFF8ED',
         }}
       >
         <Box component={Link} href="/" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, textDecoration: 'none' }}>
           <Box
+            component="img"
+            src="/velupi-logo.png"
+            alt="Velupi Cloud Platform"
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 38,
-              height: 38,
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #06b6d4 0%, #6366f1 100%)',
-              color: '#fff',
-              boxShadow: '0 0 16px rgba(6, 182, 212, 0.35)',
+              height: 40,
+              width: 'auto',
+              display: 'block',
             }}
-          >
-            <CloudQueueRoundedIcon />
-          </Box>
-          <Box>
-            <Typography
-              variant="subtitle1"
-              sx={{
-                fontWeight: 800,
-                color: '#fff',
-                lineHeight: 1.2,
-                letterSpacing: '-0.02em',
-                fontSize: '1.05rem',
-              }}
-            >
-              Velupi{' '}
-              <Box component="span" sx={{ color: '#06b6d4', fontWeight: 600 }}>
-                Cloud
-              </Box>
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#9ca3af', fontSize: '0.72rem', display: 'block' }}>
-              Tus ideas merecen volar
-            </Typography>
-          </Box>
+          />
         </Box>
 
         {/* Mobile close button */}
         <IconButton
           onClick={onMobileClose}
-          sx={{ display: { xs: 'flex', md: 'none' }, color: '#9ca3af' }}
+          sx={{ display: { xs: 'flex', md: 'none' }, color: '#667085' }}
           aria-label="Cerrar navegación"
         >
           <CloseRoundedIcon />
@@ -178,7 +155,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                   px: 1.5,
                   py: 0.5,
                   display: 'block',
-                  color: '#6b7280',
+                  color: '#9E7A6E',
                   fontWeight: 700,
                   fontSize: '0.68rem',
                   letterSpacing: '0.08em',
@@ -208,22 +185,22 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                           mb: 0.4,
                           py: 0.85,
                           px: 1.5,
-                          color: isDirectActive ? '#67e8f9' : '#d1d5db',
-                          backgroundColor: isDirectActive ? 'rgba(6, 182, 212, 0.12)' : 'transparent',
-                          borderLeft: isDirectActive ? '3px solid #06b6d4' : '3px solid transparent',
+                          color: isDirectActive ? '#FF6B00' : '#4B362F',
+                          backgroundColor: isDirectActive ? 'rgba(255, 107, 0, 0.08)' : 'transparent',
+                          borderLeft: isDirectActive ? '3px solid #FF6B00' : '3px solid transparent',
                           transition: 'all 0.15s ease',
                           '&:hover': {
                             backgroundColor: isDirectActive
-                              ? 'rgba(6, 182, 212, 0.18)'
-                              : 'rgba(255, 255, 255, 0.04)',
-                            color: '#fff',
+                              ? 'rgba(255, 107, 0, 0.14)'
+                              : 'rgba(255, 107, 0, 0.04)',
+                            color: '#FF6B00',
                           },
                         }}
                       >
                         <ListItemIcon
                           sx={{
                             minWidth: 32,
-                            color: isDirectActive ? '#06b6d4' : '#9ca3af',
+                            color: isDirectActive ? '#FF6B00' : '#8C766E',
                           }}
                         >
                           {ICON_MAP[mod.icon] || <DashboardRoundedIcon fontSize="small" />}
@@ -232,7 +209,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                           primary={mod.title}
                           primaryTypographyProps={{
                             fontSize: '0.88rem',
-                            fontWeight: isDirectActive ? 600 : 500,
+                            fontWeight: isDirectActive ? 700 : 500,
                           }}
                         />
                         {mod.badge && (
@@ -312,16 +289,16 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
       <Box
         sx={{
           p: 2,
-          borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-          backgroundColor: 'rgba(0, 0, 0, 0.2)',
+          borderTop: '1px solid #F2E8DC',
+          backgroundColor: '#FFF8ED',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box>
-            <Typography variant="caption" sx={{ color: '#6b7280', display: 'block', fontSize: '0.68rem' }}>
+            <Typography variant="caption" sx={{ color: '#9E7A6E', display: 'block', fontSize: '0.68rem', fontWeight: 600 }}>
               ORGANIZACIÓN
             </Typography>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: '#e5e7eb', fontSize: '0.82rem' }}>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#2D1B17', fontSize: '0.82rem' }}>
               org-velupi-internal
             </Typography>
           </Box>
@@ -329,8 +306,8 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
             label="Pro"
             size="small"
             sx={{
-              backgroundColor: 'rgba(99, 102, 241, 0.15)',
-              color: '#818cf8',
+              backgroundColor: 'rgba(255, 107, 0, 0.12)',
+              color: '#FF6B00',
               fontWeight: 700,
               fontSize: '0.70rem',
               height: 20,
@@ -354,7 +331,8 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: DRAWER_WIDTH,
-            borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRight: '1px solid #F2E8DC',
+            backgroundColor: '#FFFFFF',
           },
         }}
       >
@@ -369,7 +347,8 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: DRAWER_WIDTH,
-            borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRight: '1px solid #F2E8DC',
+            backgroundColor: '#FFFFFF',
           },
         }}
         open

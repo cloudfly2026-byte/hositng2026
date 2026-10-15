@@ -13,10 +13,10 @@
                 <a href="<?php echo esc_url(home_url('/')); ?>" rel="home">
                     <?php
                     $logo_src = get_template_directory_uri() . '/assets/images/logo.png';
-                    echo '<img src="' . esc_url($logo_src) . '" alt="' . esc_attr(get_bloginfo('name', 'display')) . ' — Sunchi" class="sunchi-logo-img" width="140" height="50">';
+                    echo '<img src="' . esc_url($logo_src) . '" alt="' . esc_attr(get_bloginfo('name', 'display')) . ' — Velupi" class="sunchi-logo-img" width="140" height="50">';
                     ?>
                 </a>
-                <p class="sunchi-footer-slogan"><?php esc_html_e('Hosting que impulsa tus ideas.', 'sunchi-theme'); ?></p>
+                <p class="sunchi-footer-slogan"><?php esc_html_e('Hosting que impulsa tus ideas. Tus ideas merecen volar con Velupi Cloud Platform.', 'sunchi-theme'); ?></p>
                 <div class="sunchi-social-links">
                     <a href="https://facebook.com" class="sunchi-social-link" aria-label="Facebook" target="_blank" rel="noopener">f</a>
                     <a href="https://x.com" class="sunchi-social-link" aria-label="X" target="_blank" rel="noopener">𝕏</a>
@@ -62,7 +62,7 @@
             <!-- Newsletter Column -->
             <div class="sunchi-footer-col">
                 <h4><?php esc_html_e('Recibe novedades y promociones', 'sunchi-theme'); ?></h4>
-                <form class="sunchi-newsletter-form" onsubmit="event.preventDefault(); alert('¡Gracias por suscribirte a Sunchi!');">
+                <form class="sunchi-newsletter-form" onsubmit="event.preventDefault(); alert('¡Gracias por suscribirte a Velupi!');">
                     <input type="email" placeholder="<?php esc_attr_e('Tu correo electrónico', 'sunchi-theme'); ?>" class="sunchi-newsletter-input" required>
                     <button type="submit" class="sunchi-btn sunchi-btn-primary" style="padding: 10px 20px;">
                         <?php esc_html_e('Suscribirme', 'sunchi-theme'); ?>
@@ -73,8 +73,8 @@
 
         <!-- Bottom Line -->
         <div class="sunchi-footer-bottom">
-            <p>&copy; <?php echo date('Y'); ?> <?php esc_html_e('Sunchi. Todos los derechos reservados.', 'sunchi-theme'); ?></p>
-            <p><?php esc_html_e('Hecho con ☀️ para un internet más brillante.', 'sunchi-theme'); ?></p>
+            <p>&copy; <?php echo date('Y'); ?> <?php esc_html_e('Velupi Cloud Platform. Todos los derechos reservados.', 'sunchi-theme'); ?></p>
+            <p><?php esc_html_e('Hecho con ☀️ para un internet más brillante. Velupi Cloud.', 'sunchi-theme'); ?></p>
         </div>
     </div>
 </footer>
