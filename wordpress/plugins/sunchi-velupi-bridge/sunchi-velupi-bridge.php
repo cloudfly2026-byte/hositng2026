@@ -21,17 +21,28 @@ define('SUNCHI_VELUPI_DEFAULT_CHECKOUT_URL', 'https://app.velupi.com/cart');
 /**
  * 1. Build Safe Checkout URL (Zero-Trust Validation)
  */
-function sunchi_get_checkout_url($plan_code = 'wp-starter', $billing_cycle = 'ANNUAL') {
-    $base_checkout_url = get_option('sunchi_velupi_checkout_url', SUNCHI_VELUPI_DEFAULT_CHECKOUT_URL);
-    $allowed_cycles = array('MONTHLY', 'QUARTERLY', 'SEMI_ANNUAL', 'ANNUAL', 'BIENNIAL');
+if (!function_exists('sunchi_get_checkout_url')) {
+    function sunchi_get_checkout_url($plan_code = 'wp-starter', $billing_cycle = 'ANNUAL') {
+        $base_checkout_url = get_option('sunchi_velupi_checkout_url', SUNCHI_VELUPI_DEFAULT_CHECKOUT_URL);
+        $allowed_cycles = array('MONTHLY', 'QUARTERLY', 'SEMI_ANNUAL', 'ANNUAL', 'BIENNIAL');
 
-    $safe_cycle = in_array(strtoupper($billing_cycle), $allowed_cycles, true) ? strtoupper($billing_cycle) : 'ANNUAL';
-    $safe_plan = sanitize_key($plan_code);
+        $safe_cycle = in_array(strtoupper($billing_cycle), $allowed_cycles, true) ? strtoupper($billing_cycle) : 'ANNUAL';
+        $safe_plan = sanitize_key($plan_code);
 
-    return add_query_arg(array(
-        'plan'  => $safe_plan,
-        'cycle' => $safe_cycle,
-    ), esc_url_raw($base_checkout_url));
+        return add_query_arg(array(
+            'plan'  => $safe_plan,
+            'cycle' => $safe_cycle,
+        ), esc_url_raw($base_checkout_url));
+    }
+}
+
+if (!function_exists('sunchi_get_auth_url')) {
+    function sunchi_get_auth_url($action = 'login') {
+        $base_url = ($action === 'register')
+            ? get_option('sunchi_velupi_register_url', 'https://app.velupi.com/register')
+            : get_option('sunchi_velupi_login_url', 'https://app.velupi.com/login');
+        return esc_url_raw($base_url);
+    }
 }
 
 /**

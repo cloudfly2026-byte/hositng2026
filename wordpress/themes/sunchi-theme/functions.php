@@ -98,24 +98,28 @@ add_action('wp_enqueue_scripts', 'sunchi_theme_scripts');
 /**
  * 3. Checkout & Velupi Integration Helpers
  */
-function sunchi_get_checkout_url($plan_code = 'wp-starter', $billing_cycle = 'ANNUAL') {
-    $base_url = get_theme_mod('sunchi_checkout_base_url', 'https://app.velupi.com/cart');
-    $allowed_cycles = array('MONTHLY', 'QUARTERLY', 'SEMI_ANNUAL', 'ANNUAL', 'BIENNIAL');
+if (!function_exists('sunchi_get_checkout_url')) {
+    function sunchi_get_checkout_url($plan_code = 'wp-starter', $billing_cycle = 'ANNUAL') {
+        $base_url = get_theme_mod('sunchi_checkout_base_url', 'https://app.velupi.com/cart');
+        $allowed_cycles = array('MONTHLY', 'QUARTERLY', 'SEMI_ANNUAL', 'ANNUAL', 'BIENNIAL');
 
-    $safe_cycle = in_array(strtoupper($billing_cycle), $allowed_cycles, true) ? strtoupper($billing_cycle) : 'ANNUAL';
-    $safe_plan = sanitize_key($plan_code);
+        $safe_cycle = in_array(strtoupper($billing_cycle), $allowed_cycles, true) ? strtoupper($billing_cycle) : 'ANNUAL';
+        $safe_plan = sanitize_key($plan_code);
 
-    return add_query_arg(array(
-        'plan'  => $safe_plan,
-        'cycle' => $safe_cycle,
-    ), esc_url($base_url));
+        return add_query_arg(array(
+            'plan'  => $safe_plan,
+            'cycle' => $safe_cycle,
+        ), esc_url($base_url));
+    }
 }
 
-function sunchi_get_auth_url($action = 'login') {
-    if ($action === 'register') {
-        return esc_url(get_theme_mod('sunchi_register_url', 'https://app.velupi.com/register'));
+if (!function_exists('sunchi_get_auth_url')) {
+    function sunchi_get_auth_url($action = 'login') {
+        if ($action === 'register') {
+            return esc_url(get_theme_mod('sunchi_register_url', 'https://app.velupi.com/register'));
+        }
+        return esc_url(get_theme_mod('sunchi_login_url', 'https://app.velupi.com/login'));
     }
-    return esc_url(get_theme_mod('sunchi_login_url', 'https://app.velupi.com/login'));
 }
 
 /**
