@@ -77,9 +77,14 @@ export class CartController {
   }
 
   @Post(':cartId/claim')
-  async claimCart(@Param('cartId') cartId: string, @Req() req: any) {
-    const userId = req.user?.userId || req.body?.userId;
-    const organizationId = req.user?.organizationId || req.body?.organizationId;
+  async claimCart(
+    @Param('cartId') cartId: string,
+    @Req() req: any,
+    @Body() body?: { userId?: string; organizationId?: string }
+  ) {
+    const userId = req.user?.userId || body?.userId || req.body?.userId;
+    const organizationId =
+      req.user?.organizationId || body?.organizationId || req.body?.organizationId;
 
     if (!userId || !organizationId) {
       throw new BadRequestException('userId and organizationId are required to claim a cart.');
