@@ -3,6 +3,8 @@ import {
   Post,
   Get,
   Body,
+  Query,
+  Optional,
   Req,
   UseGuards,
   UnauthorizedException,
@@ -13,6 +15,8 @@ import {
 } from '@nestjs/common';
 import {
   AuthenticationService,
+  OAuthService,
+  OAuthProviderType,
   InvalidCredentialsError,
   SessionRevokedError,
   InvalidResetTokenError,
@@ -56,7 +60,88 @@ export class ResetPasswordDto {
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthenticationService) {}
+  constructor(
+    private readonly authService: AuthenticationService,
+    @Optional() private readonly oauthService?: OAuthService
+  ) {}
+
+  @Get('oauth/google/start')
+  async googleOAuthStart(@Query('returnTo') returnTo?: string) {
+    if (!this.oauthService) {
+      throw new BadRequestException('OAuth service not configured.');
+    }
+    return this.oauthService.initiateOAuthFlow(OAuthProviderType.GOOGLE, returnTo);
+  }
+
+  @Get('oauth/google/callback')
+  async googleOAuthCallback(
+    @Query('code') code: string,
+    @Query('state') state: string,
+    @Query('mockSub') mockSub?: string,
+    @Query('mockEmail') mockEmail?: string,
+    @Query('mockName') mockName?: string
+  ) {
+    if (!this.oauthService) {
+      throw new BadRequestException('OAuth service not configured.');
+    }
+    if (!code || !state) {
+      throw new BadRequestException('Missing code or state parameter.');
+    }
+
+    try {
+      return await this.oauthService.handleOAuthCallback({
+        provider: OAuthProviderType.GOOGLE,
+        code,
+        state,
+        profile: {
+          providerSubject: mockSub || `google-${code}`,
+          email: mockEmail || `user-${code}@gmail.com`,
+          fullName: mockName || 'Google User',
+        },
+      });
+    } catch (err: any) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  @Get('oauth/github/start')
+  async githubOAuthStart(@Query('returnTo') returnTo?: string) {
+    if (!this.oauthService) {
+      throw new BadRequestException('OAuth service not configured.');
+    }
+    return this.oauthService.initiateOAuthFlow(OAuthProviderType.GITHUB, returnTo);
+  }
+
+  @Get('oauth/github/callback')
+  async githubOAuthCallback(
+    @Query('code') code: string,
+    @Query('state') state: string,
+    @Query('mockSub') mockSub?: string,
+    @Query('mockEmail') mockEmail?: string,
+    @Query('mockName') mockName?: string
+  ) {
+    if (!this.oauthService) {
+      throw new BadRequestException('OAuth service not configured.');
+    }
+    if (!code || !state) {
+      throw new BadRequestException('Missing code or state parameter.');
+    }
+
+    try {
+      return await this.oauthService.handleOAuthCallback({
+        provider: OAuthProviderType.GITHUB,
+        code,
+        state,
+        profile: {
+          providerSubject: mockSub || `github-${code}`,
+          email: mockEmail || `dev-${code}@github.com`,
+          fullName: mockName || 'GitHub Developer',
+        },
+      });
+    } catch (err: any) {
+      throw new BadRequestException(err.message);
+    }
+  }
 
   @Post('register')
   async register(@Body() body: RegisterDto) {

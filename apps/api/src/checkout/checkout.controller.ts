@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, NotFoundException } from '@nestjs/common';
 import {
   OrderService,
   WompiPaymentAdapter,
@@ -55,4 +55,16 @@ export class CheckoutController {
       session,
     };
   }
+
+  @Get('order/:orderId')
+  getOrder(@Param('orderId') orderId: string): Order {
+    const order =
+      this.orderService.getOrderById(orderId) ||
+      this.orderService.getOrderByNumber(orderId);
+    if (!order) {
+      throw new NotFoundException(`Order '${orderId}' not found`);
+    }
+    return order;
+  }
 }
+

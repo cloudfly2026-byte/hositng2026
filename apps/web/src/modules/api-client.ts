@@ -257,6 +257,96 @@ export class ApiClient {
       body: JSON.stringify(payload),
     });
   }
+
+  async getCatalogPlans(): Promise<any[]> {
+    return this.request<any[]>('/catalog/plans');
+  }
+
+  async getCatalogPlan(code: string): Promise<any> {
+    return this.request<any>(`/catalog/plans/${encodeURIComponent(code)}`);
+  }
+
+  async createCart(payload: {
+    planCode: string;
+    billingCycle: string;
+    currency: string;
+    extras?: Record<string, any>;
+  }): Promise<any> {
+    return this.request<any>('/cart', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getCart(cartId: string): Promise<any> {
+    return this.request<any>(`/cart/${encodeURIComponent(cartId)}`);
+  }
+
+  async updateCart(
+    cartId: string,
+    payload: { billingCycle?: string; quantity?: number; extras?: Record<string, any> }
+  ): Promise<any> {
+    return this.request<any>(`/cart/${encodeURIComponent(cartId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async claimCart(
+    cartId: string,
+    payload?: { userId?: string; organizationId?: string }
+  ): Promise<any> {
+    return this.request<any>(`/cart/${encodeURIComponent(cartId)}/claim`, {
+      method: 'POST',
+      body: JSON.stringify(payload || {}),
+    });
+  }
+
+  async register(payload: {
+    email: string;
+    password: string;
+    fullName: string;
+    organizationName: string;
+  }): Promise<any> {
+    return this.request<any>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async login(payload: { email: string; password: string }): Promise<any> {
+    return this.request<any>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getMe(): Promise<any> {
+    return this.request<any>('/auth/me');
+  }
+
+  async getOrder(orderId: string): Promise<any> {
+    return this.request<any>(`/orders/${encodeURIComponent(orderId)}`);
+  }
+
+  async getProvisioningJob(jobId: string, organizationId?: string): Promise<any> {
+    const headers: Record<string, string> = {};
+    if (organizationId) {
+      headers['x-tenant-id'] = organizationId;
+    }
+    return this.request<any>(`/provisioning/jobs/${encodeURIComponent(jobId)}`, {
+      headers,
+    });
+  }
+
+  async getOAuthStart(
+    provider: 'google' | 'github',
+    returnTo?: string
+  ): Promise<{ authorizationUrl: string; state: string; provider: string }> {
+    const q = returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : '';
+    return this.request<any>(`/auth/oauth/${provider}/start${q}`);
+  }
 }
 
 export const defaultApiClient = new ApiClient();
+

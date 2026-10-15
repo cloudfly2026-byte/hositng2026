@@ -1,6 +1,6 @@
 services:
   traefik:
-    image: traefik:latest
+    image: traefik:v3.7.14
     container_name: velupi-traefik
     restart: unless-stopped
     command:
@@ -21,7 +21,7 @@ services:
       - traefik_certificates:/letsencrypt
 
   portainer:
-    image: portainer/portainer-ce:latest
+    image: portainer/portainer-ce:2.27.1-alpine
     container_name: velupi-portainer
     restart: unless-stopped
     ports:
@@ -92,8 +92,8 @@ services:
       HESTIA_HOST: ${HESTIA_HOST:-89.117.147.134}
       HESTIA_PORT: ${HESTIA_PORT:-8083}
       HESTIA_API_USER: ${HESTIA_API_USER:-manager}
-      HESTIA_ACCESS_KEY: ${HESTIA_ACCESS_KEY:-k4HHLIiCDxj9pIf1QwQK}
-      HESTIA_SECRET_KEY: ${HESTIA_SECRET_KEY:-y63wRUHzKpr8hdOSuHe6CPLYKGJsXHjMWrv6t86i}
+      HESTIA_ACCESS_KEY: ${HESTIA_ACCESS_KEY}
+      HESTIA_SECRET_KEY: ${HESTIA_SECRET_KEY}
       HESTIA_READ_ONLY: ${HESTIA_READ_ONLY:-true}
       HESTIA_ALLOW_SELF_SIGNED: ${HESTIA_ALLOW_SELF_SIGNED:-true}
     depends_on:

@@ -195,5 +195,126 @@ describe('ApiClient (apps/web)', () => {
       })
     );
   });
+
+  it('sends GET /catalog/plans and returns plan listing', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => [{ code: 'wp-starter', name: 'WordPress Starter' }],
+    });
+
+    const plans = await client.getCatalogPlans();
+    expect(plans).toHaveLength(1);
+    expect(plans[0].code).toBe('wp-starter');
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://test-api:4000/catalog/plans',
+      expect.objectContaining({
+        headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
+      })
+    );
+  });
+
+  it('sends POST /cart and returns created CartDraft', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ id: 'cart-123', status: 'ACTIVE', totalCents: 41650000 }),
+    });
+
+    const cart = await client.createCart({
+      planCode: 'wp-starter',
+      billingCycle: 'ANNUAL',
+      currency: 'COP',
+    });
+
+    expect(cart.id).toBe('cart-123');
+    expect(cart.status).toBe('ACTIVE');
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://test-api:4000/cart',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          planCode: 'wp-starter',
+          billingCycle: 'ANNUAL',
+          currency: 'COP',
+        }),
+      })
+    );
+  });
+
+  it('sends POST /auth/register and POST /auth/login correctly', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        user: { id: 'u-1', email: 'user@velupi.com' },
+        tokens: { accessToken: 'at-1', refreshToken: 'rt-1' },
+      }),
+    });
+
+    const reg = await client.register({
+      email: 'user@velupi.com',
+      password: 'Password123!',
+      fullName: 'New User',
+      organizationName: 'User Org',
+    });
+    expect(reg.user.email).toBe('user@velupi.com');
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        user: { id: 'u-1', email: 'user@velupi.com' },
+        tokens: { accessToken: 'at-1', refreshToken: 'rt-1' },
+      }),
+    });
+
+    const login = await client.login({
+      email: 'user@velupi.com',
+      password: 'Password123!',
+    });
+    expect(login.tokens.accessToken).toBe('at-1');
+  });
+
+  it('sends GET /orders/:orderId and GET /provisioning/jobs/:jobId correctly', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ id: 'ord-123', status: 'PAID' }),
+    });
+
+    const order = await client.getOrder('ord-123');
+    expect(order.id).toBe('ord-123');
+    expect(order.status).toBe('PAID');
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ jobId: 'job-999', status: 'ACTIVE', progressPercentage: 100 }),
+    });
+
+    const job = await client.getProvisioningJob('job-999', 'org-123');
+    expect(job.progressPercentage).toBe(100);
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://test-api:4000/provisioning/jobs/job-999',
+      expect.objectContaining({
+        headers: expect.objectContaining({ 'x-tenant-id': 'org-123' }),
+      })
+    );
+  });
+
+  it('sends GET /auth/oauth/:provider/start with returnTo query param', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        authorizationUrl: 'https://accounts.google.com/o/oauth2/v2/auth?...',
+        state: 'st-123',
+        provider: 'GOOGLE',
+      }),
+    });
+
+    const oauth = await client.getOAuthStart('google', '/checkout?cartId=c-1');
+    expect(oauth.state).toBe('st-123');
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://test-api:4000/auth/oauth/google/start?returnTo=%2Fcheckout%3FcartId%3Dc-1',
+      expect.anything()
+    );
+  });
 });
+
+
 

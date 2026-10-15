@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { AuthController } from './auth.controller';
 import {
   AuthenticationService,
+  OAuthService,
   Argon2PasswordHasher,
   JwtSecurityService,
 } from '@cloudfly/domain';
@@ -14,13 +15,15 @@ import {
 describe('AuthController (End-to-End API Endpoints & Security)', () => {
   let controller: AuthController;
   let authService: AuthenticationService;
+  let oauthService: OAuthService;
   let jwtService: JwtSecurityService;
 
   beforeEach(() => {
     const passwordHasher = new Argon2PasswordHasher();
     jwtService = new JwtSecurityService('test_api_jwt_secret_velupi_2026');
     authService = new AuthenticationService(passwordHasher, jwtService);
-    controller = new AuthController(authService);
+    oauthService = new OAuthService(authService);
+    controller = new AuthController(authService, oauthService);
   });
 
   describe('POST /auth/register', () => {
@@ -219,4 +222,83 @@ describe('AuthController (End-to-End API Endpoints & Security)', () => {
       expect(login.user.email).toBe('recover@velupi.com');
     });
   });
+
+  describe('OAuth Endpoints (Google & GitHub)', () => {
+    it('initiates Google OAuth flow returning authorization URL and state token', async () => {
+      const res = await controller.googleOAuthStart('/checkout?cartId=test-123');
+      expect(res.authorizationUrl).toContain('https://accounts.google.com/o/oauth2/v2/auth');
+      expect(res.state).toBeTruthy();
+      expect(res.codeChallenge).toBeTruthy();
+    });
+
+    it('handles Google OAuth callback creating new user and returning auth tokens', async () => {
+      const start = await controller.googleOAuthStart('/checkout?cartId=test-123');
+      const callback = await controller.googleOAuthCallback(
+        'google-auth-code',
+        start.state,
+        'google-sub-123',
+        'oauth.user@gmail.com',
+        'OAuth User'
+      );
+
+      expect(callback.user.email).toBe('oauth.user@gmail.com');
+      expect(callback.organization).toBeTruthy();
+      expect(callback.tokens.accessToken).toBeTruthy();
+      expect(callback.returnTo).toBe('/checkout?cartId=test-123');
+    });
+
+    it('initiates GitHub OAuth flow returning authorization URL and state token', async () => {
+      const res = await controller.githubOAuthStart('/cart');
+      expect(res.authorizationUrl).toContain('https://github.com/login/oauth/authorize');
+      expect(res.state).toBeTruthy();
+    });
+
+    it('handles GitHub OAuth callback and returns valid session', async () => {
+      const start = await controller.githubOAuthStart('/cart');
+      const callback = await controller.githubOAuthCallback(
+        'gh-code-456',
+        start.state,
+        'gh-id-999',
+        'dev@github.user',
+        'GitHub Developer'
+      );
+
+      expect(callback.user.email).toBe('dev@github.user');
+      expect(callback.tokens.accessToken).toBeTruthy();
+      expect(callback.returnTo).toBe('/cart');
+    });
+
+    it('rejects OAuth callback when email collides with password-based account (anti-account-takeover)', async () => {
+      await controller.register({
+        email: 'ceo@startup.io',
+        password: 'SecurePassword123!',
+        fullName: 'Original User',
+        organizationName: 'Startup Org',
+      });
+
+      const start = await controller.googleOAuthStart('/cart');
+      await expect(
+        controller.googleOAuthCallback(
+          'attack-code',
+          start.state,
+          'google-sub-impersonator',
+          'ceo@startup.io',
+          'Impersonator'
+        )
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects invalid or forged OAuth state parameter (anti-CSRF)', async () => {
+      await expect(
+        controller.googleOAuthCallback(
+          'some-code',
+          'forged-csrf-state',
+          'sub',
+          'any@example.com',
+          'Any'
+        )
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
 });
+

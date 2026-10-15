@@ -72,11 +72,39 @@ export class WompiPaymentAdapter implements PaymentProvider {
   }
 
   verifyWebhookSignature(payload: unknown, headers: Record<string, string>): boolean {
-    const signatureHeader = headers['x-event-checksum'] || headers['X-Event-Checksum'];
+    const signatureHeader =
+      headers['x-event-checksum'] ||
+      headers['X-Event-Checksum'] ||
+      (typeof payload === 'object' && payload !== null ? (payload as any)?.signature?.checksum : undefined);
+
     if (!signatureHeader) {
       return false;
     }
 
+    // 1. Official Wompi properties concatenation:
+    // SHA256(val(prop1) + val(prop2) + ... + timestamp + eventsSecret)
+    if (typeof payload === 'object' && payload !== null) {
+      const p = payload as any;
+      if (Array.isArray(p.signature?.properties) && p.timestamp !== undefined) {
+        let concatenated = '';
+        for (const prop of p.signature.properties) {
+          const parts = prop.split('.');
+          let curr = p.data;
+          for (const part of parts) {
+            curr = curr?.[part];
+          }
+          concatenated += curr !== undefined && curr !== null ? String(curr) : '';
+        }
+        concatenated += String(p.timestamp);
+        concatenated += this.config.eventsSecret;
+        const calculatedWompiChecksum = createHash('sha256').update(concatenated).digest('hex');
+        if (signatureHeader.toLowerCase() === calculatedWompiChecksum.toLowerCase()) {
+          return true;
+        }
+      }
+    }
+
+    // 2. Fallback to raw payload HMAC-SHA256 signature
     const expectedSignature = this.generateTestSignature(payload, this.config.eventsSecret);
     return signatureHeader === expectedSignature;
   }

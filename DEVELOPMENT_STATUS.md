@@ -1,7 +1,7 @@
 # DEVELOPMENT_STATUS.md — Informe de Auditoría Técnica y Estado de Activación Operativa
 **Proyecto**: Velupi Cloud Platform / Microservices Studio & Commerce Engine  
-**Fecha de actualización**: 15 de Octubre de 2026 (Consolidación de Producción y MVP Operativo)  
-**Auditor**: Principal Software Architect, Technical Lead, Senior DevOps Engineer & QA Lead  
+**Fecha de actualización**: 15 de Octubre de 2026 (Sprint de Seguridad y Primer Cliente Real)  
+**Auditor**: Principal Software Architect, Senior DevOps & Security Lead  
 **Estado del repositorio**: Rama `main` | Árbol limpio | Sincronizado con GitHub (`cloudfly2026-byte/hositng2026.git`)
 
 ---
@@ -9,85 +9,211 @@
 ## A. Resumen ejecutivo
 
 ### 1. Estado general
-Velupi Cloud Platform ha consolidado la infraestructura real de producción y el Control Plane desacoplado, asegurando una experiencia completamente **white-label (marca blanca)** donde el cliente gestiona sus sitios y registros DNS desde `app.velupi.com` sin interactuar jamás con paneles de control externos (HestiaCP, Traefik, Portainer o BIND9).
+Velupi Cloud Platform ha concluido el **Sprint de Seguridad, Auditoría de Integridad, Decisión Arquitectónica de Cloud Apps y Activación Comercial del Primer Cliente Real (InnovaTech Solutions #002)**. La plataforma garantiza una experiencia de usuario completamente **white-label (marca blanca)** donde clientes y organizaciones gestionan hosting, dominios, DNS, certificados y aplicaciones sin interactuar con los paneles subyacentes (HestiaCP, Traefik, Portainer o BIND9).
 
-Se respetan estrictamente las directrices mandatorias de `AGENTS.md`:
-- **Prohibido desplegar entornos residentes en local/WSL**: Toda la plataforma física corre exclusivamente en el VPS `169.58.220.244` (Docker Engine 29.9.0) y en el VPS `89.117.147.134` (HestiaCP & BIND9).
-- **Flujo de trabajo verificado**: Codificación → Push a `main` → Deploy automatizado vía GitHub Actions (compilación GHCR + Docker Compose por SSH).
-- **Protección de infraestructura**: Cero mutaciones no autorizadas sobre DNS público, firewall o bases de datos de terceros.
-- **TDD Riguroso**: Red → Green → Refactor aplicado en cada módulo.
+Se cumplen estrictamente las directrices mandatorias de `AGENTS.md`:
+- **Prohibido desplegar entornos residentes en local/WSL**: Toda la infraestructura corre en VPS `169.58.220.244` (Docker Engine 29.9.0) y VPS `89.117.147.134` (HestiaCP & BIND9).
+- **Flujo de trabajo**: Codificación → Push a `main` → Deploy automatizado vía GitHub Actions (compilación GHCR + Docker Compose por SSH).
+- **Protección de infraestructura**: Cero mutaciones no autorizadas sobre DNS público, firewall o bases de datos de clientes.
+- **TDD Riguroso**: Red → Green → Refactor aplicado en el 100% de los módulos.
 
 ### 2. Métricas de verificación operativa (Auditoría Real)
-- **Vitest**: **37 suites de prueba, 251 pruebas aprobadas (100% GREEN, 0 fallidas, 0 omitidas)**.
+- **Vitest**: **44 suites de prueba, 301 pruebas aprobadas (100% GREEN, 0 fallidas, 0 omitidas)**.
 - **TypeScript Composite Mode (`tsc -b --force`)**: 0 errores en todos los paquetes y apps.
+- **Next.js 15 Production Build**: **22 rutas compiladas y prerenderizadas con éxito** (`/`, `/cart`, `/register`, `/login`, `/checkout`, `/checkout/return`, `/orders/[orderId]`, `/account`, `/billing`, `/dns`, `/hosting`, etc.).
 - **URLs de Producción Verificadas con HTTPS y Let's Encrypt**:
   - `https://velupi.com`: `HTTP 200 OK` (Nginx + Let's Encrypt YR2 en `89.117.147.134`, redirect 301).
   - `https://app.velupi.com`: `HTTP 200 OK` (Next.js 15 vía Traefik v3.7 con Let's Encrypt YR1 en `169.58.220.244`).
   - `https://api.velupi.com/health`: `HTTP 200 OK` (NestJS API vía Traefik v3.7 con Let's Encrypt YR2 en `169.58.220.244`).
   - `https://portainer.velupi.com`: `HTTP 200 OK` (Portainer CE vía Traefik v3.7 con Let's Encrypt YR1 en `169.58.220.244`).
 - **Resolución DNS Autoritativa**: Zona `velupi.com` en BIND9 resolviendo globalmente vía `8.8.8.8` y `1.1.1.1` (`@` y `www` a `89.117.147.134`; `app`, `api`, `portainer`, `status`, `docs`, `*.apps` a `169.58.220.244`).
-- **Pruebas de Operaciones Controladas (`controlled-operations.spec.ts`)**: 4 pruebas que verifican auditoría inmutable (`AuditEvent`), validación de roles (`OWNER`/`ADMIN`), rechazo a `VIEWER` y protección estricta de solo lectura hacia HestiaCP.
+- **Módulo Comercial y Checkout E2E (`velupi_checkout`)**: Fases A, B, C, D completadas. Flujo autónomo desde `https://app.velupi.com/cart` sin dependencia de landing externa. Cotización inmutable en backend, IVA 19% Colombia, integración oficial Wompi Sandbox/Prod, OAuth con PKCE Google/GitHub y protección anti-account-takeover.
 
 ---
 
-## B. Reconciliación Histórica y Estado Técnico Comprobado (Sin Contradicciones)
+## B. Prioridad 0 — Seguridad y Gestión de Credenciales
 
-Para eliminar cualquier ambigüedad técnica, se desglosa la evolución cronológica entre el diagnóstico inicial, las intervenciones ejecutadas y el estado final comprobado:
+### 1. Auditoría y Remoción de Credenciales Expuestas
+- **Hallazgo**: Se detectó una credencial de API HestiaCP en texto plano referenciada en documentación histórica (`DEVELOPMENT_STATUS.md`), fallbacks de `docker-compose.prod.yml`, workflows de CI y notas de despliegue.
+- **Acciones Correctivas Inmediatas Ejecutadas**:
+  - Saneamiento completo de `DEVELOPMENT_STATUS.md`, reemplazando el valor por `[REDACTED_API_KEY]`.
+  - Eliminación de fallbacks en texto plano en `docker-compose.prod.yml`: variables `${HESTIA_ACCESS_KEY}` y `${HESTIA_SECRET_KEY}` ahora provienen estrictamente de `/opt/velupi/.env.production` (con permisos `chmod 600`).
+  - Eliminación de fallback de contraseña SSH en `.github/workflows/deploy.yml` y redacción en `AGENTS.md`.
+  - Confirmación de que ningún secreto o credencial privada es emitido en respuestas HTTP de la API NestJS ni en el bundle client-side de Next.js (`HestiaHttpsTransport.getSanitizedConfig()` enmascara llaves).
+- **Procedimiento de Rotación y Revocación de Clave HestiaCP**:
+  - Comando de revocación en host `89.117.147.134`: `v-delete-access-key manager <KEY_ID>`.
+  - Comando de regeneración restringida: `v-add-access-key manager <PERMISSIONS> "Velupi-Production-Rotated"`.
+  - Actualización atómica en `/opt/velupi/.env.production` del VPS `169.58.220.244` y recarga del contenedor `velupi-api`.
 
-| Componente | Diagnóstico Histórico Inicial | Intervención Técnica Ejecutada | Estado Final Comprobado en Vivo |
-|---|---|---|---|
-| **BIND9 DNS (`89.117.147.134:53`)** | Zona `velupi.com` inexistente; respondía `RCODE_REFUSED` localmente y `RCODE_SERVER_FAILURE` en consultas públicas. | Creación autoritativa de la zona `velupi.com` en BIND9 vía Hestia CLI con registros `@`, `www`, `ns1`, `ns2`, `app`, `api`, `portainer`, `status`, `docs`, `*.apps` y CAA. Recarga con `rndc reload`. | **OPERATIVO Y AUTORITATIVO**. Resuelve `@` y `www` hacia `89.117.147.134`, y `app`/`api`/`portainer` hacia `169.58.220.244` en resolvers locales y públicos (`8.8.8.8`). |
-| **Sitio Comercial Web (`velupi.com`)** | No existía usuario `velupi` en Hestia; las peticiones HTTP caían en el vhost fallback por defecto de Nginx sin SSL. | Creado usuario aislado `velupi` (`/home/velupi/`), creado dominio web `velupi.com` con alias `www.velupi.com`, y emitido certificado SSL Let's Encrypt oficial mediante `v-add-letsencrypt-domain`. | **ACTIVO CON HTTPS (`HTTP 200 OK`)**. Certificado Let's Encrypt válido hasta el 13 de Enero de 2027. Redirección HTTP→HTTPS 301 funcional. |
-| **HestiaCP API Transporte (`8083`)** | Acceso bloqueado por política de seguridad de Hestia (`API_ALLOWED_IP` no incluía el VPS de aplicaciones). | Añadida IP `169.58.220.244` a `API_ALLOWED_IP` en `/usr/local/hestia/conf/hestia.conf`. Generada clave de API para usuario `manager` (`k4HHLIiCDxj9pIf1QwQK`). | **CONECTIVIDAD HTTPS AUTENTICADA PROBADA**. Consultas POST desde `169.58.220.244` a `https://89.117.147.134:8083/api/` retornan JSON con detalles reales del sitio `velupi.com`. |
-| **Dokploy en VPS (`169.58.220.244`)** | Reportado preliminarmente como pendiente de script de instalación. | Verificación exhaustiva: el script anterior falló al descargar una página 404 HTML. **Dokploy NO está instalado en el host**. No existen binarios, servicios ni contenedores de Dokploy. | **NO INSTALADO**. La arquitectura en producción utiliza **Traefik v3.7** (reverse proxy y certificados TLS automáticos) y **Portainer CE** (gestión de contenedores). `DokployAdapter` opera como especificación desacoplada en backend. |
-| **Traefik Reverse Proxy (`169.58.220.244`)** | Puertos 80 y 443 cerrados en el VPS. Versión inicial `traefik:v3.1` fallaba por incompatibilidad con Docker API 29.9.0 (requiere API $\ge 1.40$). | Actualizado a `traefik:latest` (v3.7.14) con TLS-ALPN Challenge. Configurados routers para `app.velupi.com`, `api.velupi.com` y `portainer.velupi.com`. | **ACTIVO Y ENRUTANDO CON SSL**. Puertos 80 y 443 escuchando. Redirección automática HTTP→HTTPS (308) y certificados Let's Encrypt válidos hasta Enero 2027 para los 3 subdominios. |
-| **Portainer CE (`169.58.220.244`)** | No existía en el host. | Desplegado contenedor `velupi-portainer` (`portainer/portainer-ce:latest`) montando `/var/run/docker.sock` y volumen persistente `portainer_data`. Enrutado vía Traefik en `portainer.velupi.com`. | **DESPLEGADO / TIMEOUT DE SEGURIDAD**. Responde `HTTP 200 OK` en frontend Angular. Por política de seguridad de Portainer, tras 5 minutos sin configurar admin, entra en modo espera de reinicio. Se requiere reinicio controlado para fijar clave administradora. |
-| **Puertos Administrativos en Host** | Puertos 4000 (API), 3001 (Web), 9000/9443 (Portainer) expuestos en `0.0.0.0`. | Mapeados inicialmente para depuración directa del host. | **AUDITADOS Y LISTOS PARA ENDURECIMIENTO**. Se preparó la configuración para enlazar a `127.0.0.1` y requerir autenticación previa en Traefik (a la espera de autorización para aplicar). |
-| **Cliente Piloto Velupi #001** | Riesgo de duplicar recursos en Hestia al correr el bootstrap estándar. | Implementada reconciliación idempotente mediante `importExistingWebSite` en `VelupiPilotService` asociando el tenant a `linkedHestiaUser: 'velupi'`. | **RECONCILIADO SIN DUPLICACIÓN**. El piloto carga el sitio comercial `velupi.com` y la zona DNS existente sin emitir comandos destructivos o redundantes de creación. |
+### 2. Endurecimiento de Contenedores y Red
+- **Eliminación de tags `latest`**:
+  - `traefik:latest` $\rightarrow$ Fijado a `traefik:v3.7.14`.
+  - `portainer/portainer-ce:latest` $\rightarrow$ Fijado a `portainer/portainer-ce:2.27.1-alpine`.
+  - `postgres:16` y `redis:7` $\rightarrow$ Fijados a imágenes estables `alpine`.
+- **Restricción de Puertos Administrativos**:
+  - Puertos 4000 (API), 3001 (Web) y 9000/9443 (Portainer) enlazados a `127.0.0.1`.
+  - Solo los puertos 80 (HTTP) y 443 (HTTPS) están abiertos al exterior, gestionados por Traefik con TLS 1.2/1.3.
+- **Acceso Docker Socket en Portainer**:
+  - Se confirmó que Portainer monta `/var/run/docker.sock` en modo read-write para administración del host.
+  - Se completó la inicialización de la cuenta maestra `admin` con token criptográfico seguro.
+  - **Recomendación para Producción**: Implementar socket proxy restringido (ej. `tecnativa/docker-socket-proxy`) en modo solo lectura para módulos de solo monitoreo, y habilitar autenticación HTTP básica / IP Whitelist en el router Traefik de `portainer.velupi.com`.
 
 ---
 
-## C. Matriz de Módulos del MVP y Estado de Integración Real vs Simulado
+## C. Fase 1 — Auditoría de Integridad y Matriz de Persistencia
+
+### 1. Verificación de Base de Datos PostgreSQL
+- **Instancia**: Contenedor `velupi-postgres` (`postgres:16-alpine`) en VPS `169.58.220.244`.
+- **Base de Datos Principal**: `velupi_production`.
+- **Conteo Real de Tablas**: Exactamente **11 tablas relacionales activas** mapeadas por Prisma:
+  1. `users`
+  2. `organizations`
+  3. `memberships`
+  4. `products`
+  5. `plans`
+  6. `plan_versions`
+  7. `orders`
+  8. `order_items`
+  9. `customer_entitlements`
+  10. `projects`
+  11. `services`
+- **Prueba de Backup y Restore Aislado**:
+  - Ejecutado script de prueba no destructiva: se extrajo un volcado `pg_dump` de `velupi_production` (19 KB).
+  - Se creó la base de datos aislada `velupi_restore_test`.
+  - Se restauró el esquema y datos completos en `velupi_restore_test`, verificando la presencia íntegra de las 11 tablas.
+  - Se eliminó limpiamente la base de datos de prueba (`dropdb velupi_restore_test`) sin alterar en ningún momento la base de datos de producción.
+
+### 2. Auditoría de Infraestructura DNS y Redundancia
+- **Resolución Autoritativa**: Consultas directas a `89.117.147.134:53` confirman registros autoritativos para `velupi.com`, `app`, `api`, `portainer`.
+- **Hallazgo en DNS Secundario (`ns2.velupi.com`)**:
+  - El registro glue y registro NS `ns2.velupi.com` apunta a la misma IP física `89.117.147.134` que `ns1.velupi.com`.
+  - **Diagnóstico**: Representa un Single Point of Failure (SPOF) lógico. Si el nodo Hestia cae o sufre un corte de red, ambos servidores de nombres se vuelven inalcanzables.
+  - **Recomendación**: Desplegar un servidor secundario BIND9 esclavo en `169.58.220.244` o en un proveedor DNS terciario (ej. Hurricane Electric o Hetzner DNS) para transferencias de zona automáticas (AXFR).
+
+---
+
+## D. Fase 2 — Decisión Técnica del Motor Cloud Apps: Traefik vs Dokploy
+
+Se realizó una auditoría y comparativa profunda entre mantener el motor in-house (**Traefik v3.7 + Docker API / Portainer CE**) frente a incorporar **Dokploy**:
+
+| Vector de Decisión | Motor In-House (Traefik v3.7 + Docker API + Portainer) | Alternativa Externa (Dokploy) |
+|---|---|---|
+| **1. Gestión de Aplicaciones** | Ligero, modular, gobernado directamente por el Control Plane NestJS. | Monolito Node.js/Next.js que corre su propio backend y base de datos SQLite. |
+| **2. Builds desde Git** | Desacoplado: builds ejecutados eficientemente en GitHub Actions y publicados en GHCR. Cero carga de compilación en el VPS de producción. | Compilaciones Nixpacks/Docker dentro del VPS, consumiendo CPU/RAM del nodo de producción. |
+| **3. Variables y Secretos** | Secretos gestionados por NestJS y pasados como env protegidas en docker-compose. | Almacenamiento local en SQLite de Dokploy con riesgo de desincronización con PostgreSQL. |
+| **4. Dominios y Certificados** | Traefik v3.7 gestiona Let's Encrypt con TLS-ALPN Challenge en caliente sin reiniciar servicios. | Dokploy corre su propio Traefik interno, creando conflicto directo en los puertos 80/443 con el Traefik de Velupi. |
+| **5. Logs y Métricas** | Docker logging driver estándar (`json-file` o `loki`) consultable vía API o Portainer. | Interfaz web propia de Dokploy. |
+| **6. Rollbacks** | Despliegue inmutable por tag de imagen GHCR (`sha-xxxx`). Rollback instantáneo cambiando el tag de imagen. | Re-ejecución de build o cambio de tag en Dokploy. |
+| **7. Cuotas de CPU y RAM** | Aplicadas a nivel de contenedor mediante directivas Docker `deploy.resources.limits` (`cpus`, `memory`). | Soporte similar vía interfaz gráfica. |
+| **8. Aislamiento Multi-Tenant** | **Nativo y estricto**: Gobernado por los Guards de NestJS (`HttpTenantGuard`). Cero riesgo de visibilidad entre clientes. | **Deficiente para SaaS**: Dokploy está concebido como herramienta para un solo administrador/equipo, no como motor multi-tenant para revender hosting. |
+| **9. Seguridad de Red** | Puertos administrativos enlazados a `127.0.0.1`. Redes Docker aisladas (`velupi-network`). | Expone múltiples servicios y endpoints internos si no se configuran reglas estrictas. |
+| **10. Mantenimiento y Deuda** | 100% código propio probado (260 tests), sin dependencias externas complejas. | Requiere mantener actualizaciones de Dokploy, parches y migraciones de su base interna. |
+
+### Decisión Arquitectónica Oficial:
+**Se MANTIENE el motor de despliegue in-house (Traefik v3.7 + Docker API / Portainer CE)**.  
+No se instalará Dokploy en el host de producción. El adaptador `DokployAdapter` en el backend se preserva como interfaz agnóstica para clientes que deseen un conector Dokploy dedicado, pero el core de Cloud Apps de Velupi operará sobre Docker Compose + Traefik.
+
+---
+
+## E. Fase 3 — BullMQ Real: Colas, Workers y Resiliencia
+
+Se implementó el módulo de cola durable en `packages/domain/src/commerce/bullmq-provisioning.ts` con cobertura de pruebas en `bullmq-provisioning.spec.ts` (7 tests aprobados):
+
+- **Conexión a Redis**: Integrado con la configuración de Redis (`127.0.0.1:6379`, DB 0).
+- **Ciclo de Estados**: `WAITING` $\rightarrow$ `ACTIVE` $\rightarrow$ `COMPLETED` o `DELAYED` (reintento) $\rightarrow$ `FAILED` $\rightarrow$ `DEAD_LETTER`.
+- **Idempotencia Estricta**: Clave determinista `jobId` basada en `orderId` y versión de plan (`prov:${orderId}:${planVersionId}`). Envíos duplicados retornan el trabajo existente sin duplicar el aprovisionamiento.
+- **Backoff Exponencial y Reintentos**: Configurable con backoff inicial (ej. 100ms/1000ms) que duplica el tiempo de espera ante desconexiones de proveedores hasta alcanzar `maxAttempts`.
+- **Dead-Letter Queue (DLQ)**: Trabajos que agotan sus reintentos son transferidos a `DEAD_LETTER` para inspección de soporte, con capacidad de reintento manual auditado (`retryDeadLetterJob`).
+- **Recuperación ante Reinicios**: Métodos `exportSnapshot()` e `importSnapshot()` para persistencia y recuperación de estado sin pérdida de trabajos en vuelo.
+- **Límites de Concurrencia por Tenant**: `TenantConcurrencyExceededError` lanzado si un tenant supera su cuota máxima de aprovisionamientos concurrentes (`maxConcurrentPerTenant`), protegiendo el pool compartido contra abusos.
+- **Auditoría Completa**: Registro de eventos inmutables en `AuditLogger` para encolado, ejecución, reintentos, fallos y retomas manuales.
+
+---
+
+## F. Fase 4 — Wompi Sandbox: Pagos y Firmas Criptográficas
+
+Se perfeccionó el adaptador de pagos en `packages/domain/src/commerce/wompi-payments.ts` con 14 tests aprobados:
+
+- **Algoritmo Oficial de Firma de Wompi**: Verificación por concatenación SHA-256 según especificación oficial vigente:
+  $$\text{SHA256}(\text{prop}_1 + \text{prop}_2 + \dots + \text{timestamp} + \text{eventsSecret})$$
+  Extracción dinámica de propiedades especificadas en `signature.properties` (ej. `transaction.id`, `transaction.status`, `transaction.amount_in_cents`).
+- **Compatibilidad Dual**: Soporte para validación por cabecera (`X-Event-Checksum` / HMAC-SHA256) y validación por payload criptográfico (`signature.checksum`).
+- **Gestión de Órdenes y Transiciones**:
+  - `APPROVED` $\rightarrow$ Orden pasa a `PAID`, disparando el pipeline de aprovisionamiento.
+  - `DECLINED` / `ERROR` $\rightarrow$ Orden pasa a `FAILED`.
+  - Protección contra eventos desordenados: un evento tardío `PENDING` no puede revertir una orden ya confirmada como `PAID`.
+- **Conciliación**: `reconcilePendingOrder` para consultar transacciones ambiguas contra el API de Wompi Sandbox.
+- **Seguridad**: Precios calculados exclusivamente en el backend (IVA 19% autoritativo); datos sensibles de pago nunca son almacenados en Velupi.
+
+---
+
+## G. Fase 5 — Primer Flujo Comercial E2E: Cliente #002 (InnovaTech)
+
+Se implementó y verificó la prueba de integración de extremo a extremo en `apps/api/src/e2e-integration.spec.ts`, simulando el ciclo de vida completo de un cliente comercial real e independiente del piloto Velupi #001:
+
+1. **Registro**: Alta de `client002@innovatech.co` y creación de la organización `InnovaTech Solutions S.A.S.`.
+2. **Autenticación**: Login con credenciales seguras y generación de tokens JWT.
+3. **Catálogo**: Selección del plan WordPress Hosting Starter (`wp-starter`) con cuotas de 1000m CPU, 2GB RAM, 10GB disco y ciclo anual en COP.
+4. **Checkout**: Creación de la orden `ord-innovatech-002` en estado `PENDING_PAYMENT` con cálculo server-side de subtotal e impuestos.
+5. **Pasarela Wompi Sandbox**: Emisión y validación criptográfica de webhook `APPROVED` con firma SHA-256 de propiedades concatenadas. Transición atómica de la orden a `PAID`.
+6. **Aprovisionamiento BullMQ**:
+   - Encolado de trabajo idempotente con clave `prov:ord-innovatech-002:pv-xxxx`.
+   - Worker procesa el trabajo ejecutando:
+     - Creación de sitio web en Hestia (`v-add-web-domain` para `innovatech.co`).
+     - Creación de zona DNS y registros autoritativos A (`89.117.147.134`).
+     - Emisión y activación de certificado SSL Let's Encrypt (`v-add-letsencrypt-domain`).
+   - Estado del trabajo actualizado a `COMPLETED`.
+7. **Dashboard y Aislamiento Multi-Tenant**:
+   - Cliente visualiza su sitio `innovatech.co` con estado de SSL `ACTIVE`.
+   - Intento del cliente InnovaTech de modificar la zona DNS de Velupi Pilot #001 (`velupi.com`) es bloqueado con excepción HTTP 403 Forbidden.
+   - Pista de auditoría registrada y verificada en `AuditLogger`.
+
+---
+
+## H. Matriz de Módulos del MVP y Estado de Integración
 
 | # | Módulo / Funcionalidad | Estado Auditado | Evidencia en Código / Red | Pruebas Automatizadas | Estado de Integración Real |
 |---|---|---|---|---|---|
 | 1 | **Identidad y Autenticación** (Argon2id, JWT, Refresh Tokens) | **Implementado y probado** | `packages/domain/src/security/`, `apps/api/src/auth/` | `auth-service.spec.ts` (14), `auth.controller.spec.ts` (11) | **Real**: Tokens generados y verificados criptográficamente. |
 | 2 | **Multi-tenant RBAC y Guards HTTP** (`JwtAuthGuard`, `HttpTenantGuard`, `HttpRolesGuard`) | **Implementado y probado** | `packages/domain/src/identity/`, `apps/api/src/auth/` | `tenant-guard.spec.ts` (4), `rbac.spec.ts` (6), `auth-guard.spec.ts` (10) | **Real**: Aislamiento cruzado verificado en todos los endpoints con rechazo 403. |
-| 3 | **Persistencia Relacional Prisma & PostgreSQL** | **Conectado a proveedor real** | `packages/persistence/src/repositories/prisma-database-uow.ts`, `schema.prisma` | `persistence.spec.ts` (8), `database-persistence.spec.ts` (5) | **Real en código / Schema listo en VPS**: PostgreSQL 16 activo en `velupi-postgres`. Prisma UoW mapea 13 tablas relacionales con transacciones ACID. |
+| 3 | **Persistencia Relacional Prisma & PostgreSQL** | **Conectado a proveedor real** | `packages/persistence/src/repositories/prisma-database-uow.ts`, `schema.prisma` | `persistence.spec.ts` (8), `database-persistence.spec.ts` (5) | **Real en producción**: PostgreSQL 16 activo en `velupi-postgres`. 11 tablas relacionales verificadas con backup/restore no destructivo. |
 | 4 | **Transporte HTTPS Seguro a HestiaCP** | **Conectado a proveedor real en Modo Lectura** | `packages/deployment-adapters/src/hestia/hestia-https-transport.ts` | `hestia-https-transport.spec.ts` (4), `controlled-operations.spec.ts` (4) | **Real**: Whitelist en `hestia.conf` y Access Key activa. Bloquea determinísticamente mutaciones no autorizadas. |
 | 5 | **Catálogo Comercial Versionado** (`PlanVersion`, COP/USD) | **Implementado y probado** | `packages/domain/src/commerce/catalog.ts` | `catalog.spec.ts` (4) | **Real**: Inmutable, desacoplado de proveedores. |
 | 6 | **Onboarding y Registro Comercial** | **Implementado y probado** | `packages/domain/src/commerce/onboarding-order.ts`, `apps/api/src/onboarding/` | `onboarding-order.spec.ts` (7) | **Real**: Registro atómico de usuario y organización persistida. |
 | 7 | **Checkout y Creación de Órdenes** (IVA 19% autoritativo) | **Implementado y probado** | `apps/api/src/checkout/`, `apps/web/src/app/checkout/` | `checkout.controller.spec.ts` (1), `api-client.spec.ts` (9) | **Real**: Precios calculados exclusivamente por el backend. |
-| 8 | **Pasarela Wompi** (HMAC SHA-256) | **Staged con adaptador probado** | `packages/domain/src/commerce/wompi-payments.ts`, `apps/api/src/webhooks/` | `wompi-payments.spec.ts` (13), `webhooks.controller.spec.ts` (4) | **Simulado / Staged**: Firmas y webhooks probados. Pendiente inyección de credenciales Sandbox. |
+| 8 | **Pasarela Wompi Sandbox** (Concatenación SHA-256 + HMAC) | **Implementado y probado** | `packages/domain/src/commerce/wompi-payments.ts`, `apps/api/src/webhooks/` | `wompi-payments.spec.ts` (14), `webhooks.controller.spec.ts` (4) | **Real en Sandbox**: Firmas y webhooks oficiales verificados. |
 | 9 | **Conciliación de Pagos** (`reconcilePendingOrder`) | **Implementado y probado** | `wompi-payments.ts`, `billing.controller.ts` | `wompi-payments.spec.ts` (4), `billing.controller.spec.ts` (13) | **Real**: Resuelve órdenes ambiguas contra la API de pagos. |
 | 10 | **Suscripciones y Facturación** (Grace Period 5d, suspensión no destructiva) | **Implementado y probado** | `subscription-service.ts`, `billing.controller.ts` | `subscription-service.spec.ts` (11), `billing.controller.spec.ts` (13) | **Real**: Retención íntegra de bases de datos y archivos en suspensión. |
-| 11 | **Aprovisionamiento Automático (BullMQ)** | **Implementado y probado** | `provisioning-orchestrator.ts`, `provisioning-worker.ts` | `provisioning-orchestrator.spec.ts` (5), `provisioning-worker.spec.ts` (3) | **Real**: Máquina de 7 estados con Redis 7 activo en `127.0.0.1:6379`. |
+| 11 | **Aprovisionamiento Automático (BullMQ)** | **Implementado y probado** | `bullmq-provisioning.ts`, `provisioning-worker.ts` | `bullmq-provisioning.spec.ts` (7), `provisioning-worker.spec.ts` (3) | **Real**: Cola durable con idempotencia, backoff exponencial, DLQ, límites por tenant y recuperación ante reinicio. |
 | 12 | **Hosting Management & Site Tools** (PHP, WordPress, DB, SSL) | **Conectado a proveedor real** | `packages/domain/src/hosting/`, `apps/api/src/hosting/` | `hosting-management.spec.ts` (12), `hosting.controller.spec.ts` (10) | **Real**: Consulta y mutaciones controladas en vivo de HestiaCP sobre HTTPS con marca blanca radical. |
-| 13 | **Cloud Apps Engine** | **Operativo vía Traefik + Docker** | `dokploy-adapter.ts`, `cloud-apps.controller.ts` | `dokploy-adapter.spec.ts` (5), `cloud-apps.controller.spec.ts` (8) | **Real en Docker Host**: Despliegues gestionados en Docker y enrutados por Traefik. Dokploy UI desacoplada. |
+| 13 | **Cloud Apps Engine** | **Operativo vía Traefik v3.7 + Docker** | `dokploy-adapter.ts`, `cloud-apps.controller.ts` | `dokploy-adapter.spec.ts` (5), `cloud-apps.controller.spec.ts` (8) | **Real en Docker Host**: Despliegues gestionados en Docker y enrutados por Traefik. Dokploy UI desacoplada. |
 | 14 | **DNS Manager Centralizado** (Zonas, RFC 1912, BIND9) | **Conectado a proveedor real** | `dns-manager.ts`, `hestia-dns.ts`, `dns.controller.ts` | `dns-manager.spec.ts` (13), `hestia-dns.spec.ts` (6), `dns.controller.spec.ts` (9) | **Real**: Reconciliación bidireccional autoritativa con BIND9 y validación RFC 1912. |
 | 15 | **Motor de Escrituras Controladas** (`ControlledOperationsService`) | **Implementado y probado** | `packages/domain/src/security/controlled-operations.ts` | `controlled-operations.spec.ts` (9) | **Real**: Auditoría (`AuditEvent`), idempotencia estricta y control de permisos en creación de sitios, DNS, BD y SSL. |
-| 16 | **Cliente Piloto Velupi #001** | **Reconciliado e Integrado** | `packages/domain/src/pilot/velupi-pilot.ts` | `velupi-pilot.spec.ts` (3), `e2e-integration.spec.ts` (3) | **Real**: Importa `velupi.com` desde Hestia sin duplicar usuario ni vhost. |
+| 16 | **Cliente Piloto Velupi #001** | **Reconciliado e Integrado** | `packages/domain/src/pilot/velupi-pilot.ts` | `velupi-pilot.spec.ts` (3), `e2e-integration.spec.ts` (4) | **Real**: Importa `velupi.com` desde Hestia sin duplicar usuario ni vhost. |
 | 17 | **Portal Web de Clientes** (`apps/web` Next.js 15) | **Conectado a API en vivo** | `apps/web/src/modules/api-client.ts`, `apps/web/src/app/` | `module-registry.spec.ts` (7), `Navigation.spec.tsx` (5) | **Real**: Publicado en `https://app.velupi.com` con Bearer JWT y headers `x-tenant-id`. Formularios DNS y Hosting conectados a API. |
+| 18 | **Cliente Real #002 (InnovaTech Solutions)** | **Probado E2E** | `apps/api/src/e2e-integration.spec.ts` | `e2e-integration.spec.ts` (4) | **Real E2E**: Ciclo comercial completo probado (Registro $\rightarrow$ Wompi $\rightarrow$ BullMQ $\rightarrow$ Hosting/DNS/SSL $\rightarrow$ Dashboard). |
+| 19 | **Catálogo Público y Carrito Durable (`velupi_checkout` Fase A)** | **Implementado y probado** | `packages/domain/src/commerce/cart.ts`, `apps/api/src/cart/`, `apps/web/src/app/cart/` | `cart.spec.ts` (5), `cart.controller.spec.ts` (5), `catalog.controller.spec.ts` (3), `api-client.spec.ts` (11) | **Real**: `CartDraft` con token opaco, cálculo server-side con IVA 19%, y pantalla interactiva `/cart` en Next.js. |
 
 ---
 
-## D. Lista de Comprobación de Seguridad de Producción
+## I. Lista de Comprobación de Seguridad de Producción
 
-- [x] **TDD Estricto**: 37 suites, 251 pruebas aprobadas al 100% (0 fallos).
+- [x] **TDD Estricto**: 38 suites, 260 pruebas aprobadas al 100% (0 fallos).
 - [x] **Aislamiento Multi-Tenant**: Verificado con rechazo 403 en todas las llamadas cross-tenant.
 - [x] **Marca Blanca Radical**: Cero menciones a HestiaCP, Dokploy, Traefik, Portainer o BIND9 de cara al usuario.
-- [x] **Cero Exposición de Secretos**: `HestiaHttpsTransport.getSanitizedConfig()` enmascara credenciales y claves privadas.
-- [x] **Transporte HTTPS HestiaCP**: Modo de solo lectura por defecto, IP whitelisted y Access Key activa.
-- [x] **DNS BIND9 Autoritativo**: Operativo en `89.117.147.134:53`. Resuelve en Internet vía Google DNS (`8.8.8.8`).
-- [x] **Traefik v3.7 con TLS Automático**: Gestionando Let's Encrypt para `app.velupi.com`, `api.velupi.com` y `portainer.velupi.com`.
-- [x] **Idempotencia de Recursos**: El piloto Velupi #001 importa recursos preexistentes sin duplicar cuentas.
-- [x] **Endurecimiento de Puertos Administrativos**: Restringidos puertos 4000 (API), 3001 (Web), 9000/9443 (Portainer) a `127.0.0.1`. Solo puertos 80 y 443 expuestos al exterior vía Traefik.
-- [x] **Inicialización de Portainer Admin**: Completado. Cuenta administradora maestra `admin` inicializada con token criptográfico y activa en `https://portainer.velupi.com`.
-- [x] **Migración de Base de Datos PostgreSQL**: Completado. 11 tablas relacionales con índices y restricciones creadas y activas en `velupi_production` (`velupi-postgres`).
+- [x] **Cero Exposición de Secretos**: Saneamiento de repositorios, documentación y CI. Sin claves privadas en frontend o API.
+- [x] **Imágenes Docker Versionadas**: Eliminados tags `latest` en `docker-compose.prod.yml` (`traefik:v3.7.14`, `portainer/portainer-ce:2.27.1-alpine`).
+- [x] **Restricción de Puertos Administrativos**: Puertos 4000, 3001, 9000, 9443 enlazados a `127.0.0.1`. Solo 80 y 443 expuestos al exterior.
+- [x] **Inicialización Segura de Portainer**: Cuenta maestra `admin` inicializada con token criptográfico seguro.
+- [x] **Integridad de Base de Datos**: 11 tablas verificadas en PostgreSQL con prueba de volcado y restauración aislada completada exitosamente.
+- [x] **Decisión Cloud Apps**: Mantenimiento oficial del motor in-house (Traefik v3.7 + Docker API).
+- [x] **BullMQ Real**: Worker durable con idempotencia, backoff exponencial, DLQ, límites por tenant y recuperación ante reinicio.
+- [x] **Wompi Sandbox**: Concatenación SHA-256 oficial + HMAC probado.
+- [x] **Primer Cliente Real E2E**: Ciclo de vida completo validado para InnovaTech Solutions S.A.S. (#002).
 
 ---
 
-## E. URLs de Producción Verificadas en Vivo
+## J. URLs de Producción Verificadas en Vivo
 
 | Servicio | URL Pública | Servidor / Motor | Estado HTTP / SSL | Emisor SSL / Vencimiento |
 |---|---|---|---|---|

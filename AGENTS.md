@@ -4,7 +4,7 @@
 >
 > ⚠️ **REGLA MANDATORIA DE DESPLIEGUE Y OPERACIÓN (PROHIBIDO TRABAJAR EN LOCAL / WSL):**
 > - **Prohibido trabajar o desplegar en local/WSL**: No levantar servicios residentes, bases de datos ni entornos de ejecución en máquinas locales ni WSL.
-> - **Entorno de ejecución exclusivo en VPS**: Toda la infraestructura en vivo y servicios corren exclusivamente en el VPS `169.58.220.244` (SSH `root` / `Elian20200916`).
+> - **Entorno de ejecución exclusivo en VPS**: Toda la infraestructura en vivo y servicios corren exclusivamente en el VPS `169.58.220.244` (SSH `root` / `[REDACTED_SSH_SECRET]`).
 > - **Flujo de trabajo obligatorio**: **Codificas → Haces push a `main` → Esperas el deploy por el Action de GitHub**, el cual compila las imágenes Docker en GitHub, las publica en GHCR, las descarga por SSH al nuevo VPS y monta/actualiza los contenedores en Docker.
 
 ---

@@ -101,6 +101,37 @@ describe('Epic COM-04 & COM-05 - Wompi Payments & Webhook Processing', () => {
       expect(isInvalid).toBe(false);
     });
 
+    it('verifies official Wompi properties concatenation SHA-256 signature from payload', () => {
+      const timestamp = 1776080000;
+      const trxId = 'trx-official-123';
+      const status = 'APPROVED';
+      const amount = 3570000;
+      const concatenated = `${trxId}${status}${amount}${timestamp}${eventsSecret}`;
+      const crypto = require('node:crypto');
+      const checksum = crypto.createHash('sha256').update(concatenated).digest('hex');
+
+      const payload = {
+        event: 'transaction.updated',
+        data: {
+          transaction: {
+            id: trxId,
+            reference: 'ord-1001',
+            status: status,
+            amount_in_cents: amount,
+            currency: 'COP',
+          },
+        },
+        timestamp,
+        signature: {
+          properties: ['transaction.id', 'transaction.status', 'transaction.amount_in_cents'],
+          checksum,
+        },
+      };
+
+      const isValid = adapter.verifyWebhookSignature(payload, {});
+      expect(isValid).toBe(true);
+    });
+
     it('parses Wompi transaction payloads into WebhookPaymentEvent', () => {
       const payload = {
         event: 'transaction.updated',

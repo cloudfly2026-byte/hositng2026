@@ -83,7 +83,13 @@ export function Navbar() {
           <Button component={Link} href="/services/apps" color="inherit" sx={{ color: '#d1d5db' }}>
             Cloud Apps (Docker)
           </Button>
-          <Button component={Link} href="/checkout" variant="contained" color="primary">
+          <Button component={Link} href="/cart" color="inherit" sx={{ color: '#d1d5db' }}>
+            Carrito
+          </Button>
+          <Button component={Link} href="/login" color="inherit" sx={{ color: '#d1d5db' }}>
+            Acceder
+          </Button>
+          <Button component={Link} href="/cart" variant="contained" color="primary">
             Contratar Plan
           </Button>
         </Box>

@@ -15,3 +15,6 @@ export * from './commerce/provisioning-worker';
 export * from './pilot/velupi-pilot';
 export * from './commerce/subscription-service';
 export * from './security/controlled-operations';
+export * from './commerce/bullmq-provisioning';
+export * from './commerce/cart';
+export * from './security/oauth-service';

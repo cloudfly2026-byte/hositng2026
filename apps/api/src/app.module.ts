@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { HealthController } from './health/health.controller';
 import { CatalogController } from './catalog/catalog.controller';
+import { CartController } from './cart/cart.controller';
 import { OnboardingController } from './onboarding/onboarding.controller';
 import { CheckoutController } from './checkout/checkout.controller';
 import { WebhooksController } from './webhooks/webhooks.controller';
@@ -11,8 +12,10 @@ import { CloudAppsController } from './cloud-apps/cloud-apps.controller';
 import { ProvisioningController } from './provisioning/provisioning.controller';
 import { BillingController } from './billing/billing.controller';
 import { DashboardController } from './dashboard/dashboard.controller';
+import { OrdersController } from './orders/orders.controller';
 import {
   ProductCatalogService,
+  CartService,
   OnboardingService,
   OrderService,
   WompiPaymentAdapter,
@@ -20,6 +23,7 @@ import {
   ProvisioningOrchestrator,
   Order,
   AuthenticationService,
+  OAuthService,
   Argon2PasswordHasher,
   JwtSecurityService,
   HostingManagementService,
@@ -41,6 +45,7 @@ import { PrismaUnitOfWork, PrismaDatabaseUnitOfWork } from '@cloudfly/persistenc
   controllers: [
     HealthController,
     CatalogController,
+    CartController,
     OnboardingController,
     CheckoutController,
     WebhooksController,
@@ -51,6 +56,7 @@ import { PrismaUnitOfWork, PrismaDatabaseUnitOfWork } from '@cloudfly/persistenc
     ProvisioningController,
     BillingController,
     DashboardController,
+    OrdersController,
   ],
   providers: [
     {
@@ -107,8 +113,28 @@ import { PrismaUnitOfWork, PrismaDatabaseUnitOfWork } from '@cloudfly/persistenc
       inject: [Argon2PasswordHasher, JwtSecurityService, 'IUnitOfWork'],
     },
     {
+      provide: OAuthService,
+      useFactory: (authService: AuthenticationService) =>
+        new OAuthService(authService, {
+          googleClientId: process.env.GOOGLE_CLIENT_ID,
+          googleRedirectUri: process.env.GOOGLE_REDIRECT_URI,
+          githubClientId: process.env.GITHUB_CLIENT_ID,
+          githubRedirectUri: process.env.GITHUB_REDIRECT_URI,
+        }),
+      inject: [AuthenticationService],
+    },
+    {
       provide: ProductCatalogService,
-      useFactory: () => new ProductCatalogService(),
+      useFactory: () => {
+        const catalog = new ProductCatalogService();
+        catalog.initializeStandardCatalog();
+        return catalog;
+      },
+    },
+    {
+      provide: CartService,
+      useFactory: (catalog: ProductCatalogService) => new CartService(catalog),
+      inject: [ProductCatalogService],
     },
     {
       provide: OnboardingService,
