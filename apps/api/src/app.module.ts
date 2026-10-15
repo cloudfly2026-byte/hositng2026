@@ -73,16 +73,9 @@ import { PrismaUnitOfWork, PrismaDatabaseUnitOfWork } from '@cloudfly/persistenc
       provide: HostingManagementService,
       useFactory: () => {
         if (process.env.HESTIA_HOST && process.env.HESTIA_API_USER) {
-          const httpsTransport = new HestiaHttpsTransport({
-            host: process.env.HESTIA_HOST,
-            port: Number(process.env.HESTIA_PORT || 8083),
-            user: process.env.HESTIA_API_USER,
-            accessKey: process.env.HESTIA_ACCESS_KEY,
-            secretKey: process.env.HESTIA_SECRET_KEY,
-            password: process.env.HESTIA_PASSWORD,
-            readOnly: process.env.HESTIA_READ_ONLY !== 'false', // Default strictly READ-ONLY
-            rejectUnauthorized: process.env.HESTIA_ALLOW_SELF_SIGNED !== 'true',
-          });
+          const httpsTransport = HestiaHttpsTransport.fromSecretStore(
+            (key) => process.env[key]
+          );
           return new HostingManagementService(httpsTransport);
         }
         const transport = {

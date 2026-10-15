@@ -31,12 +31,14 @@ export class DatabaseUserRepository implements IUserRepository {
         email: user.email.toLowerCase().trim(),
         fullName: user.fullName,
         emailVerified: user.emailVerified,
+        passwordHash: user.passwordHash,
         createdAt: user.createdAt,
       },
       update: {
         email: user.email.toLowerCase().trim(),
         fullName: user.fullName,
         emailVerified: user.emailVerified,
+        passwordHash: user.passwordHash,
       },
     });
   }
@@ -49,6 +51,7 @@ export class DatabaseUserRepository implements IUserRepository {
       email: record.email,
       fullName: record.fullName,
       emailVerified: record.emailVerified,
+      passwordHash: record.passwordHash || undefined,
       createdAt: record.createdAt,
     };
   }
@@ -63,6 +66,7 @@ export class DatabaseUserRepository implements IUserRepository {
       email: record.email,
       fullName: record.fullName,
       emailVerified: record.emailVerified,
+      passwordHash: record.passwordHash || undefined,
       createdAt: record.createdAt,
     };
   }

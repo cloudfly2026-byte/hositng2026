@@ -10,6 +10,9 @@ import {
   Project,
   Service,
   InfrastructureMode,
+  AuthenticationService,
+  Argon2PasswordHasher,
+  JwtSecurityService,
 } from '@cloudfly/domain';
 import { PrismaDatabaseUnitOfWork } from './repositories/prisma-database-uow';
 
@@ -223,6 +226,80 @@ describe('PrismaDatabaseUnitOfWork (Relational PostgreSQL Adapter)', () => {
 
       expect(mockPrisma.$transaction).toHaveBeenCalled();
       expect(result).toBe('transaction-committed');
+    });
+
+    it('restores authentication session after API restart from persistent PostgreSQL database', async () => {
+      const passwordHasher = new Argon2PasswordHasher();
+      const jwtService = new JwtSecurityService('test-secret');
+      const authServiceBeforeRestart = new AuthenticationService(passwordHasher, jwtService, uow);
+
+      // 1. User registers before restart
+      const regResult = await authServiceBeforeRestart.register({
+        email: 'restart-test@velupi.com',
+        password: 'PersistentPassword2026!',
+        fullName: 'Persistent User',
+        organizationName: 'Persistent Org',
+      });
+
+      expect(mockPrisma.user.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({
+            email: 'restart-test@velupi.com',
+            passwordHash: expect.any(String),
+          }),
+        })
+      );
+
+      // Simulate database holding this user and organization
+      const capturedHash = mockPrisma.user.upsert.mock.calls.find(
+        (c: any) => c[0].create?.email === 'restart-test@velupi.com'
+      )[0].create.passwordHash;
+
+      mockPrisma.user.findUnique.mockImplementation(({ where }: any) => {
+        if (where.email === 'restart-test@velupi.com') {
+          return Promise.resolve({
+            id: regResult.user.id,
+            email: 'restart-test@velupi.com',
+            fullName: 'Persistent User',
+            emailVerified: true,
+            passwordHash: capturedHash,
+            createdAt: new Date(),
+          });
+        }
+        return Promise.resolve(null);
+      });
+
+      mockPrisma.organization.findMany.mockResolvedValue([
+        {
+          id: regResult.organization.id,
+          name: 'Persistent Org',
+          slug: 'persistent-org',
+          ownerUserId: regResult.user.id,
+          isInternalPilot: false,
+          createdAt: new Date(),
+        },
+      ]);
+
+      mockPrisma.membership.findFirst.mockResolvedValue({
+        id: 'mem-1',
+        userId: regResult.user.id,
+        organizationId: regResult.organization.id,
+        role: 'OWNER',
+        createdAt: new Date(),
+      });
+
+      // 2. Simulate API restart (new AuthenticationService with empty in-memory state, but same DB UoW)
+      const authServiceAfterRestart = new AuthenticationService(passwordHasher, jwtService, uow);
+
+      // 3. User attempts login on restarted instance
+      const loginResult = await authServiceAfterRestart.login({
+        email: 'restart-test@velupi.com',
+        password: 'PersistentPassword2026!',
+      });
+
+      expect(loginResult.user.email).toBe('restart-test@velupi.com');
+      expect(loginResult.organization.id).toBe(regResult.organization.id);
+      expect(loginResult.tokens.accessToken).toBeDefined();
     });
   });
 });

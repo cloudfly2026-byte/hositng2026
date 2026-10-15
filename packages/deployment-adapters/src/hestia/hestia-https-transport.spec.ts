@@ -70,4 +70,27 @@ describe('HestiaHttpsTransport (Secure HTTPS Read-Only Transport)', () => {
     expect(HESTIA_READ_ONLY_COMMANDS.has('v-list-sys-info')).toBe(true);
     expect(HESTIA_READ_ONLY_COMMANDS.has('v-add-web-domain')).toBe(false);
   });
+
+  it('securely loads configuration from secret store and masks secrets in sanitized config', () => {
+    const mockSecrets: Record<string, string> = {
+      HESTIA_HOST: '89.117.147.134',
+      HESTIA_API_USER: 'ro_operator',
+      HESTIA_ACCESS_KEY: 'ak_restricted_123',
+      HESTIA_SECRET_KEY: 'sk_ultra_secret_456',
+    };
+
+    const transport = HestiaHttpsTransport.fromSecretStore((k) => mockSecrets[k]);
+
+    expect(transport.isReadOnly).toBe(true);
+    expect(transport.isTlsVerificationEnforced).toBe(true);
+
+    const sanitized = transport.getSanitizedConfig();
+    expect(sanitized.host).toBe('89.117.147.134');
+    expect(sanitized.user).toBe('ro_operator');
+    expect(sanitized.hasAccessKey).toBe(true);
+    expect(sanitized.hasSecretKey).toBe(true);
+    // Raw secret must not be exposed in sanitized object
+    expect((sanitized as any).secretKey).toBeUndefined();
+    expect((sanitized as any).password).toBeUndefined();
+  });
 });

@@ -6,6 +6,7 @@ export interface CustomerUser {
   email: string;
   fullName: string;
   emailVerified: boolean;
+  passwordHash?: string;
   createdAt: Date;
 }
 

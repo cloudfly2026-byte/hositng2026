@@ -135,6 +135,7 @@ export class AuthenticationService {
         email: user.email,
         fullName: user.fullName,
         emailVerified: user.emailVerified,
+        passwordHash: user.passwordHash,
         createdAt: user.createdAt,
       });
       await this.uow.organizations.save(organization);
@@ -156,9 +157,30 @@ export class AuthenticationService {
 
   async login(input: LoginInput): Promise<AuthResult> {
     const normalizedEmail = input.email.toLowerCase().trim();
-    const user = Array.from(this.users.values()).find(
+    let user = Array.from(this.users.values()).find(
       (u) => u.email.toLowerCase() === normalizedEmail
     );
+
+    if (!user && this.uow) {
+      const persistedUser = await this.uow.users.findByEmail(normalizedEmail);
+      if (persistedUser && persistedUser.passwordHash) {
+        user = {
+          ...persistedUser,
+          passwordHash: persistedUser.passwordHash,
+          isOperator: false,
+        };
+        this.users.set(user.id, user);
+
+        const orgs = await this.uow.organizations.listByUser(user.id);
+        for (const org of orgs) {
+          this.organizations.set(org.id, org);
+          const mem = await this.uow.memberships.findByUserAndOrg(user.id, org.id);
+          if (mem) {
+            this.memberships.set(mem.id, mem);
+          }
+        }
+      }
+    }
 
     if (!user) {
       throw new InvalidCredentialsError();

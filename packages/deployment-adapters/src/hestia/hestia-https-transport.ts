@@ -65,6 +65,47 @@ export class HestiaHttpsTransport implements HestiaTransport {
     this.timeoutMs = config.timeoutMs ?? 10000;
   }
 
+  static fromSecretStore(
+    getSecret: (key: string) => string | undefined,
+    overrides?: Partial<HestiaHttpsConfig>
+  ): HestiaHttpsTransport {
+    const host = overrides?.host || getSecret('HESTIA_HOST') || '89.117.147.134';
+    const user = overrides?.user || getSecret('HESTIA_API_USER') || 'api_ro_user';
+    const accessKey = overrides?.accessKey || getSecret('HESTIA_ACCESS_KEY');
+    const secretKey = overrides?.secretKey || getSecret('HESTIA_SECRET_KEY');
+    const password = overrides?.password || getSecret('HESTIA_PASSWORD');
+    const port = overrides?.port ?? Number(getSecret('HESTIA_PORT') || 8083);
+    const readOnly = overrides?.readOnly ?? (getSecret('HESTIA_READ_ONLY') !== 'false');
+    const rejectUnauthorized = overrides?.rejectUnauthorized ?? (getSecret('HESTIA_ALLOW_SELF_SIGNED') !== 'true');
+    const timeoutMs = overrides?.timeoutMs ?? Number(getSecret('HESTIA_TIMEOUT_MS') || 10000);
+
+    return new HestiaHttpsTransport({
+      host,
+      port,
+      user,
+      accessKey,
+      secretKey,
+      password,
+      readOnly,
+      rejectUnauthorized,
+      timeoutMs,
+    });
+  }
+
+  getSanitizedConfig(): Record<string, any> {
+    return {
+      host: this.host,
+      port: this.port,
+      user: this.user,
+      hasAccessKey: Boolean(this.accessKey),
+      hasSecretKey: Boolean(this.secretKey),
+      hasPassword: Boolean(this.password),
+      readOnly: this.readOnly,
+      rejectUnauthorized: this.rejectUnauthorized,
+      timeoutMs: this.timeoutMs,
+    };
+  }
+
   get isReadOnly(): boolean {
     return this.readOnly;
   }
