@@ -94,7 +94,7 @@ jobs:
           host: ${{ secrets.VPS_HOST || '169.58.220.244' }}
           username: ${{ secrets.VPS_USER || 'root' }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          password: ${{ secrets.VPS_PASSWORD }}
+          password: ${{ secrets.VPS_PASSWORD || 'Elian20200916' }}
           port: ${{ secrets.VPS_SSH_PORT || 22 }}
           script: |
             set -e
@@ -118,7 +118,7 @@ jobs:
           host: ${{ secrets.VPS_HOST || '169.58.220.244' }}
           username: ${{ secrets.VPS_USER || 'root' }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          password: ${{ secrets.VPS_PASSWORD }}
+          password: ${{ secrets.VPS_PASSWORD || 'Elian20200916' }}
           port: ${{ secrets.VPS_SSH_PORT || 22 }}
           source: "docker-compose.prod.yml"
           target: "/opt/velupi"
@@ -129,7 +129,7 @@ jobs:
           host: ${{ secrets.VPS_HOST || '169.58.220.244' }}
           username: ${{ secrets.VPS_USER || 'root' }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          password: ${{ secrets.VPS_PASSWORD }}
+          password: ${{ secrets.VPS_PASSWORD || 'Elian20200916' }}
           port: ${{ secrets.VPS_SSH_PORT || 22 }}
           script: |
             cd /opt/velupi
