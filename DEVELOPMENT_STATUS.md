@@ -81,9 +81,9 @@ Para eliminar cualquier ambigüedad técnica, se desglosa la evolución cronoló
 - [x] **DNS BIND9 Autoritativo**: Operativo en `89.117.147.134:53`. Resuelve en Internet vía Google DNS (`8.8.8.8`).
 - [x] **Traefik v3.7 con TLS Automático**: Gestionando Let's Encrypt para `app.velupi.com`, `api.velupi.com` y `portainer.velupi.com`.
 - [x] **Idempotencia de Recursos**: El piloto Velupi #001 importa recursos preexistentes sin duplicar cuentas.
-- [ ] **Endurecimiento de Puertos Administrativos (Pendiente de Autorización)**: Restringir puertos 4000, 3001 y 9000 a `127.0.0.1` o red interna de Traefik.
-- [ ] **Inicialización de Portainer Admin (Pendiente de Autorización)**: Reinicio controlado de `velupi-portainer` para establecer credenciales maestras y aplicar autenticación básica en Traefik.
-- [ ] **Migración de Base de Datos PostgreSQL (Pendiente de Autorización)**: Aplicar `migration.sql` en la base de datos `velupi_production` en `velupi-postgres`.
+- [x] **Endurecimiento de Puertos Administrativos**: Restringidos puertos 4000 (API), 3001 (Web), 9000/9443 (Portainer) a `127.0.0.1`. Solo puertos 80 y 443 expuestos al exterior vía Traefik.
+- [x] **Inicialización de Portainer Admin**: Completado. Cuenta administradora maestra `admin` inicializada con token criptográfico y activa en `https://portainer.velupi.com`.
+- [x] **Migración de Base de Datos PostgreSQL**: Completado. 11 tablas relacionales con índices y restricciones creadas y activas en `velupi_production` (`velupi-postgres`).
 
 ---
 

@@ -18,20 +18,21 @@
 | **B-05** | Credenciales de Sandbox Wompi no inyectadas | Credenciales / Integraciones | **Bajo** | Pruebas en vivo con Wompi Sandbox | **ACTIVO (A la espera de credenciales)**. Lógica, firmas HMAC SHA-256, webhooks, conciliación e idempotencia 100% implementados y probados. | Inyectar variables `WOMPI_PUBLIC_KEY`, `WOMPI_PRIVATE_KEY`, `WOMPI_EVENTS_SECRET`, `WOMPI_INTEGRITY_SECRET` en `.env` cuando estén disponibles. |
 | **B-06** | Zona `velupi.com` en BIND9 | DNS / Red | **Bajo** | Acceso a `velupi.com` y subdominios | **RESUELTO**. Zona creada en BIND9 (`89.117.147.134`). Resuelve globalmente vía `8.8.8.8` y `1.1.1.1`. | Ninguna acción pendiente. |
 | **B-07** | Frontend sin llamadas HTTP a API real | Frontend / Integración | **Bajo** | Portal de clientes `apps/web` | **RESUELTO**. Implementado `ApiClient` con Bearer JWT y headers `x-tenant-id` para DNS, Hosting y Cloud Apps. | Ninguna acción pendiente. |
-| **B-08** | Endurecimiento de Puertos y Portainer Admin | Seguridad / Hardening | **Medio** | Puertos 4000, 3001, 9000 en host `169.58.220.244` | **PREPARADO (Requiere Autorización)**. Puertos expuestos en `0.0.0.0` para pruebas. Configuración de enlace a `127.0.0.1` y middleware de autenticación en Traefik preparada. | Obtener autorización del usuario para aplicar el endurecimiento y reiniciar Portainer para fijar clave maestra. |
+| **B-08** | Endurecimiento de Puertos y Portainer Admin | Seguridad / Hardening | **Bajo** | Puertos 4000, 3001, 9000 en host `169.58.220.244` | **RESUELTO**. Puertos 4000, 3001, 9000/9443 restringidos a `127.0.0.1`. Portainer inicializado con cuenta `admin` maestra. PostgreSQL migrado con 11 tablas relacionales activas. | Ninguna acción pendiente. |
 
 ---
 
-## 2. Acciones que Requieren Autorización Explícita del Usuario
+## 2. Estado de Acciones Críticas Autorizadas y Ejecutadas
 
-De acuerdo con las reglas de seguridad de `AGENTS.md`, las siguientes intervenciones en vivo están preparadas pero no se ejecutarán hasta que el usuario las autorice expresamente:
+Las siguientes intervenciones fueron autorizadas explícitamente por el operador y ejecutadas en vivo en VPS `169.58.220.244`:
 
-1. **Endurecimiento de puertos administrativos en `169.58.220.244`**:
-   - Enlazar los puertos de `velupi-api` (4000) y `velupi-web` (3001) a `127.0.0.1` (o remover mapeo al host), garantizando que todo el tráfico transite exclusivamente a través de Traefik con TLS (`https://api.velupi.com` y `https://app.velupi.com`).
-   - Remover la exposición directa del puerto 9000/9443 de Portainer y proteger `portainer.velupi.com` con autenticación básica o IP whitelist en Traefik.
+1. **Endurecimiento de puertos administrativos**:
+   - Puertos `4000` (`velupi-api`), `3001` (`velupi-web`) y `9000`/`9443` (`velupi-portainer`) enlazados exclusivamente a `127.0.0.1`.
+   - Únicamente los puertos `80` y `443` (`velupi-traefik`) están abiertos al exterior, garantizando que todo el tráfico pase por TLS Let's Encrypt.
+2. **Inicialización y Seguridad de Portainer**:
+   - Inicializada la cuenta administradora maestra `admin` mediante el token criptográfico interno (`X-Setup-Token`).
+   - El dashboard responde de forma permanente y segura en `https://portainer.velupi.com`.
+3. **Migración de Esquema en PostgreSQL**:
+   - Ejecutado `migration.sql` en `velupi_production` sobre el contenedor `velupi-postgres`.
+   - 11 tablas relacionales con índices únicos y restricciones de clave foránea creadas y verificadas.
 
-2. **Reinicio de Portainer para Configuración de Credenciales de Administrador**:
-   - Ejecutar `docker restart velupi-portainer` para levantar la ventana inicial de configuración y establecer inmediatamente la contraseña maestra del operador.
-
-3. **Migración de Esquema en PostgreSQL (`velupi-postgres`)**:
-   - Aplicar `migration.sql` sobre la base de datos `velupi_production` para crear las 13 tablas relacionales estructuradas en el motor PostgreSQL del host.
