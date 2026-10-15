@@ -1,0 +1,1074 @@
+/* ==========================================================================
+   SUNCHI CLOUD & HOSTING — MAIN STYLESHEET
+   Clean, modern, responsive CSS system matching Sunchi visual identity
+   ========================================================================== */
+
+/* --- 1. RESET & BASE --- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--sunchi-font-body, 'Inter', sans-serif);
+  color: var(--sunchi-text, #344054);
+  background-color: var(--sunchi-background, #FFFFFF);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--sunchi-font-heading, 'Poppins', sans-serif);
+  color: var(--sunchi-dark, #2D1B17);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+img, svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Accessibility focus */
+:focus-visible {
+  outline: 2px solid var(--sunchi-primary, #FF6B00);
+  outline-offset: 3px;
+}
+
+/* --- 2. UTILITIES & CONTAINER --- */
+.sunchi-container {
+  width: 100%;
+  max-width: var(--sunchi-max-width, 1240px);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.sunchi-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background-color: var(--sunchi-cream, #FFF8ED);
+  border: 1px solid var(--sunchi-border, #F2E8DC);
+  border-radius: var(--sunchi-radius-pill, 9999px);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--sunchi-primary-dark, #E85A00);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sunchi-pill-badge svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Buttons */
+.sunchi-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: var(--sunchi-radius-pill, 9999px);
+  cursor: pointer;
+  border: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.sunchi-btn-primary {
+  background: linear-gradient(135deg, var(--sunchi-primary, #FF6B00) 0%, var(--sunchi-primary-dark, #E85A00) 100%);
+  color: #FFFFFF;
+  box-shadow: var(--sunchi-shadow-orange, 0 10px 25px rgba(255, 107, 0, 0.25));
+}
+
+.sunchi-btn-primary:hover {
+  background: linear-gradient(135deg, var(--sunchi-primary-dark, #E85A00) 0%, #D04E00 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(255, 107, 0, 0.35);
+}
+
+.sunchi-btn-secondary {
+  background-color: #FFFFFF;
+  color: var(--sunchi-dark, #2D1B17);
+  border: 1px solid var(--sunchi-border, #F2E8DC);
+  box-shadow: var(--sunchi-shadow-sm);
+}
+
+.sunchi-btn-secondary:hover {
+  background-color: var(--sunchi-cream, #FFF8ED);
+  border-color: var(--sunchi-yellow, #FFB800);
+  transform: translateY(-2px);
+}
+
+.sunchi-btn-full {
+  width: 100%;
+}
+
+/* --- 3. HEADER & NAVIGATION --- */
+.sunchi-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(242, 232, 220, 0.7);
+  transition: all 0.3s ease;
+}
+
+.sunchi-nav-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 80px;
+}
+
+.sunchi-logo-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sunchi-logo-img {
+  height: 42px;
+  width: auto;
+  object-fit: contain;
+}
+
+.sunchi-nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  list-style: none;
+}
+
+.sunchi-nav-link {
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: var(--sunchi-dark, #2D1B17);
+  position: relative;
+  padding: 6px 0;
+}
+
+.sunchi-nav-link:hover, .sunchi-nav-link.active {
+  color: var(--sunchi-primary, #FF6B00);
+}
+
+.sunchi-nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background-color: var(--sunchi-primary, #FF6B00);
+  transition: width 0.2s ease;
+}
+
+.sunchi-nav-link:hover::after, .sunchi-nav-link.active::after {
+  width: 100%;
+}
+
+.sunchi-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.sunchi-search-btn {
+  background: none;
+  border: none;
+  color: var(--sunchi-dark, #2D1B17);
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.sunchi-search-btn:hover {
+  background-color: var(--sunchi-cream, #FFF8ED);
+  color: var(--sunchi-primary, #FF6B00);
+}
+
+.sunchi-link-login {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--sunchi-dark, #2D1B17);
+  padding: 8px 12px;
+}
+
+.sunchi-link-login:hover {
+  color: var(--sunchi-primary, #FF6B00);
+}
+
+/* Mobile Toggle */
+.sunchi-mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  color: var(--sunchi-dark, #2D1B17);
+}
+
+.sunchi-mobile-drawer {
+  display: none;
+}
+
+/* --- 4. HERO SECTION --- */
+.sunchi-hero {
+  position: relative;
+  padding: 60px 0 80px 0;
+  background: radial-gradient(circle at 85% 15%, rgba(255, 213, 74, 0.35) 0%, rgba(255, 248, 237, 0.4) 35%, #FFFFFF 70%);
+  overflow: hidden;
+}
+
+.sunchi-hero-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  align-items: center;
+  gap: 48px;
+}
+
+.sunchi-hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sunchi-hero-title {
+  font-size: 3.5rem;
+  letter-spacing: -1px;
+  color: var(--sunchi-dark, #2D1B17);
+  line-height: 1.15;
+}
+
+.sunchi-hero-title span {
+  color: var(--sunchi-primary, #FF6B00);
+  position: relative;
+  display: inline-block;
+}
+
+.sunchi-hero-desc {
+  font-size: 1.15rem;
+  color: var(--sunchi-text-muted, #667085);
+  max-width: 540px;
+  line-height: 1.6;
+}
+
+.sunchi-hero-buttons {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.sunchi-trust-indicators {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  margin-top: 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--sunchi-border, #F2E8DC);
+}
+
+.sunchi-trust-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--sunchi-text, #344054);
+}
+
+.sunchi-trust-item svg {
+  color: var(--sunchi-yellow, #FFB800);
+  width: 18px;
+  height: 18px;
+}
+
+/* Hero Graphic / 3D Composition */
+.sunchi-hero-visual {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sunchi-sun-illustration {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  border-radius: var(--sunchi-radius-lg);
+  padding: 24px;
+}
+
+.sunchi-sun-character {
+  width: 240px;
+  margin: 0 auto;
+  filter: drop-shadow(0 20px 30px rgba(255, 184, 0, 0.35));
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.sunchi-browser-mockup {
+  background: #FFFFFF;
+  border: 1px solid var(--sunchi-border, #F2E8DC);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: var(--sunchi-shadow-lg);
+  margin-top: -40px;
+  position: relative;
+  z-index: 2;
+}
+
+.sunchi-browser-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.sunchi-browser-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #E4E7EC;
+}
+
+.sunchi-browser-url {
+  flex-grow: 1;
+  background-color: #F8F9FA;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  color: var(--sunchi-text-muted);
+}
+
+.sunchi-badge-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--sunchi-success-bg, #ECFDF3);
+  color: var(--sunchi-success, #16A34A);
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 6px 12px;
+  border-radius: var(--sunchi-radius-pill);
+}
+
+.sunchi-floating-badge {
+  position: absolute;
+  background: #FFFFFF;
+  border: 1px solid var(--sunchi-border, #F2E8DC);
+  border-radius: 12px;
+  padding: 10px 16px;
+  box-shadow: var(--sunchi-shadow-md);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--sunchi-dark);
+  z-index: 3;
+}
+
+.sunchi-floating-badge.badge-top-right {
+  top: -10px;
+  right: -10px;
+}
+
+.sunchi-floating-badge.badge-mid-right {
+  top: 45%;
+  right: -25px;
+}
+
+.sunchi-floating-badge.badge-bot-right {
+  bottom: 0px;
+  right: -15px;
+}
+
+/* --- 5. CATEGORY CARDS SECTION --- */
+.sunchi-section-categories {
+  padding: 60px 0;
+  background-color: #FFFFFF;
+}
+
+.sunchi-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.sunchi-category-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--sunchi-border, #F2E8DC);
+  border-radius: 16px;
+  padding: 28px 24px;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sunchi-category-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--sunchi-shadow-md);
+  border-color: var(--sunchi-yellow, #FFB800);
+}
+
+.sunchi-category-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background-color: var(--sunchi-cream, #FFF8ED);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sunchi-primary, #FF6B00);
+  margin-bottom: 4px;
+}
+
+.sunchi-category-title {
+  font-size: 1.25rem;
+  color: var(--sunchi-dark, #2D1B17);
+}
+
+.sunchi-category-desc {
+  font-size: 0.92rem;
+  color: var(--sunchi-text-muted, #667085);
+  flex-grow: 1;
+}
+
+.sunchi-category-link {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--sunchi-primary, #FF6B00);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.sunchi-category-link:hover {
+  color: var(--sunchi-primary-dark, #E85A00);
+  gap: 10px;
+}
+
+/* --- 6. PRICING & PLANS SECTION --- */
+.sunchi-section-plans {
+  padding: 80px 0;
+  background-color: var(--sunchi-cream-light, #FFFCF7);
+}
+
+.sunchi-plans-header {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 40px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.sunchi-plans-header h2 {
+  font-size: 2.6rem;
+  letter-spacing: -0.5px;
+}
+
+.sunchi-plans-header p {
+  color: var(--sunchi-text-muted, #667085);
+  font-size: 1.05rem;
+}
+
+/* Billing Toggle */
+.sunchi-billing-toggle-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-bottom: 40px;
+}
+
+.sunchi-billing-switcher {
+  display: inline-flex;
+  background-color: #FFFFFF;
+  border: 1px solid var(--sunchi-border, #F2E8DC);
+  border-radius: var(--sunchi-radius-pill, 9999px);
+  padding: 4px;
+}
+
+.sunchi-billing-btn {
+  padding: 8px 20px;
+  border-radius: var(--sunchi-radius-pill);
+  border: none;
+  background: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--sunchi-text, #344054);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sunchi-billing-btn.active {
+  background: var(--sunchi-primary, #FF6B00);
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.2);
+}
+
+.sunchi-savings-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--sunchi-success-bg, #ECFDF3);
+  border: 1px solid rgba(22, 163, 74, 0.25);
+  color: var(--sunchi-success, #16A34A);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 6px 14px;
+  border-radius: var(--sunchi-radius-pill);
+}
+
+/* Pricing Grid */
+.sunchi-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.sunchi-plan-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--sunchi-border, #F2E8DC);
+  border-radius: 20px;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+.sunchi-plan-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--sunchi-shadow-lg);
+}
+
+/* Popular Card Highlight */
+.sunchi-plan-card.popular {
+  border: 2px solid var(--sunchi-primary, #FF6B00);
+  box-shadow: var(--sunchi-shadow-orange, 0 10px 25px rgba(255, 107, 0, 0.25));
+  transform: scale(1.02);
+}
+
+.sunchi-plan-card.popular:hover {
+  transform: scale(1.03) translateY(-4px);
+}
+
+.sunchi-popular-badge {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--sunchi-primary, #FF6B00);
+  color: #FFFFFF;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 4px 16px;
+  border-radius: var(--sunchi-radius-pill);
+}
+
+.sunchi-plan-header {
+  margin-bottom: 20px;
+}
+
+.sunchi-plan-icon {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 12px;
+}
+
+.sunchi-plan-name {
+  font-size: 1.35rem;
+  margin-bottom: 4px;
+}
+
+.sunchi-plan-tagline {
+  font-size: 0.85rem;
+  color: var(--sunchi-text-muted);
+}
+
+.sunchi-plan-pricing {
+  margin: 16px 0 24px 0;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--sunchi-border, #F2E8DC);
+}
+
+.sunchi-price-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.sunchi-price-currency {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--sunchi-dark);
+}
+
+.sunchi-price-val {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--sunchi-dark);
+  font-family: var(--sunchi-font-heading);
+}
+
+.sunchi-price-period {
+  font-size: 0.95rem;
+  color: var(--sunchi-text-muted);
+  font-weight: 500;
+}
+
+.sunchi-annual-note {
+  font-size: 0.8rem;
+  color: var(--sunchi-text-muted);
+  margin-top: 4px;
+}
+
+.sunchi-annual-note span {
+  color: var(--sunchi-primary);
+  font-weight: 700;
+}
+
+.sunchi-plan-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 28px;
+  flex-grow: 1;
+}
+
+.sunchi-plan-feature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.92rem;
+  color: var(--sunchi-text);
+}
+
+.sunchi-plan-feature svg {
+  color: var(--sunchi-success, #16A34A);
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* --- 7. COMPARISON TABLE --- */
+.sunchi-section-comparison {
+  padding: 60px 0 80px 0;
+  background-color: #FFFFFF;
+}
+
+.sunchi-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--sunchi-border, #F2E8DC);
+  border-radius: 16px;
+  background: #FFFFFF;
+  box-shadow: var(--sunchi-shadow-sm);
+}
+
+.sunchi-comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.sunchi-comparison-table th, .sunchi-comparison-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--sunchi-border, #F2E8DC);
+  font-size: 0.95rem;
+}
+
+.sunchi-comparison-table th {
+  background-color: var(--sunchi-cream, #FFF8ED);
+  font-weight: 700;
+  color: var(--sunchi-dark);
+}
+
+.sunchi-comparison-table tr:hover td {
+  background-color: #FFFCF7;
+}
+
+.sunchi-cell-center {
+  text-align: center;
+}
+
+.sunchi-check {
+  color: var(--sunchi-success, #16A34A);
+  font-weight: 700;
+}
+
+/* --- 8. TESTIMONIALS SECTION --- */
+.sunchi-section-testimonials {
+  padding: 80px 0;
+  background-color: #FFFFFF;
+}
+
+.sunchi-testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  margin-top: 40px;
+}
+
+.sunchi-testimonial-card {
+  background: #FFFFFF;
+  border: 1px solid var(--sunchi-border, #F2E8DC);
+  border-radius: 16px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: var(--sunchi-shadow-sm);
+}
+
+.sunchi-stars {
+  color: var(--sunchi-yellow, #FFB800);
+  display: flex;
+  gap: 4px;
+}
+
+.sunchi-quote {
+  font-size: 0.98rem;
+  color: var(--sunchi-text, #344054);
+  font-style: italic;
+  flex-grow: 1;
+  line-height: 1.6;
+}
+
+.sunchi-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.sunchi-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--sunchi-cream);
+  border: 2px solid var(--sunchi-yellow-light);
+  overflow: hidden;
+}
+
+.sunchi-author-info h4 {
+  font-size: 0.95rem;
+  color: var(--sunchi-dark);
+}
+
+.sunchi-author-info p {
+  font-size: 0.82rem;
+  color: var(--sunchi-text-muted);
+}
+
+/* --- 9. FAQS SECTION --- */
+.sunchi-section-faqs {
+  padding: 80px 0;
+  background-color: var(--sunchi-cream-light, #FFFCF7);
+}
+
+.sunchi-faqs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  max-width: 1040px;
+  margin: 40px auto 0 auto;
+}
+
+.sunchi-faq-item {
+  background: #FFFFFF;
+  border: 1px solid var(--sunchi-border, #F2E8DC);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.sunchi-faq-item:hover {
+  border-color: var(--sunchi-yellow, #FFB800);
+}
+
+.sunchi-faq-question {
+  width: 100%;
+  text-align: left;
+  padding: 18px 20px;
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: var(--sunchi-dark);
+  cursor: pointer;
+}
+
+.sunchi-faq-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--sunchi-cream);
+  color: var(--sunchi-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.sunchi-faq-item.active .sunchi-faq-icon {
+  transform: rotate(90deg);
+}
+
+.sunchi-faq-answer {
+  display: none;
+  padding: 0 20px 20px 20px;
+  font-size: 0.92rem;
+  color: var(--sunchi-text-muted);
+  line-height: 1.6;
+}
+
+.sunchi-faq-item.active .sunchi-faq-answer {
+  display: block;
+}
+
+/* --- 10. FINAL CTA BANNER --- */
+.sunchi-section-cta {
+  padding: 80px 0;
+  background: linear-gradient(135deg, #FF9100 0%, #FF6B00 100%);
+  color: #FFFFFF;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+
+.sunchi-cta-content {
+  max-width: 640px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.sunchi-cta-content h2 {
+  color: #FFFFFF;
+  font-size: 2.8rem;
+}
+
+.sunchi-cta-content p {
+  font-size: 1.15rem;
+  opacity: 0.95;
+}
+
+.sunchi-btn-cta {
+  background: #FFFFFF;
+  color: var(--sunchi-primary-dark, #E85A00);
+  font-weight: 700;
+  padding: 14px 32px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.sunchi-btn-cta:hover {
+  background: var(--sunchi-cream, #FFF8ED);
+  transform: translateY(-2px);
+}
+
+/* --- 11. FOOTER --- */
+.sunchi-footer {
+  background-color: #FFFFFF;
+  border-top: 1px solid var(--sunchi-border, #F2E8DC);
+  padding: 70px 0 30px 0;
+}
+
+.sunchi-footer-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr 1.6fr;
+  gap: 36px;
+  margin-bottom: 50px;
+}
+
+.sunchi-footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sunchi-footer-slogan {
+  font-size: 0.9rem;
+  color: var(--sunchi-text-muted);
+}
+
+.sunchi-footer-col h4 {
+  font-size: 0.95rem;
+  margin-bottom: 16px;
+  color: var(--sunchi-dark);
+}
+
+.sunchi-footer-menu {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sunchi-footer-menu a {
+  font-size: 0.88rem;
+  color: var(--sunchi-text-muted);
+}
+
+.sunchi-footer-menu a:hover {
+  color: var(--sunchi-primary);
+}
+
+.sunchi-social-links {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.sunchi-social-link {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--sunchi-cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sunchi-dark);
+}
+
+.sunchi-social-link:hover {
+  background: var(--sunchi-primary);
+  color: #FFFFFF;
+}
+
+.sunchi-newsletter-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.sunchi-newsletter-input {
+  flex-grow: 1;
+  padding: 10px 16px;
+  border: 1px solid var(--sunchi-border, #F2E8DC);
+  border-radius: var(--sunchi-radius-pill);
+  outline: none;
+}
+
+.sunchi-newsletter-input:focus {
+  border-color: var(--sunchi-primary);
+}
+
+.sunchi-footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 24px;
+  border-top: 1px solid var(--sunchi-border, #F2E8DC);
+  font-size: 0.85rem;
+  color: var(--sunchi-text-muted);
+}
+
+/* --- 12. RESPONSIVE BREAKPOINTS --- */
+@media (max-width: 1024px) {
+  .sunchi-hero-title {
+    font-size: 2.8rem;
+  }
+  .sunchi-categories-grid, .sunchi-pricing-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .sunchi-footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .sunchi-nav-menu {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sunchi-nav-menu, .sunchi-header-actions .sunchi-link-login {
+    display: none;
+  }
+  .sunchi-mobile-toggle {
+    display: block;
+  }
+  .sunchi-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .sunchi-hero-title {
+    font-size: 2.3rem;
+  }
+  .sunchi-categories-grid, .sunchi-pricing-grid, .sunchi-testimonials-grid, .sunchi-faqs-grid {
+    grid-template-columns: 1fr;
+  }
+  .sunchi-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .sunchi-footer-bottom {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+}
+
+/* Accessible animations */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

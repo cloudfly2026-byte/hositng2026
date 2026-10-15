@@ -1,0 +1,56 @@
+/*
+Theme Name: Sunchi Theme
+Theme URI: https://sunchi.com
+Author: Sunchi Cloud & Velupi Team
+Author URI: https://sunchi.com
+Description: Tema comercial oficial de Sunchi — Hosting que impulsa tus ideas. Alegre, rápido, seguro y conectado nativamente a Velupi Cloud Platform.
+Version: 1.0.0
+Requires at least: 6.0
+Tested up to: 6.7
+Requires PHP: 8.1
+License: Proprietary / Commercial
+License URI: https://sunchi.com/terminos-y-condiciones
+Text Domain: sunchi-theme
+Tags: hosting, cloud, vps, clean, modern, responsive, orange, warm
+*/
+
+:root {
+  /* Sunchi Official Color Palette */
+  --sunchi-primary: #FF6B00;
+  --sunchi-primary-dark: #E85A00;
+  --sunchi-orange-light: #FF9100;
+  --sunchi-yellow: #FFB800;
+  --sunchi-yellow-light: #FFD54A;
+  --sunchi-dark: #2D1B17;
+  --sunchi-text: #344054;
+  --sunchi-text-muted: #667085;
+  --sunchi-background: #FFFFFF;
+  --sunchi-cream: #FFF8ED;
+  --sunchi-cream-light: #FFFCF7;
+  --sunchi-border: #F2E8DC;
+  --sunchi-border-focus: #FFB800;
+  --sunchi-success: #16A34A;
+  --sunchi-success-bg: #ECFDF3;
+  --sunchi-blue: #0284C7;
+  --sunchi-blue-bg: #F0F9FF;
+  
+  /* Typography */
+  --sunchi-font-heading: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --sunchi-font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Shadows */
+  --sunchi-shadow-sm: 0 2px 4px rgba(45, 27, 23, 0.04);
+  --sunchi-shadow-md: 0 8px 24px rgba(45, 27, 23, 0.06);
+  --sunchi-shadow-lg: 0 16px 36px rgba(45, 27, 23, 0.08);
+  --sunchi-shadow-orange: 0 10px 25px rgba(255, 107, 0, 0.25);
+  --sunchi-shadow-yellow: 0 10px 25px rgba(255, 184, 0, 0.25);
+
+  /* Radius */
+  --sunchi-radius-sm: 8px;
+  --sunchi-radius-md: 14px;
+  --sunchi-radius-lg: 20px;
+  --sunchi-radius-pill: 9999px;
+
+  /* Layout */
+  --sunchi-max-width: 1240px;
+}

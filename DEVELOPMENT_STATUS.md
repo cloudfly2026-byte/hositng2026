@@ -18,7 +18,7 @@ Se cumplen estrictamente las directrices mandatorias de `AGENTS.md`:
 - **TDD Riguroso**: Red → Green → Refactor aplicado en el 100% de los módulos.
 
 ### 2. Métricas de verificación operativa (Auditoría Real)
-- **Vitest**: **45 suites de prueba, 311 pruebas aprobadas (100% GREEN, 0 fallidas, 0 omitidas)**.
+- **Vitest**: **46 suites de prueba, 323 pruebas aprobadas (100% GREEN, 0 fallidas, 0 omitidas)**.
 - **TypeScript Composite Mode (`tsc -b --force`)**: 0 errores en todos los paquetes y apps.
 - **Next.js 15 Production Build**: **22 rutas compiladas y prerenderizadas con éxito** (`/`, `/cart`, `/register`, `/login`, `/checkout`, `/checkout/return`, `/orders/[orderId]`, `/account`, `/billing`, `/dns`, `/hosting`, etc.).
 - **URLs de Producción Verificadas con HTTPS y Let's Encrypt**:
@@ -253,3 +253,21 @@ Se ha completado la validación de extremo a extremo del flujo de nuevo cliente 
 - **Grabaciones de sesión en navegador**:
   - `cart_flow_demo_1792097110351.webp`
   - `checkout_auth_demo_1792097207821.webp`
+
+---
+
+## L. SPRINT WORDPRESS SUNCHI: Sitio Comercial y Conector Velupi Bridge
+
+Se construyó e integró el sitio web comercial completo de **Sunchi** como un tema WordPress moderno, responsive y modular (`sunchi-theme`) con el plugin transaccional `sunchi-velupi-bridge`:
+
+### 1. Componentes y Plantillas Implementadas
+- **Identidad de Marca Sunchi**: Logotipo oficial RGBA integrado en `assets/images/logo.png`. Variables CSS globales (`--sunchi-primary: #FF6B00`, `--sunchi-primary-dark: #E85A00`, `--sunchi-orange-light: #FF9100`, `--sunchi-yellow: #FFB800`, `--sunchi-dark: #2D1B17`, etc.). Tipografía Google Fonts Poppins & Inter.
+- **Página de Inicio (`front-page.php`)**: Reproducción fiel de la Imagen 2 con Hero (Badge "HOSTING PARA UN MUNDO MÁS BRILLANTE", ilustración del sol sonriente, mockup de navegador con score 99/100, badges flotantes), tarjetas de categorías (Hosting, WordPress, Cloud Apps, VPS), vista previa de 4 planes con badge "MÁS POPULAR", testimonios con estrellas y CTA final.
+- **Página de Planes y Precios (`template-precios.php`)**: Reproducción fiel de la Imagen 1 con selector interactivo de ciclo de facturación (Mensual/Anual), etiqueta de ahorro ("Ahorra hasta 20% con el pago anual"), 4 tarjetas con cálculo dinámico, tabla comparativa de características y acordeón interactivo de 6 preguntas frecuentes.
+- **Plantillas de Servicios**: `page-hosting.php`, `page-wordpress.php`, `page-cloud-apps.php`, `page-vps.php`, `page-contacto.php`.
+- **Plugin Sunchi Velupi Bridge (`sunchi-velupi-bridge.php`)**:
+  - Consumo del catálogo oficial desde `https://api.velupi.com/catalog/plans` con caché transient de 1 hora y fallback de contingencia.
+  - Generador de URLs seguras hacia el carrito: `https://app.velupi.com/cart?plan=<slug>&cycle=<cycle>` con validación Zero-Trust y sanitización estricta.
+  - Panel administrativo en WordPress (`Ajustes -> Sunchi Bridge`) para configuración de endpoints y parámetros.
+- **Entregables Empaquetados**: `wordpress/sunchi-theme.zip` (503 KB) y `wordpress/sunchi-velupi-bridge.zip` (2.3 KB).
+- **Pruebas Automatizadas TDD**: Suite `wordpress/sunchi-theme.spec.ts` con 12 pruebas aprobadas al 100%. Total general del monorepo: **46 suites, 323 pruebas (100% GREEN)**.
