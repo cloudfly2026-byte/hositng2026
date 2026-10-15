@@ -11,17 +11,26 @@
 | Componente | Host / IP | Puertos Abiertos | Rol Operativo | Nivel de Exposición |
 |---|---|---|---|---|
 | **Control Plane & Apps** (`shared-node-01`) | `169.58.220.244` | 22 (SSH), 4000 (API), 3001 (Web) | Docker Engine 29.9.0, NestJS API, Next.js Web, PostgreSQL 16, Redis 7 | Temporalmente puertos 4000 y 3001 públicos para pruebas; migrarán detrás de Traefik (443) |
-| **Hosting Tradicional & DNS** (`hestia-node-01`) | `89.117.147.134` | 53 (BIND9 DNS), 80 (HTTP), 443 (HTTPS), 8083 (Hestia Admin API) | PHP 8.2/8.3, MariaDB 10.11, BIND9 DNS, Exim4 Mail | Servidor web PHP y DNS autoritativo |
+| **Hosting Tradicional & DNS** (`hestia-node-01`) | `89.117.147.134` | 10622 (SSH), 53 (BIND9 DNS), 80 (HTTP), 443 (HTTPS), 8083 (Hestia Admin API) | PHP 8.2/8.3, MariaDB 10.11, BIND9 DNS, Exim4 Mail | Servidor web PHP y DNS autoritativo (Admin: `manager`) |
 | **DNS Autoritativo Primario** | `ns1.velupi.com` (`89.117.147.134`) | 53 (UDP/TCP) | Servidor de nombres autoritativo primario | Público |
 | **DNS Autoritativo Secundario** | `ns2.velupi.com` (`89.117.147.134`) | 53 (UDP/TCP) | Servidor de nombres autoritativo secundario | Público |
 
 ---
 
-## 2. Configuración Autoritativa de BIND9 para `velupi.com`
+## 2. Configuración Autoritativa de BIND9 y Hosting para `velupi.com`
 
-### 2.1 Diagnóstico de Red Actual
-- `cloudfly.com.co` resuelve correctamente en `89.117.147.134:53`.
-- `velupi.com` responde con **`RCODE_REFUSED`** en `89.117.147.134` porque la zona no está declarada en BIND9.
+### 2.1 Diagnóstico Real por SSH / Hestia CLI (15 de Octubre de 2026)
+- **Conectividad SSH**: Operativa en puerto `10622` (`root / Elian20200916`).
+- **Estado de Cuentas**:
+  - Usuario administrador de Hestia: `manager`.
+  - Usuarios existentes: `manager`, `cloudfly`, `ebmmetrology`, `hospita2`, `inmaculada`, `nueveluna`, `prenem`, `protor`, `pulguero`.
+  - **No existe usuario `velupi`** en el sistema.
+- **Estado de Dominios Web**:
+  - Existen 13 dominios configurados (ej. `cloudfly.com.co`, `clinicalainmaculada.org`, etc.).
+  - **`velupi.com` NO existe como dominio web**. Las peticiones HTTP caen en el vhost fallback por defecto de Nginx.
+- **Estado de Zonas DNS en BIND9**:
+  - Existen 13 zonas DNS configuradas.
+  - **`velupi.com` NO existe en BIND9** (por eso devuelve `RCODE_REFUSED`).
 - Resolución pública retorna **`RCODE_SERVER_FAILURE`** debido a falta de respuesta autoritativa.
 
 ### 2.2 Archivo de Zona BIND9 Preparado (`/etc/bind/zones/velupi.com.db`)

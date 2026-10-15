@@ -78,7 +78,9 @@ Se respetan estrictamente las directrices mandatorias de `AGENTS.md`:
 - [x] **Marca Blanca Radical**: Eliminadas de la interfaz de usuario y respuestas públicas las menciones a HestiaCP, Dokploy, Traefik o BIND9.
 - [x] **Cero Exposición de Secretos**: `HestiaHttpsTransport.getSanitizedConfig()` enmascara credenciales y secretos de acceso.
 - [x] **Transporte HTTPS HestiaCP**: Forzado de `readOnly: true` por defecto y rechazo estricto de certificados no confiables (`rejectUnauthorized: true`).
+- [x] **Auditoría Real Hestia CLI (`89.117.147.134:10622`)**: Confirmada conectividad SSH. Usuario administrador es `manager`. Confirmado que `velupi.com` no existe aún como cuenta de usuario ni como dominio web/DNS.
 - [x] **Plan de Recuperación (Disaster Recovery)**: Documentado en `INFRASTRUCTURE_RUNBOOK.md` con backups de PostgreSQL, configuración y rollback de emergencia.
+- [ ] **Creación de Cuenta / Dominio Web `velupi.com` en Hestia**: Pendiente de decisión sobre si crear bajo usuario `manager` o nuevo usuario `velupi`.
 - [ ] **Creación de Zona BIND9**: Pendiente de autorización del usuario.
 - [ ] **Bootstrap de Dokploy/Traefik**: Pendiente de autorización del usuario.
 
@@ -87,12 +89,15 @@ Se respetan estrictamente las directrices mandatorias de `AGENTS.md`:
 ## E. Próximo Paso Concreto que Requiere Aprobación
 
 **Acción Requerida**:  
-Aprobar la creación de la zona autoritativa `velupi.com` en BIND9 (`89.117.147.134`) mediante el comando seguro de HestiaCP:
-```bash
-v-add-dns-domain admin velupi.com 89.117.147.134 ns1.velupi.com ns2.velupi.com
-```
-y el bootstrap de Dokploy en el VPS `169.58.220.244` en los puertos 80/443/3000:
-```bash
-curl -sSL https://dokploy.com/setup.sh | sh
-```
-Una vez que el usuario otorgue esta autorización, se ejecutarán estos dos pasos y se verificará la resolución en vivo y el enrutamiento TLS de `app.velupi.com` y `api.velupi.com`.
+Aprobar la creación de la cuenta de hosting y zona autoritativa `velupi.com` en HestiaCP (`89.117.147.134` puerto SSH 10622):
+1. **Opción recomendada (Usuario dedicado)**:
+   ```bash
+   v-add-user velupi <password> admin@velupi.com default "Velupi Platform"
+   v-add-web-domain velupi velupi.com 89.117.147.134 yes www.velupi.com
+   v-add-dns-domain velupi velupi.com 89.117.147.134 ns1.velupi.com ns2.velupi.com
+   ```
+2. **Bootstrap de Dokploy en el VPS `169.58.220.244`**:
+   ```bash
+   curl -sSL https://dokploy.com/setup.sh | sh
+   ```
+Una vez confirmada la opción para el hosting comercial y el bootstrap, se procederá inmediatamente.
