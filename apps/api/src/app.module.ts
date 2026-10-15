@@ -29,6 +29,7 @@ import {
   SubscriptionService,
 } from '@cloudfly/domain';
 import { HestiaDnsAdapter, DokployAdapter, DokployApiClient } from '@cloudfly/deployment-adapters';
+import { PrismaUnitOfWork } from '@cloudfly/persistence';
 
 @Module({
   imports: [],
@@ -47,6 +48,10 @@ import { HestiaDnsAdapter, DokployAdapter, DokployApiClient } from '@cloudfly/de
     DashboardController,
   ],
   providers: [
+    {
+      provide: 'IUnitOfWork',
+      useFactory: () => new PrismaUnitOfWork(),
+    },
     {
       provide: HostingManagementService,
       useFactory: () => {
@@ -70,9 +75,12 @@ import { HestiaDnsAdapter, DokployAdapter, DokployApiClient } from '@cloudfly/de
     },
     {
       provide: AuthenticationService,
-      useFactory: (hasher: Argon2PasswordHasher, jwt: JwtSecurityService) =>
-        new AuthenticationService(hasher, jwt),
-      inject: [Argon2PasswordHasher, JwtSecurityService],
+      useFactory: (
+        hasher: Argon2PasswordHasher,
+        jwt: JwtSecurityService,
+        uow: PrismaUnitOfWork
+      ) => new AuthenticationService(hasher, jwt, uow),
+      inject: [Argon2PasswordHasher, JwtSecurityService, 'IUnitOfWork'],
     },
     {
       provide: ProductCatalogService,
@@ -84,8 +92,9 @@ import { HestiaDnsAdapter, DokployAdapter, DokployApiClient } from '@cloudfly/de
     },
     {
       provide: OrderService,
-      useFactory: (catalog: ProductCatalogService) => new OrderService(catalog),
-      inject: [ProductCatalogService],
+      useFactory: (catalog: ProductCatalogService, uow: PrismaUnitOfWork) =>
+        new OrderService(catalog, uow),
+      inject: [ProductCatalogService, 'IUnitOfWork'],
     },
     {
       provide: WompiPaymentAdapter,
@@ -110,9 +119,11 @@ import { HestiaDnsAdapter, DokployAdapter, DokployApiClient } from '@cloudfly/de
     },
     {
       provide: ProvisioningOrchestrator,
-      useFactory: (catalog: ProductCatalogService) => new ProvisioningOrchestrator(catalog),
-      inject: [ProductCatalogService],
+      useFactory: (catalog: ProductCatalogService, uow: PrismaUnitOfWork) =>
+        new ProvisioningOrchestrator(catalog, uow),
+      inject: [ProductCatalogService, 'IUnitOfWork'],
     },
+
     {
       provide: SubscriptionService,
       useFactory: () => new SubscriptionService(),

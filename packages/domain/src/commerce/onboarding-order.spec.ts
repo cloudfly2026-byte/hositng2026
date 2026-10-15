@@ -171,5 +171,44 @@ describe('Epic COM-02 & COM-03 - Customer Onboarding and Orders', () => {
       expect(order1.orderNumber).toBe(order2.orderNumber);
       expect(orderService.getOrderCount()).toBe(1);
     });
+
+    it('persists created and updated orders to IUnitOfWork when provided', async () => {
+      const savedOrders: Order[] = [];
+      const mockUow: any = {
+        orders: {
+          save: async (order: Order) => {
+            savedOrders.push({ ...order });
+          },
+          findById: async (id: string) => savedOrders.find((o) => o.id === id) || null,
+          findByIdempotencyKey: async (key: string) =>
+            savedOrders.find((o) => o.idempotencyKey === key) || null,
+          listByOrganization: async (orgId: string) =>
+            savedOrders.filter((o) => o.organizationId === orgId),
+        },
+      };
+
+      const orderService = new OrderService(catalog, mockUow);
+      const input: CreateOrderInput = {
+        organizationId: 'org-123',
+        currency: 'COP',
+        billingCycle: BillingCycle.ANNUAL,
+        items: [
+          {
+            planVersionId: planVersion.id,
+            quantity: 1,
+          },
+        ],
+        idempotencyKey: 'idem-uow-order',
+      };
+
+      const order = orderService.createOrder(input);
+      expect(savedOrders).toHaveLength(1);
+      expect(savedOrders[0].id).toBe(order.id);
+
+      orderService.updateOrderStatus(order.id, OrderStatus.PAID);
+      expect(savedOrders).toHaveLength(2);
+      expect(savedOrders[1].status).toBe(OrderStatus.PAID);
+    });
   });
 });
+

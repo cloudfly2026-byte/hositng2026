@@ -230,4 +230,105 @@ describe('Epic COM-04 & COM-05 - Wompi Payments & Webhook Processing', () => {
       }).toThrow(OrderNotEligibleForPaymentError);
     });
   });
+
+  describe('COM-06: Payment Reconciliation (Job de Conciliación & Status Query)', () => {
+    it('queries provider transaction status by transaction ID', async () => {
+      const result = await adapter.queryTransactionStatus('trx-approved-123');
+      expect(result.transactionId).toBe('trx-approved-123');
+      expect(result.status).toBeDefined();
+    });
+
+    it('reconciles a pending order when provider transaction is APPROVED', async () => {
+      const pendingOrder: Order = {
+        ...sampleOrder,
+        id: 'ord-reconcile-1',
+        status: OrderStatus.PENDING_PAYMENT,
+      };
+
+      const ordersMap = new Map<string, Order>([[pendingOrder.id, pendingOrder]]);
+      const mockProvider = {
+        ...adapter,
+        queryTransactionStatus: async (trxId: string) => ({
+          transactionId: trxId,
+          reference: pendingOrder.id,
+          status: 'APPROVED' as const,
+          amountCents: pendingOrder.totalCents,
+          currency: 'COP',
+        }),
+      };
+
+      const processor = new PaymentProcessorService(mockProvider as any, ordersMap);
+      const reconciliationResult = await processor.reconcilePendingOrder(pendingOrder.id, 'trx-123');
+
+      expect(reconciliationResult.status).toBe('RECONCILED_PAID');
+      expect(pendingOrder.status).toBe(OrderStatus.PAID);
+    });
+
+    it('reconciles a pending order when provider transaction is DECLINED', async () => {
+      const pendingOrder: Order = {
+        ...sampleOrder,
+        id: 'ord-reconcile-2',
+        status: OrderStatus.PENDING_PAYMENT,
+      };
+
+      const ordersMap = new Map<string, Order>([[pendingOrder.id, pendingOrder]]);
+      const mockProvider = {
+        ...adapter,
+        queryTransactionStatus: async (trxId: string) => ({
+          transactionId: trxId,
+          reference: pendingOrder.id,
+          status: 'DECLINED' as const,
+          amountCents: pendingOrder.totalCents,
+          currency: 'COP',
+        }),
+      };
+
+      const processor = new PaymentProcessorService(mockProvider as any, ordersMap);
+      const reconciliationResult = await processor.reconcilePendingOrder(pendingOrder.id, 'trx-failed-456');
+
+      expect(reconciliationResult.status).toBe('RECONCILED_FAILED');
+      expect(pendingOrder.status).toBe(OrderStatus.FAILED);
+    });
+
+    it('reconciles a pending order when provider transaction is still PENDING', async () => {
+      const pendingOrder: Order = {
+        ...sampleOrder,
+        id: 'ord-reconcile-3',
+        status: OrderStatus.PENDING_PAYMENT,
+      };
+
+      const ordersMap = new Map<string, Order>([[pendingOrder.id, pendingOrder]]);
+      const mockProvider = {
+        ...adapter,
+        queryTransactionStatus: async (trxId: string) => ({
+          transactionId: trxId,
+          reference: pendingOrder.id,
+          status: 'PENDING' as const,
+          amountCents: pendingOrder.totalCents,
+          currency: 'COP',
+        }),
+      };
+
+      const processor = new PaymentProcessorService(mockProvider as any, ordersMap);
+      const reconciliationResult = await processor.reconcilePendingOrder(pendingOrder.id, 'trx-pending-789');
+
+      expect(reconciliationResult.status).toBe('STILL_PENDING');
+      expect(pendingOrder.status).toBe(OrderStatus.PENDING_PAYMENT);
+    });
+
+    it('handles idempotent reconciliation: already paid order is returned without double processing', async () => {
+      const alreadyPaidOrder: Order = {
+        ...sampleOrder,
+        id: 'ord-already-paid',
+        status: OrderStatus.PAID,
+      };
+
+      const ordersMap = new Map<string, Order>([[alreadyPaidOrder.id, alreadyPaidOrder]]);
+      const processor = new PaymentProcessorService(adapter, ordersMap);
+
+      const reconciliationResult = await processor.reconcilePendingOrder(alreadyPaidOrder.id, 'trx-dup-999');
+      expect(reconciliationResult.status).toBe('ALREADY_PAID');
+      expect(alreadyPaidOrder.status).toBe(OrderStatus.PAID);
+    });
+  });
 });

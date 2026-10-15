@@ -76,6 +76,12 @@ export class SubscriptionService {
       throw new Error(`Cannot create subscription from unpaid order '${order.id}' in status '${order.status}'.`);
     }
 
+    // Idempotency: return existing subscription if already created for this order
+    const existingSub = Array.from(this.subscriptions.values()).find((s) => s.orderId === order.id);
+    if (existingSub) {
+      return existingSub;
+    }
+
     const firstItem = order.items[0];
     if (!firstItem) {
       throw new Error(`Order '${order.id}' has no items.`);
@@ -104,6 +110,12 @@ export class SubscriptionService {
   }
 
   generateInvoiceForOrder(order: Order, subscriptionId?: string): Invoice {
+    // Idempotency: return existing invoice if already generated for this order
+    const existingInv = Array.from(this.invoices.values()).find((inv) => inv.orderId === order.id);
+    if (existingInv) {
+      return existingInv;
+    }
+
     const padded = this.invoiceCounter.toString().padStart(5, '0');
     this.invoiceCounter++;
 

@@ -13,9 +13,13 @@ import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Divider from '@mui/material/Divider';
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
 import CheckIcon from '@mui/icons-material/Check';
 import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout';
 import LockIcon from '@mui/icons-material/Lock';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { defaultApiClient } from '../../modules/api-client';
 
 interface PlanOption {
   id: string;
@@ -77,6 +81,9 @@ export default function CheckoutPage() {
   const [billingCycle, setBillingCycle] = React.useState<'MONTHLY' | 'ANNUAL'>('MONTHLY');
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [orderCompleted, setOrderCompleted] = React.useState(false);
+  const [checkoutUrl, setCheckoutUrl] = React.useState<string | null>(null);
+  const [orderNumber, setOrderNumber] = React.useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   const selectedPlan = plans.find((p) => p.id === selectedPlanId) || plans[0];
 
@@ -87,12 +94,45 @@ export default function CheckoutPage() {
   const tax = Math.round(subtotal * 0.19); // 19% IVA Colombia
   const total = subtotal + tax;
 
-  const handleSimulateCheckout = () => {
+  const handleCheckout = async () => {
     setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
+    setErrorMessage(null);
+    try {
+      const planVersionMap: Record<string, string> = {
+        'wp-starter': 'ver-wp-starter-v1',
+        'app-node': 'ver-node-starter-v1',
+        'vps-pro': 'ver-vps-pro-v1',
+      };
+      const planVersionId = planVersionMap[selectedPlanId] || 'ver-wp-starter-v1';
+      const idempotencyKey = `idem-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+
+      const redirectUrl =
+        typeof window !== 'undefined'
+          ? `${window.location.origin}/billing`
+          : 'https://app.velupi.com/billing';
+
+      const result = await defaultApiClient.createCheckoutOrder({
+        organizationId: 'org-velupi-internal',
+        currency: 'COP',
+        billingCycle,
+        items: [{ planVersionId, quantity: 1 }],
+        idempotencyKey,
+        customerEmail: 'operaciones@velupi.com',
+        redirectUrl,
+      });
+
+      if (result?.order?.orderNumber) {
+        setOrderNumber(result.order.orderNumber);
+      }
+      if (result?.session?.checkoutUrl) {
+        setCheckoutUrl(result.session.checkoutUrl);
+      }
       setOrderCompleted(true);
-    }, 1500);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Error al conectar con la pasarela o el Control Plane.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -223,14 +263,54 @@ export default function CheckoutPage() {
           <Typography variant="h5" sx={{ color: '#06b6d4', fontWeight: 800 }}>${total.toLocaleString('es-CO')} COP</Typography>
         </Box>
 
+        {errorMessage && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            <AlertTitle>Error en Checkout</AlertTitle>
+            {errorMessage}
+          </Alert>
+        )}
+
         {orderCompleted ? (
-          <Box sx={{ p: 2, backgroundColor: 'rgba(16, 185, 129, 0.15)', borderRadius: 2, textAlign: 'center', border: '1px solid #10b981' }}>
+          <Box sx={{ p: 2.5, backgroundColor: 'rgba(16, 185, 129, 0.15)', borderRadius: 2, textAlign: 'center', border: '1px solid #10b981' }}>
             <Typography variant="body1" sx={{ color: '#10b981', fontWeight: 700, mb: 0.5 }}>
-              ¡Orden pagada y aprovisionada con éxito!
+              ¡Orden creada en el Control Plane!
             </Typography>
-            <Typography variant="caption" sx={{ color: '#9ca3af' }}>
-              El Provisioning Orchestrator ha despachado el trabajo al nodo correspondiente.
+            {orderNumber && (
+              <Typography variant="body2" sx={{ color: '#fff', mb: 1 }}>
+                Número de Orden: <strong>{orderNumber}</strong>
+              </Typography>
+            )}
+            <Typography variant="caption" sx={{ color: '#9ca3af', display: 'block', mb: 2 }}>
+              Sesión de pago generada de forma segura mediante Wompi (Colombia).
             </Typography>
+
+            {checkoutUrl ? (
+              <Button
+                variant="contained"
+                color="success"
+                fullWidth
+                size="large"
+                component="a"
+                href={checkoutUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                endIcon={<OpenInNewIcon />}
+                sx={{ py: 1.5, fontWeight: 700 }}
+              >
+                Continuar al Pago Seguro en Wompi
+              </Button>
+            ) : (
+              <Button
+                variant="outlined"
+                color="primary"
+                fullWidth
+                component="a"
+                href="/billing"
+                sx={{ py: 1.5, fontWeight: 700 }}
+              >
+                Ver Estado en Mis Facturas
+              </Button>
+            )}
           </Box>
         ) : (
           <Button
@@ -240,12 +320,13 @@ export default function CheckoutPage() {
             size="large"
             startIcon={<LockIcon />}
             disabled={isProcessing}
-            onClick={handleSimulateCheckout}
+            onClick={handleCheckout}
             sx={{ py: 1.5, fontSize: '1rem', fontWeight: 700 }}
           >
             {isProcessing ? 'Conectando con pasarela Wompi...' : 'Pagar con Wompi (Tarjetas / PSE / Nequi)'}
           </Button>
         )}
+
 
         <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', color: '#6b7280', mt: 2 }}>
           Transacción protegida con cifrado SSL de 256 bits y firma HMAC SHA-256. Ningún dato de tarjeta se almacena en Velupi.

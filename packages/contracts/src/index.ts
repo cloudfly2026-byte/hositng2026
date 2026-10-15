@@ -58,6 +58,14 @@ export interface PaymentSessionContext {
   redirectUrl: string;
 }
 
+export interface PaymentStatusResult {
+  transactionId: string;
+  reference: string;
+  status: PaymentStatus;
+  amountCents: number;
+  currency: string;
+}
+
 export interface PaymentProvider {
   readonly name: string;
   createPaymentSession(
@@ -66,6 +74,7 @@ export interface PaymentProvider {
   ): Promise<PaymentSessionResult>;
   verifyWebhookSignature(payload: unknown, headers: Record<string, string>): boolean;
   parseWebhookEvent(payload: unknown): WebhookPaymentEvent;
+  queryTransactionStatus(transactionId: string): Promise<PaymentStatusResult>;
 }
 
 export interface DeploymentCapabilities {

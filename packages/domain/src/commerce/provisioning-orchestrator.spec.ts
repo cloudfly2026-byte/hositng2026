@@ -183,5 +183,49 @@ describe('Epic COM-07 & COM-09 - Provisioning Orchestrator & Velupi Pilot #001',
       expect(result.job.metadata?.primaryDomain).toBe('velupi.com');
       expect(result.job.metadata?.isInternalPilot).toBe(true);
     });
+
+    it('persists created CustomerEntitlement to IUnitOfWork when provided', async () => {
+      const savedEntitlements: any[] = [];
+      const mockUow: any = {
+        entitlements: {
+          save: async (ent: any) => {
+            savedEntitlements.push({ ...ent });
+          },
+          findById: async (id: string) => savedEntitlements.find((e) => e.id === id) || null,
+          listByOrganization: async (orgId: string) =>
+            savedEntitlements.filter((e) => e.organizationId === orgId),
+        },
+      };
+
+      const orchestrator = new ProvisioningOrchestrator(catalog, mockUow);
+      const paidOrder: Order = {
+        id: 'ord-uow-ent-1',
+        organizationId: 'org-client-uow',
+        orderNumber: 'VEL-UOW-001',
+        status: OrderStatus.PAID,
+        currency: 'COP',
+        subtotalCents: 3500000,
+        taxCents: 665000,
+        totalCents: 4165000,
+        items: [
+          {
+            id: 'item-1',
+            orderId: 'ord-uow-ent-1',
+            planVersionId: wpVersion.id,
+            billingCycle: BillingCycle.MONTHLY,
+            unitPriceCents: 3500000,
+            quantity: 1,
+          },
+        ],
+        idempotencyKey: 'idem-uow-ent-1',
+        createdAt: new Date(),
+      };
+
+      const result = orchestrator.orchestratePaidOrder(paidOrder);
+      expect(savedEntitlements).toHaveLength(1);
+      expect(savedEntitlements[0].id).toBe(result.entitlement.id);
+      expect(savedEntitlements[0].organizationId).toBe('org-client-uow');
+    });
   });
 });
+

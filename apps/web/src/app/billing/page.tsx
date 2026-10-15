@@ -14,6 +14,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Divider from '@mui/material/Divider';
+import CircularProgress from '@mui/material/CircularProgress';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import CreditCardRoundedIcon from '@mui/icons-material/CreditCardRounded';
@@ -21,7 +22,10 @@ import ShoppingCartCheckoutRoundedIcon from '@mui/icons-material/ShoppingCartChe
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import Link from 'next/link';
+import { defaultApiClient } from '../../modules/api-client';
+
 
 interface SubscriptionItem {
   id: string;
@@ -60,7 +64,7 @@ export default function BillingPage() {
     },
   ]);
 
-  const [invoices] = React.useState<InvoiceItem[]>([
+  const [invoices, setInvoices] = React.useState<InvoiceItem[]>([
     {
       invoiceNumber: 'INV-2026-00001',
       date: '13 Octubre 2026',
@@ -79,8 +83,68 @@ export default function BillingPage() {
     },
   ]);
 
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [fetchNotice, setFetchNotice] = React.useState<string | null>(null);
   const [selectedInvoice, setSelectedInvoice] = React.useState<InvoiceItem | null>(null);
   const [cancelTargetSub, setCancelTargetSub] = React.useState<SubscriptionItem | null>(null);
+
+  const loadBillingData = React.useCallback(async () => {
+    setIsLoading(true);
+    setFetchNotice(null);
+    try {
+      const orgId = 'org-velupi-internal';
+      const [subsRes, invRes] = await Promise.allSettled([
+        defaultApiClient.getSubscriptions(orgId),
+        defaultApiClient.getInvoices(orgId),
+      ]);
+
+      if (subsRes.status === 'fulfilled' && Array.isArray(subsRes.value) && subsRes.value.length > 0) {
+        setSubscriptions(
+          subsRes.value.map((s: any) => ({
+            id: s.id,
+            planName: s.planName || 'Plan Cloud Velupi',
+            cycle: s.billingCycle === 'ANNUAL' ? 'Anual' : 'Mensual',
+            status: s.status,
+            subtotal: `$${(s.subtotalCents / 100).toLocaleString('es-CO')} COP`,
+            tax: `$${(s.taxCents / 100).toLocaleString('es-CO')} COP`,
+            total: `$${(s.totalCents / 100).toLocaleString('es-CO')} COP`,
+            renewalDate: new Date(s.currentPeriodEnd).toLocaleDateString('es-CO'),
+            gracePeriodUntil: s.gracePeriodUntil
+              ? new Date(s.gracePeriodUntil).toLocaleDateString('es-CO')
+              : undefined,
+          }))
+        );
+      }
+
+      if (invRes.status === 'fulfilled' && Array.isArray(invRes.value) && invRes.value.length > 0) {
+        setInvoices(
+          invRes.value.map((inv: any) => ({
+            invoiceNumber: inv.invoiceNumber,
+            date: new Date(inv.issuedAt).toLocaleDateString('es-CO'),
+            subtotal: `$${(inv.subtotalCents / 100).toLocaleString('es-CO')} COP`,
+            tax: `$${(inv.taxCents / 100).toLocaleString('es-CO')} COP`,
+            total: `$${(inv.totalCents / 100).toLocaleString('es-CO')} COP`,
+            status: inv.status,
+            paymentMethod: 'Wompi / Orden Autorizada',
+            items:
+              inv.items?.map((item: any) => ({
+                description: item.description || 'Servicio Cloud Velupi',
+                quantity: item.quantity || 1,
+                amount: `$${(item.unitPriceCents / 100).toLocaleString('es-CO')} COP`,
+              })) || [],
+          }))
+        );
+      }
+    } catch (err: any) {
+      setFetchNotice(err?.message || 'Error al conectar con la API de facturación.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    loadBillingData();
+  }, [loadBillingData]);
 
   const handleConfirmCancel = () => {
     if (cancelTargetSub) {
@@ -105,6 +169,15 @@ export default function BillingPage() {
         </Box>
         <Box sx={{ display: 'flex', gap: 1.5 }}>
           <Button
+            onClick={loadBillingData}
+            variant="outlined"
+            disabled={isLoading}
+            startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : <RefreshRoundedIcon />}
+            sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, borderColor: 'rgba(255,255,255,0.15)', color: '#fff' }}
+          >
+            Actualizar
+          </Button>
+          <Button
             component={Link}
             href="/checkout"
             variant="contained"
@@ -116,6 +189,13 @@ export default function BillingPage() {
           </Button>
         </Box>
       </Box>
+
+      {fetchNotice && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          {fetchNotice}
+        </Alert>
+      )}
+
 
       {/* Subscriptions Section */}
       <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff', mb: 2 }}>

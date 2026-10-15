@@ -1,6 +1,7 @@
 import { TargetEngine } from '../projects/project-service';
 import { ProductCatalogService, ProductCategory, ResourceQuota } from './catalog';
 import { Order, OrderStatus } from './onboarding-order';
+import { IUnitOfWork } from '../repositories/interfaces';
 
 export enum EntitlementStatus {
   ACTIVE = 'ACTIVE',
@@ -64,7 +65,10 @@ export class ProvisioningOrchestrator {
   private jobs: Map<string, ProvisioningJob> = new Map();
   private orderJobIndex: Map<string, ProvisioningJob> = new Map(); // orderId -> Job (Idempotency)
 
-  constructor(private catalog: ProductCatalogService) {}
+  constructor(
+    private catalog: ProductCatalogService,
+    private readonly uow?: IUnitOfWork
+  ) {}
 
   orchestratePaidOrder(order: Order, options?: OrchestrateOptions): OrchestrationResult {
     if (order.status !== OrderStatus.PAID) {
@@ -113,6 +117,10 @@ export class ProvisioningOrchestrator {
       createdAt: new Date(),
     };
     this.entitlements.set(entitlement.id, entitlement);
+
+    if (this.uow) {
+      this.uow.entitlements.save(entitlement);
+    }
 
     // 2. Enqueue Provisioning Job
     const jobId = `job-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;

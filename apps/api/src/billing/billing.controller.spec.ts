@@ -7,6 +7,9 @@ import {
   ProductCategory,
   BillingCycle,
   OrderStatus,
+  WompiPaymentAdapter,
+  PaymentProcessorService,
+  ProvisioningOrchestrator,
 } from '@cloudfly/domain';
 import { AuthorizedContext } from '@cloudfly/contracts';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
@@ -15,6 +18,8 @@ describe('BillingController (API Subscriptions & Invoicing)', () => {
   let catalog: ProductCatalogService;
   let orderService: OrderService;
   let subscriptionService: SubscriptionService;
+  let paymentProcessor: PaymentProcessorService;
+  let orchestrator: ProvisioningOrchestrator;
   let controller: BillingController;
   let planVersionId: string;
 
@@ -67,7 +72,17 @@ describe('BillingController (API Subscriptions & Invoicing)', () => {
 
     orderService = new OrderService(catalog);
     subscriptionService = new SubscriptionService();
-    controller = new BillingController(subscriptionService);
+    const adapter = new WompiPaymentAdapter({
+      publicKey: 'pub_test',
+      privateKey: 'prv_test',
+      integritySecret: 'sec_int',
+      eventsSecret: 'sec_evt',
+      isSandbox: true,
+    });
+    const ordersMap = (orderService as any).orders;
+    paymentProcessor = new PaymentProcessorService(adapter, ordersMap);
+    orchestrator = new ProvisioningOrchestrator(catalog);
+    controller = new BillingController(subscriptionService, paymentProcessor, orderService, orchestrator);
   });
 
   it('lists subscriptions strictly scoped to the requesting tenant', async () => {
@@ -180,5 +195,152 @@ describe('BillingController (API Subscriptions & Invoicing)', () => {
     const cancelled = await controller.cancelSubscription(subA.id, tenantAContext);
     expect(cancelled.status).toBe('CANCELLED');
     expect(cancelled.cancelledAt).toBeDefined();
+  });
+
+  describe('Subscription Evaluation & Grace Period Management', () => {
+    it('evaluates subscription and enters GRACE_PERIOD within 5 days of expiry', async () => {
+      const orderA = orderService.createOrder({
+        organizationId: 'org-tenant-a',
+        currency: 'COP',
+        billingCycle: BillingCycle.MONTHLY,
+        items: [{ planVersionId, quantity: 1 }],
+        idempotencyKey: 'idem-eval-sub-1',
+      });
+      orderA.status = OrderStatus.PAID;
+      const subA = subscriptionService.createSubscriptionFromPaidOrder(orderA);
+
+      // Fast forward past currentPeriodEnd (e.g. 32 days later)
+      const testDate = new Date(subA.currentPeriodStart.getTime() + 1000 * 60 * 60 * 24 * 32);
+      const evaluated = await controller.evaluateSubscription(subA.id, tenantAContext, testDate.toISOString());
+
+      expect(evaluated.status).toBe('GRACE_PERIOD');
+      expect(evaluated.gracePeriodUntil).toBeDefined();
+    });
+
+    it('evaluates subscription and enters non-destructive SUSPENDED status after grace period expires', async () => {
+      const orderA = orderService.createOrder({
+        organizationId: 'org-tenant-a',
+        currency: 'COP',
+        billingCycle: BillingCycle.MONTHLY,
+        items: [{ planVersionId, quantity: 1 }],
+        idempotencyKey: 'idem-eval-sub-2',
+      });
+      orderA.status = OrderStatus.PAID;
+      const subA = subscriptionService.createSubscriptionFromPaidOrder(orderA);
+
+      // Fast forward past grace period (e.g. 38 days later)
+      const testDate = new Date(subA.currentPeriodStart.getTime() + 1000 * 60 * 60 * 24 * 38);
+      const evaluated = await controller.evaluateSubscription(subA.id, tenantAContext, testDate.toISOString());
+
+      expect(evaluated.status).toBe('SUSPENDED');
+      expect(evaluated.suspendedAt).toBeDefined();
+    });
+
+    it('prevents cross-tenant subscription evaluation', async () => {
+      const orderA = orderService.createOrder({
+        organizationId: 'org-tenant-a',
+        currency: 'COP',
+        billingCycle: BillingCycle.MONTHLY,
+        items: [{ planVersionId, quantity: 1 }],
+        idempotencyKey: 'idem-cross-eval',
+      });
+      orderA.status = OrderStatus.PAID;
+      const subA = subscriptionService.createSubscriptionFromPaidOrder(orderA);
+
+      await expect(
+        controller.evaluateSubscription(subA.id, tenantBContext)
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('Subscription Reactivation', () => {
+    it('reactivates a suspended subscription when paid renewal order is provided', async () => {
+      const initialOrder = orderService.createOrder({
+        organizationId: 'org-tenant-a',
+        currency: 'COP',
+        billingCycle: BillingCycle.MONTHLY,
+        items: [{ planVersionId, quantity: 1 }],
+        idempotencyKey: 'idem-react-init',
+      });
+      initialOrder.status = OrderStatus.PAID;
+      const sub = subscriptionService.createSubscriptionFromPaidOrder(initialOrder);
+
+      // Force suspend
+      const futureDate = new Date(Date.now() + 1000 * 60 * 60 * 24 * 40);
+      subscriptionService.evaluateSubscriptionStatus(sub.id, futureDate);
+
+      // Create paid renewal order
+      const renewalOrder = orderService.createOrder({
+        organizationId: 'org-tenant-a',
+        currency: 'COP',
+        billingCycle: BillingCycle.MONTHLY,
+        items: [{ planVersionId, quantity: 1 }],
+        idempotencyKey: 'idem-react-renewal',
+      });
+      renewalOrder.status = OrderStatus.PAID;
+
+      const reactivated = await controller.reactivateSubscription(
+        sub.id,
+        { renewalOrderId: renewalOrder.id },
+        tenantAContext
+      );
+
+      expect(reactivated.status).toBe('ACTIVE');
+      expect(reactivated.suspendedAt).toBeNull();
+      expect(reactivated.gracePeriodUntil).toBeNull();
+    });
+
+    it('prevents cross-tenant reactivation of subscriptions', async () => {
+      const orderA = orderService.createOrder({
+        organizationId: 'org-tenant-a',
+        currency: 'COP',
+        billingCycle: BillingCycle.MONTHLY,
+        items: [{ planVersionId, quantity: 1 }],
+        idempotencyKey: 'idem-cross-react',
+      });
+      orderA.status = OrderStatus.PAID;
+      const sub = subscriptionService.createSubscriptionFromPaidOrder(orderA);
+
+      await expect(
+        controller.reactivateSubscription(sub.id, { renewalOrderId: 'ord-dummy' }, tenantBContext)
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('Payment Reconciliation Endpoint', () => {
+    it('reconciles a pending order when provider transaction is APPROVED', async () => {
+      const pendingOrder = orderService.createOrder({
+        organizationId: 'org-tenant-a',
+        currency: 'COP',
+        billingCycle: BillingCycle.MONTHLY,
+        items: [{ planVersionId, quantity: 1 }],
+        idempotencyKey: 'idem-reconcile-api-1',
+      });
+
+      const result = await controller.reconcileOrder(
+        { orderId: pendingOrder.id, transactionId: 'trx-reconcile-approved-1' },
+        tenantAContext
+      );
+
+      expect(result.status).toBe('RECONCILED_PAID');
+      expect(result.order.status).toBe(OrderStatus.PAID);
+    });
+
+    it('rejects cross-tenant reconciliation attempts', async () => {
+      const pendingOrder = orderService.createOrder({
+        organizationId: 'org-tenant-a',
+        currency: 'COP',
+        billingCycle: BillingCycle.MONTHLY,
+        items: [{ planVersionId, quantity: 1 }],
+        idempotencyKey: 'idem-cross-reconcile',
+      });
+
+      await expect(
+        controller.reconcileOrder(
+          { orderId: pendingOrder.id, transactionId: 'trx-123' },
+          tenantBContext
+        )
+      ).rejects.toThrow(ForbiddenException);
+    });
   });
 });

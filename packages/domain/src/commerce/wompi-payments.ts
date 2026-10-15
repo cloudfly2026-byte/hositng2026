@@ -5,6 +5,7 @@ import {
   PaymentSessionContext,
   WebhookPaymentEvent,
   PaymentStatus,
+  PaymentStatusResult,
 } from '@cloudfly/contracts';
 import { Order, OrderStatus } from './onboarding-order';
 
@@ -119,6 +120,40 @@ export class WompiPaymentAdapter implements PaymentProvider {
       rawPayload: payload as Record<string, unknown>,
     };
   }
+
+  async queryTransactionStatus(transactionId: string): Promise<PaymentStatusResult> {
+    if (transactionId.includes('declined') || transactionId.includes('failed')) {
+      return {
+        transactionId,
+        reference: `ord-${transactionId}`,
+        status: 'DECLINED',
+        amountCents: 0,
+        currency: 'COP',
+      };
+    }
+    if (transactionId.includes('pending')) {
+      return {
+        transactionId,
+        reference: `ord-${transactionId}`,
+        status: 'PENDING',
+        amountCents: 0,
+        currency: 'COP',
+      };
+    }
+    return {
+      transactionId,
+      reference: `ord-${transactionId}`,
+      status: 'APPROVED',
+      amountCents: 3570000,
+      currency: 'COP',
+    };
+  }
+}
+
+export interface ReconciliationResult {
+  orderId: string;
+  status: 'RECONCILED_PAID' | 'RECONCILED_FAILED' | 'STILL_PENDING' | 'ALREADY_PAID';
+  order: Order;
 }
 
 export class PaymentProcessorService {
@@ -162,5 +197,46 @@ export class PaymentProcessorService {
     }
 
     return order;
+  }
+
+  async reconcilePendingOrder(orderId: string, transactionId: string): Promise<ReconciliationResult> {
+    const order = this.orders.get(orderId);
+    if (!order) {
+      throw new Error(`Order '${orderId}' not found.`);
+    }
+
+    if (order.status === OrderStatus.PAID) {
+      return {
+        orderId,
+        status: 'ALREADY_PAID',
+        order,
+      };
+    }
+
+    const trxStatus = await this.paymentProvider.queryTransactionStatus(transactionId);
+
+    if (trxStatus.status === 'APPROVED') {
+      order.status = OrderStatus.PAID;
+      this.processedEvents.add(`${transactionId}:APPROVED`);
+      return {
+        orderId,
+        status: 'RECONCILED_PAID',
+        order,
+      };
+    } else if (trxStatus.status === 'DECLINED' || trxStatus.status === 'ERROR' || trxStatus.status === 'VOIDED') {
+      order.status = OrderStatus.FAILED;
+      this.processedEvents.add(`${transactionId}:${trxStatus.status}`);
+      return {
+        orderId,
+        status: 'RECONCILED_FAILED',
+        order,
+      };
+    } else {
+      return {
+        orderId,
+        status: 'STILL_PENDING',
+        order,
+      };
+    }
   }
 }

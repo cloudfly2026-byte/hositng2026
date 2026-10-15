@@ -247,4 +247,50 @@ describe('AuthenticationService (End-to-End Identity & Auth)', () => {
       expect(context.roles).toContain('OWNER');
     });
   });
+
+  describe('Relational Persistence / IUnitOfWork Integration', () => {
+    it('persists registered users, organizations, and memberships into IUnitOfWork', async () => {
+      const savedUsers: any[] = [];
+      const savedOrgs: any[] = [];
+      const savedMemberships: any[] = [];
+
+      const mockUow: any = {
+        users: {
+          save: async (u: any) => { savedUsers.push(u); },
+          findById: async () => null,
+          findByEmail: async () => null,
+          delete: async () => {},
+        },
+        organizations: {
+          save: async (o: any) => { savedOrgs.push(o); },
+          findById: async () => null,
+          findBySlug: async () => null,
+          listByUser: async () => [],
+        },
+        memberships: {
+          save: async (m: any) => { savedMemberships.push(m); },
+          findById: async () => null,
+          findByUserAndOrg: async () => null,
+          listByOrganization: async () => [],
+          delete: async () => {},
+        },
+      };
+
+      const authWithUow = new AuthenticationService(passwordHasher, jwtService, mockUow);
+      const reg = await authWithUow.register({
+        email: 'persistent.user@velupi.com',
+        password: 'PersistentPassword123!',
+        fullName: 'Persistent User',
+        organizationName: 'Persistent Org',
+      });
+
+      expect(savedUsers.length).toBe(1);
+      expect(savedUsers[0].email).toBe('persistent.user@velupi.com');
+      expect(savedOrgs.length).toBe(1);
+      expect(savedOrgs[0].name).toBe('Persistent Org');
+      expect(savedMemberships.length).toBe(1);
+      expect(savedMemberships[0].role).toBe('OWNER');
+      expect(reg.user.email).toBe('persistent.user@velupi.com');
+    });
+  });
 });

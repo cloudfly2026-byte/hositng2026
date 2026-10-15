@@ -2,6 +2,7 @@ import { Role, AuthTokens } from '@cloudfly/contracts';
 import { IPasswordHasher, JwtSecurityService } from './password-hasher';
 import { CustomerUser, CustomerOrganization, DuplicateEmailError, InvalidVerificationTokenError } from '../commerce/onboarding-order';
 import { Membership } from '../identity/rbac';
+import { IUnitOfWork } from '../repositories/interfaces';
 
 export class InvalidCredentialsError extends Error {
   constructor() {
@@ -69,7 +70,8 @@ export class AuthenticationService {
 
   constructor(
     private readonly passwordHasher: IPasswordHasher,
-    private readonly jwtService: JwtSecurityService
+    private readonly jwtService: JwtSecurityService,
+    private readonly uow?: IUnitOfWork
   ) {}
 
   async register(input: RegisterInput): Promise<AuthResult> {
@@ -126,6 +128,18 @@ export class AuthenticationService {
       createdAt: new Date(),
     };
     this.memberships.set(membership.id, membership);
+
+    if (this.uow) {
+      await this.uow.users.save({
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        emailVerified: user.emailVerified,
+        createdAt: user.createdAt,
+      });
+      await this.uow.organizations.save(organization);
+      await this.uow.memberships.save(membership);
+    }
 
     const verificationToken = `vt-${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
     this.verificationTokens.set(user.id, verificationToken);

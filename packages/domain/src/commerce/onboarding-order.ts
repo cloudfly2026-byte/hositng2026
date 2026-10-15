@@ -1,4 +1,5 @@
 import { BillingCycle, ProductCatalogService } from './catalog';
+import { IUnitOfWork } from '../repositories/interfaces';
 
 export interface CustomerUser {
   id: string;
@@ -171,7 +172,10 @@ export class OrderService {
   private orders: Map<string, Order> = new Map();
   private idempotencyIndex: Map<string, Order> = new Map(); // key -> Order
 
-  constructor(private catalog: ProductCatalogService) {}
+  constructor(
+    private catalog: ProductCatalogService,
+    private uow?: IUnitOfWork
+  ) {}
 
   createOrder(input: CreateOrderInput): Order {
     // Idempotency check
@@ -235,6 +239,10 @@ export class OrderService {
     this.orders.set(order.id, order);
     this.idempotencyIndex.set(input.idempotencyKey, order);
 
+    if (this.uow) {
+      this.uow.orders.save(order);
+    }
+
     return order;
   }
 
@@ -260,6 +268,12 @@ export class OrderService {
       throw new Error(`Order '${orderId}' not found.`);
     }
     order.status = status;
+
+    if (this.uow) {
+      this.uow.orders.save(order);
+    }
+
     return order;
   }
 }
+
