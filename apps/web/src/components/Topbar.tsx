@@ -104,22 +104,22 @@ export function Topbar({ onDrawerToggle }: TopbarProps) {
             onClick={handleOpenOrgMenu}
             size="small"
             variant="outlined"
-            endIcon={<ArrowDropDownRoundedIcon sx={{ color: '#9ca3af' }} />}
-            startIcon={<BusinessRoundedIcon sx={{ fontSize: '16px !important', color: '#06b6d4' }} />}
+            endIcon={<ArrowDropDownRoundedIcon sx={{ color: '#667085' }} />}
+            startIcon={<BusinessRoundedIcon sx={{ fontSize: '16px !important', color: '#FF6B00' }} />}
             sx={{
               display: { xs: 'none', sm: 'flex' },
-              borderColor: 'rgba(255, 255, 255, 0.12)',
-              color: '#f3f4f6',
+              borderColor: '#F2E8DC',
+              color: '#2D1B17',
               textTransform: 'none',
-              fontWeight: 600,
+              fontWeight: 700,
               fontSize: '0.78rem',
               py: 0.4,
               px: 1.2,
               borderRadius: '8px',
-              backgroundColor: 'rgba(255, 255, 255, 0.03)',
+              backgroundColor: '#FFFFFF',
               '&:hover': {
-                borderColor: '#06b6d4',
-                backgroundColor: 'rgba(6, 182, 212, 0.08)',
+                borderColor: '#FF6B00',
+                backgroundColor: 'rgba(255, 107, 0, 0.04)',
               },
             }}
           >
@@ -134,23 +134,25 @@ export function Topbar({ onDrawerToggle }: TopbarProps) {
             transformOrigin={{ vertical: 'top', horizontal: 'right' }}
             PaperProps={{
               sx: {
-                backgroundColor: '#111827',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#f3f4f6',
+                backgroundColor: '#FFFFFF',
+                border: '1px solid #F2E8DC',
+                color: '#2D1B17',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
                 minWidth: 200,
+                borderRadius: 2,
               },
             }}
           >
             <Box sx={{ px: 2, py: 1 }}>
-              <Typography variant="caption" sx={{ color: '#9ca3af', fontWeight: 600 }}>
+              <Typography variant="caption" sx={{ color: '#667085', fontWeight: 700 }}>
                 ORGANIZACIONES ACTIVAS
               </Typography>
             </Box>
             <MenuItem onClick={handleCloseOrgMenu} selected sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              <Typography variant="body2" sx={{ fontWeight: 700, color: '#2D1B17' }}>
                 org-velupi-internal
               </Typography>
-              <Chip label="Actual" size="small" color="primary" sx={{ height: 18, fontSize: '0.65rem' }} />
+              <Chip label="Actual" size="small" color="primary" sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700 }} />
             </MenuItem>
           </Menu>
 
@@ -176,7 +178,7 @@ export function Topbar({ onDrawerToggle }: TopbarProps) {
               borderRadius: '8px',
               transition: 'background-color 0.15s ease',
               '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                backgroundColor: 'rgba(255, 107, 0, 0.05)',
               },
             }}
           >
@@ -185,17 +187,18 @@ export function Topbar({ onDrawerToggle }: TopbarProps) {
                 width: 32,
                 height: 32,
                 fontSize: '0.85rem',
-                fontWeight: 700,
-                background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
+                fontWeight: 800,
+                background: 'linear-gradient(135deg, #FF6B00 0%, #FFB800 100%)',
+                color: '#FFFFFF',
               }}
             >
               E
             </Avatar>
             <Box sx={{ display: { xs: 'none', lg: 'block' } }}>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: '#f3f4f6', fontSize: '0.82rem', lineHeight: 1.1 }}>
+              <Typography variant="body2" sx={{ fontWeight: 700, color: '#2D1B17', fontSize: '0.82rem', lineHeight: 1.1 }}>
                 Edwin
               </Typography>
-              <Typography variant="caption" sx={{ color: '#06b6d4', fontWeight: 600, fontSize: '0.68rem' }}>
+              <Typography variant="caption" sx={{ color: '#FF6B00', fontWeight: 800, fontSize: '0.68rem' }}>
                 OWNER
               </Typography>
             </Box>
@@ -209,30 +212,32 @@ export function Topbar({ onDrawerToggle }: TopbarProps) {
             transformOrigin={{ vertical: 'top', horizontal: 'right' }}
             PaperProps={{
               sx: {
-                backgroundColor: '#111827',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#f3f4f6',
+                backgroundColor: '#FFFFFF',
+                border: '1px solid #F2E8DC',
+                color: '#2D1B17',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
                 minWidth: 180,
+                borderRadius: 2,
               },
             }}
           >
-            <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #F2E8DC' }}>
+              <Typography variant="body2" sx={{ fontWeight: 700, color: '#2D1B17' }}>
                 Edwin
               </Typography>
-              <Typography variant="caption" sx={{ color: '#9ca3af' }}>
+              <Typography variant="caption" sx={{ color: '#667085' }}>
                 admin@velupi.com
               </Typography>
             </Box>
-            <MenuItem onClick={handleCloseUserMenu} sx={{ py: 1, gap: 1.5, fontSize: '0.85rem' }}>
-              <PersonOutlineRoundedIcon fontSize="small" sx={{ color: '#9ca3af' }} />
+            <MenuItem onClick={handleCloseUserMenu} sx={{ py: 1, gap: 1.5, fontSize: '0.85rem', color: '#2D1B17' }}>
+              <PersonOutlineRoundedIcon fontSize="small" sx={{ color: '#667085' }} />
               Mi Perfil
             </MenuItem>
-            <MenuItem onClick={handleCloseUserMenu} sx={{ py: 1, gap: 1.5, fontSize: '0.85rem' }}>
-              <BusinessRoundedIcon fontSize="small" sx={{ color: '#9ca3af' }} />
+            <MenuItem onClick={handleCloseUserMenu} sx={{ py: 1, gap: 1.5, fontSize: '0.85rem', color: '#2D1B17' }}>
+              <BusinessRoundedIcon fontSize="small" sx={{ color: '#667085' }} />
               Organizaciones
             </MenuItem>
-            <MenuItem onClick={handleCloseUserMenu} sx={{ py: 1, gap: 1.5, fontSize: '0.85rem', color: '#f87171' }}>
+            <MenuItem onClick={handleCloseUserMenu} sx={{ py: 1, gap: 1.5, fontSize: '0.85rem', color: '#DC2626' }}>
               <LogoutRoundedIcon fontSize="small" />
               Cerrar Sesión
             </MenuItem>

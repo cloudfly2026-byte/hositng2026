@@ -40,7 +40,7 @@ export class ApiClient {
     this.baseUrl =
       config?.baseUrl ||
       (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) ||
-      'http://169.58.220.244:4000';
+      'https://api.velupi.com';
     this.token = config?.token;
   }
 

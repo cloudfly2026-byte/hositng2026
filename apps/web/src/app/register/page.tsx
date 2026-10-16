@@ -115,14 +115,14 @@ function RegisterContent() {
       {/* Stepper indicator if coming from cart */}
       {cartId && (
         <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, backgroundColor: 'rgba(255,255,255,0.03)', px: 2.5, py: 1, borderRadius: 3, border: '1px solid rgba(255,255,255,0.08)' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, backgroundColor: '#FFFFFF', px: 2.5, py: 1, borderRadius: 3, border: '1px solid #F2E8DC', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
             <Chip label="1" size="small" color="success" sx={{ height: 22, fontSize: '0.75rem' }} />
             <Typography variant="caption" sx={{ color: '#10b981', fontWeight: 600 }}>Carrito</Typography>
-            <Typography variant="caption" sx={{ color: '#6b7280' }}>→</Typography>
+            <Typography variant="caption" sx={{ color: '#9ca3af' }}>→</Typography>
             <Chip label="2" size="small" color="primary" sx={{ height: 22, fontSize: '0.75rem' }} />
-            <Typography variant="caption" sx={{ color: '#fff', fontWeight: 700 }}>Crear Cuenta</Typography>
-            <Typography variant="caption" sx={{ color: '#6b7280' }}>→</Typography>
-            <Chip label="3" size="small" variant="outlined" sx={{ height: 22, fontSize: '0.75rem', color: '#6b7280' }} />
+            <Typography variant="caption" sx={{ color: '#2D1B17', fontWeight: 700 }}>Crear Cuenta</Typography>
+            <Typography variant="caption" sx={{ color: '#9ca3af' }}>→</Typography>
+            <Chip label="3" size="small" variant="outlined" sx={{ height: 22, fontSize: '0.75rem', color: '#6b7280', borderColor: '#E5E7EB' }} />
             <Typography variant="caption" sx={{ color: '#6b7280' }}>Facturación</Typography>
           </Box>
         </Box>
@@ -132,23 +132,23 @@ function RegisterContent() {
         elevation={0}
         sx={{
           p: { xs: 3, sm: 4 },
-          backgroundColor: '#111827',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          backgroundColor: '#FFFFFF',
+          border: '1px solid #F2E8DC',
           borderRadius: 3,
-          boxShadow: '0 12px 32px rgba(0,0,0,0.4)',
+          boxShadow: '0 4px 16px rgba(255, 107, 0, 0.06)',
         }}
       >
         <Box sx={{ textAlign: 'center', mb: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: 800, color: '#fff', mb: 0.5 }}>
+          <Typography variant="h5" sx={{ fontWeight: 800, color: '#2D1B17', mb: 0.5 }}>
             Crea tu Cuenta Velupi
           </Typography>
-          <Typography variant="body2" sx={{ color: '#9ca3af' }}>
+          <Typography variant="body2" sx={{ color: '#667085' }}>
             Accede al panel de control cloud y activa tu infraestructura en minutos.
           </Typography>
         </Box>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 3, backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#fca5a5', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
             {error}
           </Alert>
         )}
@@ -165,12 +165,12 @@ function RegisterContent() {
               py: 1.2,
               textTransform: 'none',
               fontWeight: 600,
-              color: '#fff',
-              borderColor: 'rgba(255, 255, 255, 0.15)',
-              backgroundColor: 'rgba(255, 255, 255, 0.02)',
+              color: '#2D1B17',
+              borderColor: '#E5E7EB',
+              backgroundColor: '#FFFFFF',
               '&:hover': {
-                borderColor: '#06b6d4',
-                backgroundColor: 'rgba(6, 182, 212, 0.05)',
+                borderColor: '#FF6B00',
+                backgroundColor: 'rgba(255, 107, 0, 0.04)',
               },
             }}
           >
@@ -186,12 +186,12 @@ function RegisterContent() {
               py: 1.2,
               textTransform: 'none',
               fontWeight: 600,
-              color: '#fff',
-              borderColor: 'rgba(255, 255, 255, 0.15)',
-              backgroundColor: 'rgba(255, 255, 255, 0.02)',
+              color: '#2D1B17',
+              borderColor: '#E5E7EB',
+              backgroundColor: '#FFFFFF',
               '&:hover': {
-                borderColor: '#06b6d4',
-                backgroundColor: 'rgba(6, 182, 212, 0.05)',
+                borderColor: '#FF6B00',
+                backgroundColor: 'rgba(255, 107, 0, 0.04)',
               },
             }}
           >
@@ -199,8 +199,8 @@ function RegisterContent() {
           </Button>
         </Box>
 
-        <Divider sx={{ my: 3, borderColor: 'rgba(255, 255, 255, 0.1)' }}>
-          <Typography variant="caption" sx={{ color: '#6b7280', px: 1 }}>
+        <Divider sx={{ my: 3, borderColor: '#F2E8DC' }}>
+          <Typography variant="caption" sx={{ color: '#667085', px: 1, fontWeight: 600 }}>
             O REGÍSTRATE CON TU EMAIL
           </Typography>
         </Divider>
@@ -263,11 +263,11 @@ function RegisterContent() {
               <Checkbox
                 checked={acceptTerms}
                 onChange={(e) => setAcceptTerms(e.target.checked)}
-                sx={{ color: '#06b6d4', '&.Mui-checked': { color: '#06b6d4' } }}
+                color="primary"
               />
             }
             label={
-              <Typography variant="caption" sx={{ color: '#9ca3af' }}>
+              <Typography variant="caption" sx={{ color: '#667085' }}>
                 Acepto los Términos de Servicio y la Política de Tratamiento de Datos Personales.
               </Typography>
             }
@@ -284,10 +284,9 @@ function RegisterContent() {
             sx={{
               py: 1.4,
               mt: 1,
-              fontWeight: 700,
+              fontWeight: 800,
               fontSize: '1rem',
               borderRadius: 2,
-              boxShadow: '0 4px 14px rgba(6, 182, 212, 0.4)',
             }}
           >
             {loading ? 'Creando cuenta...' : 'Crear Cuenta y Continuar'}
@@ -295,11 +294,11 @@ function RegisterContent() {
         </Box>
 
         <Box sx={{ mt: 3, textAlign: 'center' }}>
-          <Typography variant="body2" sx={{ color: '#9ca3af' }}>
+          <Typography variant="body2" sx={{ color: '#667085' }}>
             ¿Ya tienes una cuenta?{' '}
             <Link
               href={`/login?returnTo=${encodeURIComponent(returnTo)}${cartId ? `&cartId=${encodeURIComponent(cartId)}` : ''}`}
-              style={{ color: '#06b6d4', textDecoration: 'none', fontWeight: 600 }}
+              style={{ color: '#FF6B00', textDecoration: 'none', fontWeight: 700 }}
             >
               Iniciar Sesión
             </Link>

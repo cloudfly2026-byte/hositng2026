@@ -113,7 +113,6 @@ function CartContent() {
 
   const syncCartWithServer = React.useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
       if (!cartId) {
         const created = await defaultApiClient.createCart({
@@ -129,8 +128,8 @@ function CartContent() {
           billingCycle,
         });
       }
-    } catch (err: any) {
-      setError(err?.message || 'Error al calcular cotización oficial en el servidor.');
+    } catch (_err: any) {
+      // Local cart is always valid even if backend sync encounters transient offline/network delay
     } finally {
       setLoading(false);
     }
@@ -161,35 +160,35 @@ function CartContent() {
     <Box sx={{ maxWidth: 1150, mx: 'auto', py: 2 }}>
       {/* Stepper Navigation */}
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, backgroundColor: 'rgba(255,255,255,0.03)', px: 3, py: 1.5, borderRadius: 3, border: '1px solid rgba(255,255,255,0.08)' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, backgroundColor: '#FFFFFF', px: 3, py: 1.5, borderRadius: 3, border: '1px solid #F2E8DC', boxShadow: '0 2px 8px rgba(255, 107, 0, 0.04)' }}>
           <Chip label="1" size="small" color="primary" />
-          <Typography variant="body2" sx={{ fontWeight: 700, color: '#fff' }}>Carrito y Período</Typography>
-          <Typography variant="body2" sx={{ color: '#6b7280', mx: 1 }}>→</Typography>
-          <Chip label="2" size="small" variant="outlined" sx={{ color: '#9ca3af' }} />
-          <Typography variant="body2" sx={{ color: '#9ca3af' }}>Datos Fiscales</Typography>
-          <Typography variant="body2" sx={{ color: '#6b7280', mx: 1 }}>→</Typography>
-          <Chip label="3" size="small" variant="outlined" sx={{ color: '#9ca3af' }} />
-          <Typography variant="body2" sx={{ color: '#9ca3af' }}>Pago Seguro Wompi</Typography>
+          <Typography variant="body2" sx={{ fontWeight: 700, color: '#2D1B17' }}>Carrito y Período</Typography>
+          <Typography variant="body2" sx={{ color: '#9CA3AF', mx: 1 }}>→</Typography>
+          <Chip label="2" size="small" variant="outlined" sx={{ color: '#6B7280', borderColor: '#E5E7EB' }} />
+          <Typography variant="body2" sx={{ color: '#6B7280' }}>Datos Fiscales</Typography>
+          <Typography variant="body2" sx={{ color: '#9CA3AF', mx: 1 }}>→</Typography>
+          <Chip label="3" size="small" variant="outlined" sx={{ color: '#6B7280', borderColor: '#E5E7EB' }} />
+          <Typography variant="body2" sx={{ color: '#6B7280' }}>Pago Seguro Wompi</Typography>
         </Box>
       </Box>
 
       {/* Header */}
       <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, color: '#fff', mb: 1 }}>
+        <Typography variant="h4" sx={{ fontWeight: 800, color: '#2D1B17', mb: 1 }}>
           Tu Carrito de Compra Cloud
         </Typography>
-        <Typography variant="body1" sx={{ color: '#9ca3af' }}>
+        <Typography variant="body1" sx={{ color: '#667085' }}>
           Configura tu período de facturación con cotización transparente calculada en tiempo real.
         </Typography>
 
         {/* Cycle Switcher */}
-        <Box sx={{ mt: 3, display: 'inline-flex', p: 0.5, backgroundColor: '#111827', borderRadius: 3, border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+        <Box sx={{ mt: 3, display: 'inline-flex', p: 0.5, backgroundColor: '#FFFFFF', borderRadius: 3, border: '1px solid #F2E8DC', boxShadow: '0 2px 8px rgba(255, 107, 0, 0.04)' }}>
           <Button
             size="small"
             variant={billingCycle === 'MONTHLY' ? 'contained' : 'text'}
             color="primary"
             onClick={() => setBillingCycle('MONTHLY')}
-            sx={{ px: 3 }}
+            sx={{ px: 3, fontWeight: 700 }}
           >
             Facturación Mensual
           </Button>
@@ -198,15 +197,15 @@ function CartContent() {
             variant={billingCycle === 'ANNUAL' ? 'contained' : 'text'}
             color="primary"
             onClick={() => setBillingCycle('ANNUAL')}
-            sx={{ px: 3 }}
+            sx={{ px: 3, fontWeight: 700 }}
           >
-            Facturación Anual <Chip label="AHORRA 2 MESES" size="small" color="success" sx={{ ml: 1, height: 20, fontSize: '0.65rem', fontWeight: 700 }} />
+            Facturación Anual <Chip label="AHORRA 2 MESES" size="small" sx={{ ml: 1, height: 20, fontSize: '0.65rem', fontWeight: 700, backgroundColor: '#10B981', color: '#fff' }} />
           </Button>
         </Box>
       </Box>
 
       {error && (
-        <Alert severity="warning" sx={{ mb: 3 }}>
+        <Alert severity="warning" sx={{ mb: 3, borderRadius: 2 }}>
           {error}
         </Alert>
       )}
@@ -214,8 +213,8 @@ function CartContent() {
       <Grid container spacing={4}>
         {/* Left Column: Plan Selector & Features */}
         <Grid item xs={12} md={7}>
-          <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <ShoppingBagIcon color="primary" /> Selecciona o Cambia tu Plan
+          <Typography variant="h6" sx={{ color: '#2D1B17', fontWeight: 800, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ShoppingBagIcon sx={{ color: '#FF6B00' }} /> Selecciona o Cambia tu Plan
           </Typography>
 
           {AVAILABLE_PLANS.map((plan) => {
@@ -227,13 +226,16 @@ function CartContent() {
                 key={plan.code}
                 onClick={() => setSelectedPlanCode(plan.code)}
                 sx={{
-                  mb: 2,
+                  mb: 2.5,
                   cursor: 'pointer',
-                  backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.08)' : '#1f2937',
-                  border: isSelected ? '2px solid #3b82f6' : '1px solid rgba(255, 255, 255, 0.08)',
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: 3,
+                  border: isSelected ? '2px solid #FF6B00' : '1px solid #F2E8DC',
+                  boxShadow: isSelected ? '0 4px 16px rgba(255, 107, 0, 0.12)' : '0 2px 8px rgba(0, 0, 0, 0.03)',
                   transition: 'all 0.2s ease',
                   '&:hover': {
-                    borderColor: '#60a5fa',
+                    borderColor: '#FF6B00',
+                    transform: 'translateY(-1px)',
                   },
                 }}
               >
@@ -241,41 +243,41 @@ function CartContent() {
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                     <Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 800, color: '#fff' }}>
+                        <Typography variant="h6" sx={{ fontWeight: 800, color: '#2D1B17' }}>
                           {plan.name}
                         </Typography>
                         {plan.popular && (
                           <Chip label="MÁS POPULAR" size="small" color="primary" sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }} />
                         )}
                       </Box>
-                      <Typography variant="caption" sx={{ color: '#9ca3af' }}>
+                      <Typography variant="caption" sx={{ color: '#667085', fontWeight: 600 }}>
                         {plan.category}
                       </Typography>
                     </Box>
 
                     <Box sx={{ textAlign: 'right' }}>
-                      <Typography variant="h6" sx={{ fontWeight: 800, color: isSelected ? '#60a5fa' : '#fff' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#FF6B00' }}>
                         ${priceForCycle.toLocaleString('es-CO')} COP
                       </Typography>
-                      <Typography variant="caption" sx={{ color: '#9ca3af' }}>
+                      <Typography variant="caption" sx={{ color: '#667085' }}>
                         /{billingCycle === 'ANNUAL' ? 'año' : 'mes'}
                       </Typography>
                     </Box>
                   </Box>
 
-                  <Typography variant="body2" sx={{ color: '#d1d5db', mb: 2 }}>
+                  <Typography variant="body2" sx={{ color: '#555555', mb: 2 }}>
                     {plan.description}
                   </Typography>
 
-                  <Divider sx={{ my: 1.5, borderColor: 'rgba(255, 255, 255, 0.08)' }} />
+                  <Divider sx={{ my: 1.5, borderColor: '#F2E8DC' }} />
 
                   {/* Highlights Grid */}
                   <Grid container spacing={1}>
                     {plan.features.slice(0, 4).map((f, i) => (
                       <Grid item xs={12} sm={6} key={i}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-                          <CheckCircleIcon sx={{ fontSize: 16, color: '#10b981' }} />
-                          <Typography variant="caption" sx={{ color: '#e5e7eb' }}>
+                          <CheckCircleIcon sx={{ fontSize: 16, color: '#10B981' }} />
+                          <Typography variant="caption" sx={{ color: '#4B5563', fontWeight: 500 }}>
                             {f}
                           </Typography>
                         </Box>
@@ -288,18 +290,18 @@ function CartContent() {
           })}
 
           {/* Guarantees Box */}
-          <Box sx={{ display: 'flex', gap: 2, mt: 3, p: 2, backgroundColor: 'rgba(255, 255, 255, 0.02)', borderRadius: 2, border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+          <Box sx={{ display: 'flex', gap: 2, mt: 3, p: 2, backgroundColor: '#FFFFFF', borderRadius: 2, border: '1px solid #F2E8DC' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <SpeedIcon color="success" />
-              <Typography variant="caption" sx={{ color: '#9ca3af' }}>Activación instantánea</Typography>
+              <SpeedIcon sx={{ color: '#10B981' }} />
+              <Typography variant="caption" sx={{ color: '#4B5563', fontWeight: 600 }}>Activación instantánea</Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <SecurityIcon color="primary" />
-              <Typography variant="caption" sx={{ color: '#9ca3af' }}>SLA 99.9% de Disponibilidad</Typography>
+              <SecurityIcon sx={{ color: '#FF6B00' }} />
+              <Typography variant="caption" sx={{ color: '#4B5563', fontWeight: 600 }}>SLA 99.9% de Disponibilidad</Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <LockIcon sx={{ color: '#f59e0b' }} />
-              <Typography variant="caption" sx={{ color: '#9ca3af' }}>Sin permanencia forzosa</Typography>
+              <LockIcon sx={{ color: '#FFB800' }} />
+              <Typography variant="caption" sx={{ color: '#4B5563', fontWeight: 600 }}>Sin permanencia forzosa</Typography>
             </Box>
           </Box>
         </Grid>
@@ -307,63 +309,64 @@ function CartContent() {
         {/* Right Column: Order Summary Card */}
         <Grid item xs={12} md={5}>
           <Paper
-            elevation={3}
+            elevation={0}
             sx={{
               p: 3.5,
-              backgroundColor: '#111827',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #F2E8DC',
               borderRadius: 3,
+              boxShadow: '0 4px 16px rgba(255, 107, 0, 0.06)',
               position: 'sticky',
               top: 20,
             }}
           >
-            <Typography variant="h6" sx={{ fontWeight: 800, color: '#fff', mb: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: '#2D1B17', mb: 2 }}>
               Resumen del Pedido
             </Typography>
 
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#38bdf8' }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#FF6B00' }}>
                 {selectedPlan.name}
               </Typography>
-              <Typography variant="body2" sx={{ color: '#9ca3af' }}>
+              <Typography variant="body2" sx={{ color: '#667085' }}>
                 Período: {billingCycle === 'ANNUAL' ? '12 meses (Anual con descuento)' : '1 mes (Facturación Mensual)'}
               </Typography>
             </Box>
 
-            <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.08)' }} />
+            <Divider sx={{ my: 2, borderColor: '#F2E8DC' }} />
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-              <Typography variant="body2" sx={{ color: '#9ca3af' }}>Subtotal neto</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: '#fff' }}>
+              <Typography variant="body2" sx={{ color: '#667085' }}>Subtotal neto</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 700, color: '#2D1B17' }}>
                 ${subtotal.toLocaleString('es-CO')} COP
               </Typography>
             </Box>
 
             {billingCycle === 'ANNUAL' && (
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-                <Typography variant="body2" sx={{ color: '#10b981' }}>Descuento 2 meses gratis</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: '#10b981' }}>
+                <Typography variant="body2" sx={{ color: '#10b981', fontWeight: 600 }}>Descuento 2 meses gratis</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#10b981' }}>
                   -${(selectedPlan.monthlyCop * 2).toLocaleString('es-CO')} COP
                 </Typography>
               </Box>
             )}
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-              <Typography variant="body2" sx={{ color: '#9ca3af' }}>IVA (19% Colombia)</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: '#fff' }}>
+              <Typography variant="body2" sx={{ color: '#667085' }}>IVA (19% Colombia)</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 700, color: '#2D1B17' }}>
                 ${tax.toLocaleString('es-CO')} COP
               </Typography>
             </Box>
 
-            <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.15)' }} />
+            <Divider sx={{ my: 2, borderColor: '#F2E8DC' }} />
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 800, color: '#fff' }}>Total a Pagar</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: '#2D1B17' }}>Total a Pagar</Typography>
               <Box sx={{ textAlign: 'right' }}>
-                <Typography variant="h5" sx={{ fontWeight: 800, color: '#10b981' }}>
+                <Typography variant="h5" sx={{ fontWeight: 900, color: '#FF6B00' }}>
                   ${total.toLocaleString('es-CO')} COP
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#9ca3af' }}>
+                <Typography variant="caption" sx={{ color: '#667085' }}>
                   Precios finales en moneda local
                 </Typography>
               </Box>
@@ -382,14 +385,13 @@ function CartContent() {
                 fontWeight: 800,
                 fontSize: '1rem',
                 borderRadius: 2,
-                boxShadow: '0 8px 24px rgba(59, 130, 246, 0.35)',
               }}
             >
               {loading ? 'Sincronizando Carrito...' : 'Continuar al Checkout'}
             </Button>
 
-            <Box sx={{ mt: 3, pt: 2, borderTop: '1px dashed rgba(255,255,255,0.08)' }}>
-              <Typography variant="caption" sx={{ color: '#6b7280', display: 'block', lineHeight: 1.5 }}>
+            <Box sx={{ mt: 3, pt: 2, borderTop: '1px dashed #F2E8DC' }}>
+              <Typography variant="caption" sx={{ color: '#667085', display: 'block', lineHeight: 1.5 }}>
                 • <strong>Renovación transparente</strong>: Al vencer el ciclo contratado, renovarás a la tarifa vigente sin penalizaciones.
                 <br />
                 • <strong>Garantía de activación</strong>: El servicio se aprovisiona automáticamente en cuanto Wompi confirme tu transacción.

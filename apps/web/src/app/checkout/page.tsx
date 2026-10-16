@@ -194,19 +194,20 @@ function CheckoutContent() {
             elevation={0}
             sx={{
               p: 3,
-              backgroundColor: '#111827',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #F2E8DC',
               borderRadius: 3,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
               mb: 3,
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-              <ReceiptLongIcon sx={{ color: '#06b6d4' }} />
-              <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff' }}>
+              <ReceiptLongIcon sx={{ color: '#FF6B00' }} />
+              <Typography variant="h6" sx={{ fontWeight: 800, color: '#2D1B17' }}>
                 Datos de Facturación Fiscal
               </Typography>
             </Box>
-            <Typography variant="body2" sx={{ color: '#9ca3af', mb: 3 }}>
+            <Typography variant="body2" sx={{ color: '#667085', mb: 3 }}>
               Información requerida para emitir tu comprobante y habilitar tu suscripción cloud.
             </Typography>
 
@@ -218,13 +219,13 @@ function CheckoutContent() {
               >
                 <FormControlLabel
                   value="NATURAL"
-                  control={<Radio sx={{ color: '#06b6d4', '&.Mui-checked': { color: '#06b6d4' } }} />}
-                  label={<Typography variant="body2" sx={{ color: '#fff' }}>Persona Natural</Typography>}
+                  control={<Radio color="primary" />}
+                  label={<Typography variant="body2" sx={{ color: '#2D1B17', fontWeight: 600 }}>Persona Natural</Typography>}
                 />
                 <FormControlLabel
                   value="JURIDICA"
-                  control={<Radio sx={{ color: '#06b6d4', '&.Mui-checked': { color: '#06b6d4' } }} />}
-                  label={<Typography variant="body2" sx={{ color: '#fff' }}>Persona Jurídica / Empresa</Typography>}
+                  control={<Radio color="primary" />}
+                  label={<Typography variant="body2" sx={{ color: '#2D1B17', fontWeight: 600 }}>Persona Jurídica / Empresa</Typography>}
                 />
               </RadioGroup>
             </Box>
@@ -322,29 +323,30 @@ function CheckoutContent() {
             elevation={0}
             sx={{
               p: 3,
-              backgroundColor: '#111827',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #F2E8DC',
               borderRadius: 3,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <PaymentIcon sx={{ color: '#06b6d4' }} />
-                <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff' }}>
+                <PaymentIcon sx={{ color: '#FF6B00' }} />
+                <Typography variant="h6" sx={{ fontWeight: 800, color: '#2D1B17' }}>
                   Método de Pago Seguro
                 </Typography>
               </Box>
               <Chip label="WOMPI SANDBOX / PROD" size="small" color="primary" sx={{ fontSize: '0.65rem', fontWeight: 700 }} />
             </Box>
 
-            <Typography variant="body2" sx={{ color: '#9ca3af', mb: 2 }}>
+            <Typography variant="body2" sx={{ color: '#667085', mb: 2 }}>
               Tus transacciones están 100% cifradas y protegidas. Velupi no almacena números de tarjeta ni códigos CVV.
             </Typography>
 
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, p: 2, backgroundColor: 'rgba(255, 255, 255, 0.02)', borderRadius: 2, border: '1px solid rgba(255, 255, 255, 0.05)', mb: 3 }}>
-              <Chip icon={<CreditCardIcon />} label="Tarjetas de Crédito / Débito (Visa, Mastercard)" size="small" variant="outlined" sx={{ color: '#e5e7eb', borderColor: 'rgba(255,255,255,0.1)' }} />
-              <Chip icon={<AccountBalanceIcon />} label="PSE (Todos los Bancos)" size="small" variant="outlined" sx={{ color: '#e5e7eb', borderColor: 'rgba(255,255,255,0.1)' }} />
-              <Chip label="Nequi & Bancolombia" size="small" variant="outlined" sx={{ color: '#e5e7eb', borderColor: 'rgba(255,255,255,0.1)' }} />
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, p: 2, backgroundColor: '#FAF6F0', borderRadius: 2, border: '1px solid #F2E8DC', mb: 3 }}>
+              <Chip icon={<CreditCardIcon />} label="Tarjetas de Crédito / Débito (Visa, Mastercard)" size="small" variant="outlined" sx={{ color: '#2D1B17', borderColor: '#E5E7EB' }} />
+              <Chip icon={<AccountBalanceIcon />} label="PSE (Todos los Bancos)" size="small" variant="outlined" sx={{ color: '#2D1B17', borderColor: '#E5E7EB' }} />
+              <Chip label="Nequi & Bancolombia" size="small" variant="outlined" sx={{ color: '#2D1B17', borderColor: '#E5E7EB' }} />
             </Box>
 
             <FormControlLabel
@@ -352,11 +354,11 @@ function CheckoutContent() {
                 <Checkbox
                   checked={acceptTerms}
                   onChange={(e) => setAcceptTerms(e.target.checked)}
-                  sx={{ color: '#06b6d4', '&.Mui-checked': { color: '#06b6d4' } }}
+                  color="primary"
                 />
               }
               label={
-                <Typography variant="caption" sx={{ color: '#9ca3af' }}>
+                <Typography variant="caption" sx={{ color: '#667085' }}>
                   Acepto los Términos de Servicio, la activación del servicio cloud y la política de renovación automática de Velupi.
                 </Typography>
               }
@@ -374,10 +376,9 @@ function CheckoutContent() {
               sx={{
                 mt: 2.5,
                 py: 1.5,
-                fontWeight: 700,
+                fontWeight: 800,
                 fontSize: '1.05rem',
                 borderRadius: 2,
-                boxShadow: '0 4px 16px rgba(6, 182, 212, 0.4)',
               }}
             >
               {isProcessing ? 'Conectando con Wompi...' : `Pagar $${totalCop.toLocaleString('es-CO')} COP con Wompi`}
@@ -391,61 +392,62 @@ function CheckoutContent() {
             elevation={0}
             sx={{
               p: 3,
-              backgroundColor: '#111827',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #F2E8DC',
               borderRadius: 3,
+              boxShadow: '0 4px 16px rgba(255, 107, 0, 0.06)',
               position: 'sticky',
               top: 24,
             }}
           >
-            <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff', mb: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: '#2D1B17', mb: 2 }}>
               Resumen de la Orden
             </Typography>
 
             {loadingCart ? (
               <Box sx={{ py: 4, textAlign: 'center' }}>
                 <CircularProgress size={28} />
-                <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#9ca3af' }}>
+                <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#667085' }}>
                   Calculando cotización oficial...
                 </Typography>
               </Box>
             ) : (
               <Box>
-                <Box sx={{ mb: 2.5, p: 2, backgroundColor: 'rgba(255, 255, 255, 0.02)', borderRadius: 2, border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#fff' }}>
+                <Box sx={{ mb: 2.5, p: 2, backgroundColor: '#FAF6F0', borderRadius: 2, border: '1px solid #F2E8DC' }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#FF6B00' }}>
                     {planName}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: '#06b6d4', fontWeight: 600 }}>
+                  <Typography variant="caption" sx={{ color: '#667085', fontWeight: 600 }}>
                     Período: {billingCycle === 'ANNUAL' ? 'Facturación Anual (12 Meses con 2 meses gratis)' : 'Facturación Mensual'}
                   </Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-                  <Typography variant="body2" sx={{ color: '#9ca3af' }}>Subtotal</Typography>
-                  <Typography variant="body2" sx={{ color: '#fff', fontWeight: 600 }}>
+                  <Typography variant="body2" sx={{ color: '#667085' }}>Subtotal</Typography>
+                  <Typography variant="body2" sx={{ color: '#2D1B17', fontWeight: 700 }}>
                     ${subtotalCop.toLocaleString('es-CO')} COP
                   </Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-                  <Typography variant="body2" sx={{ color: '#9ca3af' }}>IVA (19% Colombia)</Typography>
-                  <Typography variant="body2" sx={{ color: '#fff', fontWeight: 600 }}>
+                  <Typography variant="body2" sx={{ color: '#667085' }}>IVA (19% Colombia)</Typography>
+                  <Typography variant="body2" sx={{ color: '#2D1B17', fontWeight: 700 }}>
                     ${taxCop.toLocaleString('es-CO')} COP
                   </Typography>
                 </Box>
 
-                <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+                <Divider sx={{ my: 2, borderColor: '#F2E8DC' }} />
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 2 }}>
-                  <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700 }}>Total a Pagar</Typography>
-                  <Typography variant="h5" sx={{ color: '#06b6d4', fontWeight: 800 }}>
-                    ${totalCop.toLocaleString('es-CO')} <Typography component="span" variant="caption" sx={{ color: '#9ca3af' }}>COP</Typography>
+                  <Typography variant="h6" sx={{ color: '#2D1B17', fontWeight: 800 }}>Total a Pagar</Typography>
+                  <Typography variant="h5" sx={{ color: '#FF6B00', fontWeight: 900 }}>
+                    ${totalCop.toLocaleString('es-CO')} <Typography component="span" variant="caption" sx={{ color: '#667085' }}>COP</Typography>
                   </Typography>
                 </Box>
 
-                <Box sx={{ p: 1.5, backgroundColor: 'rgba(6, 182, 212, 0.05)', borderRadius: 2, border: '1px solid rgba(6, 182, 212, 0.15)', mb: 2 }}>
-                  <Typography variant="caption" sx={{ color: '#9ca3af', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <ShieldOutlinedIcon sx={{ fontSize: '1rem', color: '#06b6d4' }} />
+                <Box sx={{ p: 1.5, backgroundColor: '#FFF8ED', borderRadius: 2, border: '1px solid #F2E8DC', mb: 2 }}>
+                  <Typography variant="caption" sx={{ color: '#667085', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <ShieldOutlinedIcon sx={{ fontSize: '1rem', color: '#FF6B00' }} />
                     Cotización inmutable validada por el Control Plane de Velupi.
                   </Typography>
                 </Box>
@@ -455,7 +457,7 @@ function CheckoutContent() {
                     size="small"
                     variant="text"
                     onClick={() => router.push(`/cart${cartId ? `?cartId=${encodeURIComponent(cartId)}` : ''}`)}
-                    sx={{ color: '#9ca3af', textTransform: 'none', fontSize: '0.8rem' }}
+                    sx={{ color: '#FF6B00', textTransform: 'none', fontSize: '0.85rem', fontWeight: 600 }}
                   >
                     ← Modificar plan o período en el carrito
                   </Button>
