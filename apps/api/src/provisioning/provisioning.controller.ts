@@ -90,4 +90,20 @@ export class ProvisioningController {
       throw new HttpException(err.message || 'Retry failed', HttpStatus.BAD_REQUEST);
     }
   }
+
+  @Get('operator/jobs')
+  async listAllJobsForOperator(
+    @Headers('x-roles') rolesHeader?: string
+  ): Promise<ProcessedProvisioningJob[]> {
+    const roles = (rolesHeader || '').split(',').map((r) => r.trim().toUpperCase());
+    if (!roles.includes('OPERATOR') && !roles.includes('OWNER')) {
+      throw new HttpException('Operator or Platform Admin privileges required', HttpStatus.FORBIDDEN);
+    }
+
+    const anyWorker = this.worker as any;
+    if (anyWorker.jobs && anyWorker.jobs instanceof Map) {
+      return Array.from(anyWorker.jobs.values());
+    }
+    return [];
+  }
 }

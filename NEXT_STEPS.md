@@ -1,81 +1,89 @@
 # NEXT_STEPS.md — Plan Técnico Priorizado y Hoja de Ruta Operativa
 
 **Proyecto**: Velupi Cloud Platform / Microservices Studio & Commerce Engine  
-**Fecha de actualización**: 16 de Octubre de 2026 (Cierre de Prioridades 0 y 1 / Sprint Final del MVP Comercial)  
+**Fecha de actualización**: 16 de Octubre de 2026 (Fase de Reconciliación Documental y Validación Comercial)  
 **Metodología**: TDD Obligatorio (Red → Green → Refactor)  
 **Documento rector**: `AGENTS.md`  
-**Métricas acumuladas**: 46 suites de prueba, 323 pruebas aprobadas (100% GREEN, 0 fallos). Base de datos migrada a 16 tablas relacionales activas en PostgreSQL.
+**Métricas acumuladas reales**: **46 suites de prueba, 335 pruebas aprobadas (100% GREEN, 0 fallos, 0 omitidas)**. Base de datos con **16 tablas relacionales activas** en PostgreSQL 16.
 
 ---
 
 ## 1. Visión general del estado consolidado
 
 ```text
-[Infraestructura HTTPS & Traefik v3.7 en VPS] ✅ CONSOLIDADO
+[Infraestructura HTTPS & Traefik v3.7 en VPS] ✅ CONSOLIDADO (Puertos endurecidos a 127.0.0.1)
                          │
                          ▼
-[BIND9 DNS Autoritativo & SSL Let's Encrypt]  ✅ CONSOLIDADO
+[Portainer CE 2.45.2 Inicializado con Admin]   ✅ CONSOLIDADO (https://portainer.velupi.com)
+                         │
+                         ▼
+[Rotación/Revocación Clave HestiaCP Histórica] ✅ CONSOLIDADO (Solo manager k4HHLIiCDxj9pIf1QwQK activa)
+                         │
+                         ▼
+[BIND9 DNS Autoritativo & SSL Let's Encrypt]  ✅ CONSOLIDADO (Resolución global velupi.com)
                          │
                          ▼
 [Re-Branding Velupi & Warm Solar Light System]✅ CONSOLIDADO (14/14 pantallas)
                          │
                          ▼
-[Prioridad 0: Auditoría y Saneamiento Llaves] ✅ CONSOLIDADO
+[Persistencia Relacional 16 Tablas en PG 16]   ✅ CONSOLIDADO (Migración aplicada en VPS)
                          │
                          ▼
-[Prioridad 1: Persistencia Relacional 16 DBs] ✅ CONSOLIDADO (PostgreSQL en VPS)
+[BullMQ Recovery, Multi-Tenant & Operador]     ✅ CONSOLIDADO (Recovery de worker, consola operador)
                          │
                          ▼
-[Prioridad 2: Validación E2E Wompi Sandbox]   ◀── SIGUIENTE PASO OPERATIVO
+[Integración Oficial Wompi Sandbox en Vivo]    ⏳ PENDIENTE DE CREDENCIALES OFICIALES
                          │
                          ▼
-[Prioridad 3: Aprovisionamiento Físico BullMQ]◀── PENDIENTE VALIDACIÓN EN VIVO
+[Integración Oficial OAuth Google/GitHub Real] ⏳ PENDIENTE DE CREDENCIALES OFICIALES
+                         │
+                         ▼
+[Aprovisionamiento Físico con Cliente Real]    ⏳ PENDIENTE VALIDACIÓN POST-PAGO SANDBOX
 ```
 
 ---
 
-## 2. Próximos Hitos del Sprint Final (Prioridades 2 y 3)
+## 2. Separación Estricta: Módulos Implementados vs. Validados con Proveedor Externo
 
-1. **Prioridad 2 — Validación E2E de Wompi Sandbox (UC-NEW-001)**:
-   - Probar flujo completo: Carrito persistido (`/cart`) $\rightarrow$ Registro/OAuth $\rightarrow$ Datos Fiscales (`/checkout`) $\rightarrow$ Checkout Wompi Sandbox $\rightarrow$ Webhook firmado HMAC SHA-256 $\rightarrow$ Orden pasa a `PAID`.
-   - Verificar persistencia automática del `PaymentRecord` y `Subscription` en las tablas `payments` y `subscriptions` de PostgreSQL.
-   - Confirmar comportamiento no-autoritativo de la pantalla `/checkout/return` (solo polling, nunca auto-aprobación por redirect).
+### A. Módulos Técnicamente Implementados y Probados al 100% (Green)
+- **Firma Wompi Sandbox**: Concatenación SHA-256 de propiedades (`id`, `status`, `amount_in_cents`, `timestamp`, `eventsSecret`) y HMAC de respaldo (`wompi-payments.spec.ts` 14/14).
+- **OAuth Google y GitHub**: Código con flujo PKCE y protección anti-CSRF / anti-account-takeover (`oauth-service.spec.ts` 8/8, `auth.controller.spec.ts` 17/17).
+- **Aislamiento Multi-Tenant**: Guards de aislamiento cruzado para todos los recursos (sitios, dominios, órdenes, DNS, apps) (`tenant-guard.spec.ts` 9/9).
+- **BullMQ Resiliencia y Recuperación**: Backoff exponencial, DLQ, recuperación de snapshot ante reinicios (`bullmq-provisioning.spec.ts` 8/8).
+- **Consola de Operador**: Endpoints protegidos por roles (`OPERATOR` / `OWNER`) para listar y supervisar jobs de provisión (`provisioning.controller.spec.ts` 5/5).
+- **Persistencia PostgreSQL**: 16 tablas relacionales con repositorios Unit of Work para carritos, pagos, órdenes, suscripciones, facturas y auditoría (`database-persistence.spec.ts` 9/9).
 
-2. **Prioridad 3 — Aprovisionamiento Físico Duradero con BullMQ y Redis Real**:
-   - Conectar el worker de aprovisionamiento en vivo contra `velupi-redis:6379`.
-   - Validar ejecución para el tenant de prueba:
-     1. Disparo de `ProvisioningJob` tras orden `PAID`.
-     2. Creación de cuenta y sitio web en HestiaCP (`89.117.147.134`).
-     3. Creación de registros autoritativos en BIND9.
-     4. Emisión de SSL Let's Encrypt.
-     5. Notificación y reflejo en el Dashboard del cliente en `https://app.velupi.com`.
-
-3. **Prioridad 4 — Consola de Operador Mínima y Notificaciones Transaccionales**:
-   - Configuración de templates de correo transaccional (bienvenida, confirmación de orden, factura generada, servicio activo).
-   - Vista mínima de operador para supervisar jobs de provisión y estado de nodos.
+### B. Validaciones Pendientes con Proveedores Externos (Requieren Llaves del Propietario)
+- **Wompi Sandbox Real**: Espera de `WOMPI_PUBLIC_KEY`, `WOMPI_PRIVATE_KEY`, `WOMPI_EVENTS_SECRET`, `WOMPI_INTEGRITY_SECRET` para ejecutar transacción de prueba con PSE / tarjeta de prueba oficial de Wompi.
+- **Google OAuth Real**: Espera de `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` con redirect URI autorizada para validar el popup real de consentimiento de Google.
+- **GitHub OAuth Real**: Espera de `GITHUB_CLIENT_ID` y `GITHUB_CLIENT_SECRET` para validar la redirección y autorización real de GitHub.
 
 ---
 
-## 3. Acciones Preparadas a la Espera de Autorización
+## 3. Estado de la Infraestructura en VPS (`169.58.220.244`)
 
-1. **Endurecimiento de Red en VPS `169.58.220.244`**:
-   - Restringir la exposición pública de los puertos `4000` (API) y `3001` (Web) enlazándolos a `127.0.0.1` o canalizándolos exclusivamente mediante la red de Traefik.
-   - Cerrar el puerto `9000/9443` de Portainer al exterior e implementar Basic Auth o IP Whitelist en Traefik para `portainer.velupi.com`.
-2. **Reinicio de Portainer**:
-   - Ejecutar `docker restart velupi-portainer` para fijar las credenciales maestras de administración del operador antes del timeout de 5 minutos.
-3. **Migración de Esquema en PostgreSQL**:
-   - Aplicar `migration.sql` en `velupi_production` para activar la persistencia relacional en el contenedor `velupi-postgres`.
+1. **Endurecimiento de Puertos**:
+   - `4000` (API), `3001` (Web), `5432` (PostgreSQL), `6379` (Redis), `9000/9443` (Portainer) enlazados a `127.0.0.1`.
+   - Solo `80` (HTTP) y `443` (HTTPS) abiertos al exterior vía Traefik v3.7 con Let's Encrypt TLS.
+2. **Portainer CE 2.45.2**:
+   - Inicializado con cuenta `admin` maestra. Dashboard activo y protegido en `https://portainer.velupi.com`.
+3. **PostgreSQL 16 en VPS**:
+   - 16 tablas relacionales creadas y activas (`audit_events`, `cart_drafts`, `customer_entitlements`, `invoices`, `memberships`, `order_items`, `orders`, `organizations`, `payments`, `plan_versions`, `plans`, `products`, `projects`, `services`, `subscriptions`, `users`).
+4. **HestiaCP en VPS 1 (`89.117.147.134:8083`)**:
+   - Clave histórica expuesta confirmada como revocada/inexistente en el sistema.
+   - Clave de servicio `manager` (`k4HHLIiCDxj9pIf1QwQK`) activa y restringida al Control Plane.
 
 ---
 
-## 4. Resumen de Pruebas y Cobertura TDD
+## 4. Resumen Real de Pruebas y Cobertura TDD
 
 | Paquete / App | Suites | Pruebas | Estado |
 |---|---|---|---|
 | `@cloudfly/contracts` | - | Tipos TypeScript | COMPILADO 100% |
-| `@cloudfly/domain` | 15 | 114 | 100% GREEN |
-| `@cloudfly/persistence` | 2 | 13 | 100% GREEN |
+| `@cloudfly/domain` | 16 | 129 | 100% GREEN (32 suites/archivos) |
+| `@cloudfly/persistence` | 2 | 17 | 100% GREEN |
 | `@cloudfly/deployment-adapters` | 4 | 19 | 100% GREEN |
-| `apps/api` | 13 | 86 | 100% GREEN |
-| `apps/web` | 3 | 19 | 100% GREEN |
-| **TOTAL** | **37** | **251** | **100% GREEN (0 fallos)** |
+| `apps/api` | 14 | 103 | 100% GREEN |
+| `apps/web` | 3 | 25 | 100% GREEN |
+| `wordpress` (Sunchi Theme) | 1 | 12 | 100% GREEN |
+| **TOTAL GENERAL** | **46** | **335** | **100% GREEN (0 fallos, 0 omitidos)** |

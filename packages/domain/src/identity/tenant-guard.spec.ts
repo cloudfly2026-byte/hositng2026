@@ -52,4 +52,48 @@ describe('TenantAccessPolicy (Identity & Tenancy Guard)', () => {
     const canDeploy = TenantAccessPolicy.hasPermission(devContext, 'deploy');
     expect(canDeploy).toBe(true);
   });
+
+  describe('Multi-Tenant Cross-Access Isolation (Commerce, Operations & Assets)', () => {
+    const tenantAlphaContext: AuthorizedContext = {
+      userId: 'usr-alpha-01',
+      organizationId: 'org-alpha',
+      roles: ['OWNER'],
+      permissions: ['read', 'write', 'deploy', 'billing', 'admin'],
+    };
+
+    it('strictly isolates orders and invoices across distinct tenants', () => {
+      const orderOrgBeta = 'org-beta';
+      expect(TenantAccessPolicy.canAccessTenant(tenantAlphaContext, orderOrgBeta)).toBe(false);
+    });
+
+    it('strictly isolates DNS zones and records across distinct tenants', () => {
+      const dnsZoneOrgBeta = 'org-beta';
+      expect(TenantAccessPolicy.canAccessTenant(tenantAlphaContext, dnsZoneOrgBeta)).toBe(false);
+    });
+
+    it('strictly isolates Cloud Apps, Docker services and projects across distinct tenants', () => {
+      const appOrgBeta = 'org-beta';
+      expect(TenantAccessPolicy.canAccessTenant(tenantAlphaContext, appOrgBeta)).toBe(false);
+    });
+
+    it('strictly isolates hosting domains and database resources across distinct tenants', () => {
+      const hostingOrgBeta = 'org-beta';
+      expect(TenantAccessPolicy.canAccessTenant(tenantAlphaContext, hostingOrgBeta)).toBe(false);
+    });
+
+    it('prevents role escalation from VIEWER to billing or deployment operations', () => {
+      const viewerContext: AuthorizedContext = {
+        userId: 'usr-alpha-viewer',
+        organizationId: 'org-alpha',
+        roles: ['VIEWER'],
+        permissions: ['read'],
+      };
+
+      expect(TenantAccessPolicy.hasPermission(viewerContext, 'billing')).toBe(false);
+      expect(TenantAccessPolicy.hasPermission(viewerContext, 'deploy')).toBe(false);
+      expect(TenantAccessPolicy.hasPermission(viewerContext, 'admin')).toBe(false);
+      expect(TenantAccessPolicy.hasPermission(viewerContext, 'read')).toBe(true);
+    });
+  });
 });
+

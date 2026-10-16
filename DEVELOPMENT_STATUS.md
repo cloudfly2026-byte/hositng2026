@@ -18,7 +18,7 @@ Se cumplen estrictamente las directrices mandatorias de `AGENTS.md`:
 - **TDD Riguroso**: Red → Green → Refactor aplicado en el 100% de los módulos.
 
 ### 2. Métricas de verificación operativa (Auditoría Real)
-- **Vitest**: **46 suites de prueba, 323 pruebas aprobadas (100% GREEN, 0 fallidas, 0 omitidas)**.
+- **Vitest**: **46 suites de prueba, 335 pruebas aprobadas (100% GREEN, 0 fallidas, 0 omitidas)**.
 - **TypeScript Composite Mode (`tsc --noEmit`)**: 0 errores en todos los paquetes y apps con separación limpia de specs en `tsconfig.json`.
 - **Next.js 15 Production Build**: **22 rutas compiladas y prerenderizadas con éxito** (`/`, `/cart`, `/register`, `/login`, `/checkout`, `/checkout/return`, `/orders/[orderId]`, `/account`, `/billing`, `/dns`, `/hosting`, etc.).
 - **URLs de Producción Verificadas con HTTPS y Let's Encrypt**:

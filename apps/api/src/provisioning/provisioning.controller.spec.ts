@@ -83,4 +83,38 @@ describe('ProvisioningController (TDD & Security)', () => {
     expect(retried.status).toBe(ProvisioningJobStatus.ACTIVE);
     expect(retried.attempts).toBe(2);
   });
+
+  it('should allow operator to list all jobs across tenants', async () => {
+    const jobA: ProvisioningJob = {
+      id: 'job-tenant-a',
+      orderId: 'ord-a',
+      entitlementId: 'ent-a',
+      organizationId: orgA,
+      targetEngine: 'HESTIA',
+      status: ProvisioningJobStatus.QUEUED,
+      createdAt: new Date(),
+    };
+    const jobB: ProvisioningJob = {
+      id: 'job-tenant-b',
+      orderId: 'ord-b',
+      entitlementId: 'ent-b',
+      organizationId: orgB,
+      targetEngine: 'DOKPLOY',
+      status: ProvisioningJobStatus.QUEUED,
+      createdAt: new Date(),
+    };
+
+    await worker.processJob(jobA);
+    await worker.processJob(jobB);
+
+    const jobs = await controller.listAllJobsForOperator('OPERATOR');
+    expect(jobs.length).toBe(2);
+    expect(jobs.map((j) => j.id)).toContain('job-tenant-a');
+    expect(jobs.map((j) => j.id)).toContain('job-tenant-b');
+  });
+
+  it('should reject non-operator listing jobs with 403 Forbidden', async () => {
+    await expect(controller.listAllJobsForOperator('DEVELOPER')).rejects.toThrow(HttpException);
+    await expect(controller.listAllJobsForOperator('')).rejects.toThrow(HttpException);
+  });
 });

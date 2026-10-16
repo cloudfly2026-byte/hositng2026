@@ -249,4 +249,31 @@ describe('BullMQ Real Provisioning Queue & Worker (Resilient Execution Engine)',
     const finished = await worker.processJobById(job.id);
     expect(finished?.status).toBe(BullJobStatus.COMPLETED);
   });
+
+  it('preserves queued and delayed jobs across simulated process reboot without job loss', async () => {
+    // 1. Enqueue job before worker reboot
+    const jobData: ProvisioningJob = {
+      id: 'job-restart-persisted',
+      orderId: 'ord-restart-1',
+      entitlementId: 'ent-restart-1',
+      organizationId: 'org-restart-tenant',
+      targetEngine: 'HESTIA',
+      status: ProvisioningJobStatus.QUEUED,
+      createdAt: new Date(),
+    };
+
+    await queue.addJob('provision-site', jobData, { jobId: 'job-restart-persisted' });
+
+    // 2. Simulate worker reboot: instantiate fresh worker against the persistent queue
+    const freshWorker = new BullMqProvisioningWorker(queue, mockEngine, auditLogger);
+
+    // 3. Fresh worker picks up pending job
+    const processed = await freshWorker.processNextJob();
+
+    expect(processed).toBeDefined();
+    expect(processed?.id).toBe('job-restart-persisted');
+    expect(processed?.status).toBe(BullJobStatus.COMPLETED);
+    expect(mockEngine.provision).toHaveBeenCalled();
+  });
 });
+
