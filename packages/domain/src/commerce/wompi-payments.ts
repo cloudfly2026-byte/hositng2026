@@ -194,14 +194,22 @@ export class PaymentProcessorService {
     private uow?: IUnitOfWork
   ) {}
 
-  processWebhook(payload: unknown, headers: Record<string, string>): Order {
+  async processWebhook(payload: unknown, headers: Record<string, string>): Promise<Order> {
     const isValid = this.paymentProvider.verifyWebhookSignature(payload, headers);
     if (!isValid) {
       throw new InvalidWebhookSignatureError();
     }
 
     const event = this.paymentProvider.parseWebhookEvent(payload);
-    const order = this.orders.get(event.orderId);
+    let order = this.orders.get(event.orderId);
+
+    if (!order && this.uow?.orders) {
+      const persisted = await this.uow.orders.findById(event.orderId);
+      if (persisted) {
+        order = persisted;
+        this.orders.set(order.id, order);
+      }
+    }
 
     if (!order) {
       throw new Error(`Order '${event.orderId}' not found.`);

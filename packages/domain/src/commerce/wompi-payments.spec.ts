@@ -157,7 +157,7 @@ describe('Epic COM-04 & COM-05 - Wompi Payments & Webhook Processing', () => {
   });
 
   describe('COM-05: Webhook Processing & Order State Transitions', () => {
-    it('transitions order from PENDING_PAYMENT to PAID upon verified APPROVED webhook', () => {
+    it('transitions order from PENDING_PAYMENT to PAID upon verified APPROVED webhook', async () => {
       const ordersMap = new Map<string, Order>([[sampleOrder.id, { ...sampleOrder }]]);
       const processor = new PaymentProcessorService(adapter, ordersMap);
 
@@ -176,12 +176,12 @@ describe('Epic COM-04 & COM-05 - Wompi Payments & Webhook Processing', () => {
       };
 
       const signature = adapter.generateTestSignature(payload, eventsSecret);
-      const updatedOrder = processor.processWebhook(payload, { 'x-event-checksum': signature });
+      const updatedOrder = await processor.processWebhook(payload, { 'x-event-checksum': signature });
 
       expect(updatedOrder.status).toBe(OrderStatus.PAID);
     });
 
-    it('rejects processing when webhook signature verification fails', () => {
+    it('rejects processing when webhook signature verification fails', async () => {
       const ordersMap = new Map<string, Order>([[sampleOrder.id, { ...sampleOrder }]]);
       const processor = new PaymentProcessorService(adapter, ordersMap);
 
@@ -199,12 +199,12 @@ describe('Epic COM-04 & COM-05 - Wompi Payments & Webhook Processing', () => {
         timestamp: 1776080000,
       };
 
-      expect(() => {
-        processor.processWebhook(payload, { 'x-event-checksum': 'bad-checksum' });
-      }).toThrow(InvalidWebhookSignatureError);
+      await expect(async () => {
+        await processor.processWebhook(payload, { 'x-event-checksum': 'bad-checksum' });
+      }).rejects.toThrow(InvalidWebhookSignatureError);
     });
 
-    it('guarantees idempotency: multiple identical webhooks do not duplicate transition or fail', () => {
+    it('guarantees idempotency: multiple identical webhooks do not duplicate transition or fail', async () => {
       const ordersMap = new Map<string, Order>([[sampleOrder.id, { ...sampleOrder }]]);
       const processor = new PaymentProcessorService(adapter, ordersMap);
 
@@ -224,14 +224,14 @@ describe('Epic COM-04 & COM-05 - Wompi Payments & Webhook Processing', () => {
 
       const signature = adapter.generateTestSignature(payload, eventsSecret);
 
-      const firstProcess = processor.processWebhook(payload, { 'x-event-checksum': signature });
-      const secondProcess = processor.processWebhook(payload, { 'x-event-checksum': signature });
+      const firstProcess = await processor.processWebhook(payload, { 'x-event-checksum': signature });
+      const secondProcess = await processor.processWebhook(payload, { 'x-event-checksum': signature });
 
       expect(firstProcess.status).toBe(OrderStatus.PAID);
       expect(secondProcess.status).toBe(OrderStatus.PAID);
     });
 
-    it('prevents out-of-order pending events from reverting an already PAID order', () => {
+    it('prevents out-of-order pending events from reverting an already PAID order', async () => {
       const paidOrder: Order = {
         ...sampleOrder,
         id: 'ord-paid',
@@ -256,9 +256,9 @@ describe('Epic COM-04 & COM-05 - Wompi Payments & Webhook Processing', () => {
       };
 
       const signature = adapter.generateTestSignature(pendingPayload, eventsSecret);
-      expect(() => {
-        processor.processWebhook(pendingPayload, { 'x-event-checksum': signature });
-      }).toThrow(OrderNotEligibleForPaymentError);
+      await expect(async () => {
+        await processor.processWebhook(pendingPayload, { 'x-event-checksum': signature });
+      }).rejects.toThrow(OrderNotEligibleForPaymentError);
     });
   });
 

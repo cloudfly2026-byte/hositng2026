@@ -96,7 +96,7 @@ describe('WebhooksController (Authenticated Wompi Webhooks & Commerce Engine)', 
     controller = new WebhooksController(paymentProcessor, orchestrator, subscriptionService);
   });
 
-  it('rejects webhooks with invalid or missing HMAC signature', () => {
+  it('rejects webhooks with invalid or missing HMAC signature', async () => {
     const payload = {
       event: 'transaction.updated',
       data: {
@@ -111,12 +111,12 @@ describe('WebhooksController (Authenticated Wompi Webhooks & Commerce Engine)', 
       timestamp: 1776080000,
     };
 
-    expect(() => {
-      controller.handleWompiWebhook(payload, { 'x-event-checksum': 'bad-signature' });
-    }).toThrow(HttpException);
+    await expect(async () => {
+      await controller.handleWompiWebhook(payload, { 'x-event-checksum': 'bad-signature' });
+    }).rejects.toThrow(HttpException);
   });
 
-  it('processes verified APPROVED webhook: updates order to PAID, triggers provisioning, subscription & invoice', () => {
+  it('processes verified APPROVED webhook: updates order to PAID, triggers provisioning, subscription & invoice', async () => {
     const payload = {
       event: 'transaction.updated',
       data: {
@@ -132,7 +132,7 @@ describe('WebhooksController (Authenticated Wompi Webhooks & Commerce Engine)', 
     };
 
     const signature = adapter.generateTestSignature(payload, eventsSecret);
-    const result = controller.handleWompiWebhook(payload, { 'x-event-checksum': signature });
+    const result = await controller.handleWompiWebhook(payload, { 'x-event-checksum': signature });
 
     expect(result.status).toBe('PROCESSED');
     expect(result.orderId).toBe(testOrder.id);
@@ -154,7 +154,7 @@ describe('WebhooksController (Authenticated Wompi Webhooks & Commerce Engine)', 
     expect(invoices[0].totalCents).toBe(testOrder.totalCents);
   });
 
-  it('processes verified DECLINED webhook: updates order to FAILED without provisioning', () => {
+  it('processes verified DECLINED webhook: updates order to FAILED without provisioning', async () => {
     const payload = {
       event: 'transaction.updated',
       data: {
@@ -170,7 +170,7 @@ describe('WebhooksController (Authenticated Wompi Webhooks & Commerce Engine)', 
     };
 
     const signature = adapter.generateTestSignature(payload, eventsSecret);
-    const result = controller.handleWompiWebhook(payload, { 'x-event-checksum': signature });
+    const result = await controller.handleWompiWebhook(payload, { 'x-event-checksum': signature });
 
     expect(result.status).toBe('PROCESSED');
     expect(result.orderId).toBe(testOrder.id);
@@ -183,7 +183,7 @@ describe('WebhooksController (Authenticated Wompi Webhooks & Commerce Engine)', 
     expect(subs.length).toBe(0);
   });
 
-  it('is strictly idempotent: duplicate webhooks do not duplicate subscriptions or invoices', () => {
+  it('is strictly idempotent: duplicate webhooks do not duplicate subscriptions or invoices', async () => {
     const payload = {
       event: 'transaction.updated',
       data: {
@@ -201,9 +201,9 @@ describe('WebhooksController (Authenticated Wompi Webhooks & Commerce Engine)', 
     const signature = adapter.generateTestSignature(payload, eventsSecret);
 
     // First call
-    controller.handleWompiWebhook(payload, { 'x-event-checksum': signature });
+    await controller.handleWompiWebhook(payload, { 'x-event-checksum': signature });
     // Duplicate call
-    const dupResult = controller.handleWompiWebhook(payload, { 'x-event-checksum': signature });
+    const dupResult = await controller.handleWompiWebhook(payload, { 'x-event-checksum': signature });
 
     expect(dupResult.status).toBe('PROCESSED');
 

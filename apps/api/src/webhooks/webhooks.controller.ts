@@ -17,13 +17,13 @@ export class WebhooksController {
 
   @Post('wompi')
   @HttpCode(200)
-  handleWompiWebhook(
+  async handleWompiWebhook(
     @Body() payload: unknown,
     @Headers() headers: Record<string, string>
-  ): { status: string; orderId: string } {
+  ): Promise<{ status: string; orderId: string }> {
     let updatedOrder: Order;
     try {
-      updatedOrder = this.paymentProcessor.processWebhook(payload, headers);
+      updatedOrder = await this.paymentProcessor.processWebhook(payload, headers);
     } catch (err: any) {
       if (err.name === 'InvalidWebhookSignatureError' || err.message?.includes('signature')) {
         throw new HttpException('Invalid webhook cryptographic signature', HttpStatus.BAD_REQUEST);

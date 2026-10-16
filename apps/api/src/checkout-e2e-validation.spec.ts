@@ -258,7 +258,7 @@ describe('UC-NEW-001: End-to-End Real Commercial Checkout Flow Validation', () =
       };
 
       const signature = wompiAdapter.generateTestSignature(webhookPayload, TEST_EVENTS_SECRET);
-      const result = webhooksController.handleWompiWebhook(webhookPayload, {
+      const result = await webhooksController.handleWompiWebhook(webhookPayload, {
         'x-event-checksum': signature,
       });
 
@@ -270,7 +270,7 @@ describe('UC-NEW-001: End-to-End Real Commercial Checkout Flow Validation', () =
       expect(paidOrder.status).toBe(OrderStatus.PAID);
     });
 
-    it('rejects forged webhook with invalid checksum without changing order state', () => {
+    it('rejects forged webhook with invalid checksum without changing order state', async () => {
       const order = orderService.createOrder({
         organizationId: 'org-client-real-003',
         currency: 'COP',
@@ -292,11 +292,11 @@ describe('UC-NEW-001: End-to-End Real Commercial Checkout Flow Validation', () =
         timestamp: 12345678,
       };
 
-      expect(() => {
-        webhooksController.handleWompiWebhook(fakePayload, {
+      await expect(async () => {
+        await webhooksController.handleWompiWebhook(fakePayload, {
           'x-event-checksum': 'bad-checksum-forged',
         });
-      }).toThrow(HttpException);
+      }).rejects.toThrow(HttpException);
 
       // Order remains PENDING_PAYMENT
       const unchangedOrder = ordersController.getOrder(order.id);
