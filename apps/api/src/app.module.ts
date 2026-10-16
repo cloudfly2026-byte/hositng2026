@@ -65,10 +65,20 @@ import { PrismaUnitOfWork, PrismaDatabaseUnitOfWork } from '@cloudfly/persistenc
         if (process.env.DATABASE_URL) {
           try {
             // Lazy load PrismaClient so tests without database driver don't fail
-            const { PrismaClient } = require('@prisma/client');
-            const prisma = new PrismaClient();
+            let PrismaClientClass: any;
+            try {
+              PrismaClientClass = require('@prisma/client').PrismaClient;
+            } catch {
+              try {
+                PrismaClientClass = require('/app/packages/persistence/node_modules/@prisma/client').PrismaClient;
+              } catch {
+                PrismaClientClass = require('../../packages/persistence/node_modules/@prisma/client').PrismaClient;
+              }
+            }
+            const prisma = new PrismaClientClass();
             return new PrismaDatabaseUnitOfWork(prisma);
-          } catch {
+          } catch (err) {
+            console.warn('[PrismaUnitOfWork] Fallback to in-memory store due to:', err);
             return new PrismaUnitOfWork();
           }
         }
