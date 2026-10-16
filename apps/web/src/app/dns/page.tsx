@@ -205,7 +205,6 @@ export default function DnsManagerPage() {
   });
 
   return (
-  return (
     <Box>
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
         <Box>
