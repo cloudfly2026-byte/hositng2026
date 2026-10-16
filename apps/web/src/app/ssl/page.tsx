@@ -30,18 +30,18 @@ export default function SslManagerPage() {
     <Box>
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, color: '#fff', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <HttpsRoundedIcon sx={{ color: '#06b6d4', fontSize: '2rem' }} /> SSL / TLS Manager
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#2D1B17', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <HttpsRoundedIcon sx={{ color: '#FF6B00', fontSize: '2rem' }} /> SSL / TLS Manager
           </Typography>
-          <Typography variant="body1" sx={{ color: '#9ca3af' }}>
+          <Typography variant="body1" sx={{ color: '#667085' }}>
             Emisión automática de certificados Let's Encrypt con renovación desatendida y soporte de certificados personalizados.
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1.5 }}>
-          <Button variant="outlined" sx={{ borderColor: 'rgba(255, 255, 255, 0.15)', color: '#d1d5db', textTransform: 'none', borderRadius: '8px' }}>
+          <Button variant="outlined" sx={{ borderColor: '#F2E8DC', color: '#2D1B17', backgroundColor: '#FFFFFF', textTransform: 'none', borderRadius: 2, '&:hover': { borderColor: '#FF6B00', backgroundColor: '#FFFDF9' } }}>
             Instalar Certificado Propio
           </Button>
-          <Button variant="contained" color="primary" startIcon={<VerifiedRoundedIcon />} sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}>
+          <Button variant="contained" startIcon={<VerifiedRoundedIcon />} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, backgroundColor: '#FF6B00', '&:hover': { backgroundColor: '#E85A00' } }}>
             Solicitar Let's Encrypt
           </Button>
         </Box>
@@ -54,9 +54,10 @@ export default function SslManagerPage() {
               <Paper
                 sx={{
                   p: 3,
-                  backgroundColor: '#111827',
+                  backgroundColor: '#FFFFFF',
                   borderRadius: 3,
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  border: '1px solid #F2E8DC',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -66,22 +67,22 @@ export default function SslManagerPage() {
               >
                 <Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-                    <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700 }}>
+                    <Typography variant="h6" sx={{ color: '#2D1B17', fontWeight: 700 }}>
                       {cert.domain}
                     </Typography>
-                    <Chip label={cert.status} size="small" color="success" sx={{ fontWeight: 700, fontSize: '0.7rem' }} />
-                    <Chip label="Auto-Renovable" size="small" sx={{ backgroundColor: 'rgba(16, 185, 129, 0.12)', color: '#34d399', fontWeight: 600, fontSize: '0.7rem' }} />
+                    <Chip label={cert.status} size="small" sx={{ fontWeight: 700, fontSize: '0.75rem', backgroundColor: '#D1FAE5', color: '#065F46' }} />
+                    <Chip label="Auto-Renovable" size="small" sx={{ backgroundColor: '#FFF4E5', color: '#FF6B00', fontWeight: 600, fontSize: '0.75rem' }} />
                   </Box>
-                  <Typography variant="body2" sx={{ color: '#9ca3af', mb: 0.5 }}>
+                  <Typography variant="body2" sx={{ color: '#667085', mb: 0.5 }}>
                     Emisor: <strong>{cert.issuer}</strong> | Validez: {cert.validUntil}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                  <Typography variant="caption" sx={{ color: '#9CA3AF' }}>
                     Nombres alternativos (SAN): {cert.sans.join(', ')}
                   </Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', gap: 1.5 }}>
-                  <Button variant="outlined" size="small" startIcon={<AutorenewRoundedIcon />} sx={{ borderColor: 'rgba(255, 255, 255, 0.15)', color: '#d1d5db', textTransform: 'none', borderRadius: '8px' }}>
+                  <Button variant="outlined" size="small" startIcon={<AutorenewRoundedIcon />} sx={{ borderColor: '#F2E8DC', color: '#2D1B17', textTransform: 'none', borderRadius: 2, '&:hover': { borderColor: '#FF6B00', backgroundColor: '#FFF8ED' } }}>
                     Forzar Renovación
                   </Button>
                 </Box>

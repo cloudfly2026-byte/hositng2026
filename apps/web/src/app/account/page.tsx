@@ -33,18 +33,18 @@ export default function AccountPage() {
       {/* Header */}
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, color: '#fff', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <ManageAccountsRoundedIcon sx={{ color: '#06b6d4', fontSize: '2rem' }} /> Cuenta y Seguridad
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#2D1B17', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <ManageAccountsRoundedIcon sx={{ color: '#FF6B00', fontSize: '2rem' }} /> Cuenta y Seguridad
           </Typography>
-          <Typography variant="body1" sx={{ color: '#9ca3af' }}>
+          <Typography variant="body1" sx={{ color: '#667085' }}>
             Control de identidades, miembros de la organización, roles RBAC, 2FA y auditoría inmutable de accesos.
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1.5 }}>
-          <Button variant="outlined" startIcon={<KeyRoundedIcon />} sx={{ borderRadius: '8px', textTransform: 'none', borderColor: 'rgba(255,255,255,0.2)', color: '#fff' }}>
+          <Button variant="outlined" startIcon={<KeyRoundedIcon />} sx={{ borderRadius: 2, textTransform: 'none', borderColor: '#F2E8DC', color: '#2D1B17', backgroundColor: '#FFFFFF', '&:hover': { borderColor: '#FF6B00', backgroundColor: '#FFFDF9' } }}>
             Gestionar API Keys
           </Button>
-          <Button variant="contained" color="primary" startIcon={<GroupAddRoundedIcon />} sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}>
+          <Button variant="contained" startIcon={<GroupAddRoundedIcon />} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, backgroundColor: '#FF6B00', '&:hover': { backgroundColor: '#E85A00' } }}>
             Invitar Miembro
           </Button>
         </Box>
@@ -52,14 +52,15 @@ export default function AccountPage() {
 
       {/* Team Members */}
       <ModuleStateContainer state={state} emptyTitle="No hay miembros registrados" emptyMessage="Invita colaboradores a tu organización.">
-        <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff', mb: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 700, color: '#2D1B17', mb: 2 }}>
           Miembros y Permisos RBAC
         </Typography>
         <Paper
           sx={{
-            backgroundColor: '#111827',
+            backgroundColor: '#FFFFFF',
             borderRadius: 3,
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            border: '1px solid #F2E8DC',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
             overflow: 'hidden',
             mb: 4,
           }}
@@ -74,14 +75,15 @@ export default function AccountPage() {
                 alignItems: 'center',
                 flexWrap: 'wrap',
                 gap: 2,
-                borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                borderBottom: '1px solid #F2E8DC',
+                '&:last-child': { borderBottom: 'none' },
               }}
             >
               <Box>
-                <Typography variant="body1" sx={{ fontWeight: 700, color: '#fff' }}>
+                <Typography variant="body1" sx={{ fontWeight: 700, color: '#2D1B17' }}>
                   {m.name}
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#9ca3af' }}>
+                <Typography variant="caption" sx={{ color: '#667085' }}>
                   {m.email}
                 </Typography>
               </Box>
@@ -90,8 +92,8 @@ export default function AccountPage() {
                   label={m.role}
                   size="small"
                   sx={{
-                    backgroundColor: m.role === 'OWNER' ? 'rgba(6, 182, 212, 0.2)' : 'rgba(59, 130, 246, 0.2)',
-                    color: m.role === 'OWNER' ? '#22d3ee' : '#60a5fa',
+                    backgroundColor: m.role === 'OWNER' ? '#FFF4E5' : '#EFF6FF',
+                    color: m.role === 'OWNER' ? '#FF6B00' : '#1D4ED8',
                     fontWeight: 700,
                   }}
                 />
@@ -99,9 +101,10 @@ export default function AccountPage() {
                   label={m.twoFactor ? '2FA Activado' : '2FA Pendiente'}
                   size="small"
                   sx={{
-                    backgroundColor: m.twoFactor ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                    color: m.twoFactor ? '#34d399' : '#f87171',
+                    backgroundColor: m.twoFactor ? '#D1FAE5' : '#FEE2E2',
+                    color: m.twoFactor ? '#065F46' : '#991B1B',
                     fontSize: '0.75rem',
+                    fontWeight: 600,
                   }}
                 />
               </Box>
@@ -110,14 +113,15 @@ export default function AccountPage() {
         </Paper>
 
         {/* Audit Log */}
-        <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-          <HistoryRoundedIcon sx={{ color: '#06b6d4' }} /> Registro Inmutable de Auditoría
+        <Typography variant="h6" sx={{ fontWeight: 700, color: '#2D1B17', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <HistoryRoundedIcon sx={{ color: '#FF6B00' }} /> Registro Inmutable de Auditoría
         </Typography>
         <Paper
           sx={{
-            backgroundColor: '#111827',
+            backgroundColor: '#FFFFFF',
             borderRadius: 3,
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            border: '1px solid #F2E8DC',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
             overflow: 'hidden',
           }}
         >
@@ -131,18 +135,19 @@ export default function AccountPage() {
                 alignItems: 'center',
                 flexWrap: 'wrap',
                 gap: 2,
-                borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                borderBottom: '1px solid #F2E8DC',
+                '&:last-child': { borderBottom: 'none' },
               }}
             >
               <Box>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: '#f3f4f6' }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#2D1B17' }}>
                   {evt.event}
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                <Typography variant="caption" sx={{ color: '#667085' }}>
                   Actor: {evt.actor} &bull; IP: {evt.ip}
                 </Typography>
               </Box>
-              <Typography variant="caption" sx={{ color: '#9ca3af' }}>
+              <Typography variant="caption" sx={{ color: '#667085' }}>
                 {evt.time}
               </Typography>
             </Box>

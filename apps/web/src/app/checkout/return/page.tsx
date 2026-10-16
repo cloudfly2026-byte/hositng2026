@@ -80,50 +80,47 @@ function ReturnContent() {
         elevation={0}
         sx={{
           p: { xs: 3, sm: 5 },
-          backgroundColor: '#111827',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          backgroundColor: '#FFFFFF',
+          border: '1px solid #F2E8DC',
           borderRadius: 3,
           textAlign: 'center',
-          boxShadow: '0 16px 40px rgba(0,0,0,0.5)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.04)',
         }}
       >
         {loading ? (
           <Box sx={{ py: 4 }}>
-            <CircularProgress size={48} sx={{ color: '#06b6d4', mb: 2 }} />
-            <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700 }}>
+            <CircularProgress size={48} sx={{ color: '#FF6B00', mb: 2 }} />
+            <Typography variant="h6" sx={{ color: '#2D1B17', fontWeight: 700 }}>
               Consultando estado del pedido con Wompi...
             </Typography>
-            <Typography variant="body2" sx={{ color: '#9ca3af', mt: 1 }}>
+            <Typography variant="body2" sx={{ color: '#667085', mt: 1 }}>
               Verificando confirmación criptográfica en el Control Plane.
             </Typography>
           </Box>
         ) : status === 'ACTIVE' || status === 'COMPLETED' ? (
           <Box>
-            <CheckCircleOutlineIcon sx={{ fontSize: '4.5rem', color: '#10b981', mb: 2 }} />
-            <Typography variant="h4" sx={{ fontWeight: 800, color: '#fff', mb: 1 }}>
+            <CheckCircleOutlineIcon sx={{ fontSize: '4.5rem', color: '#10B981', mb: 2 }} />
+            <Typography variant="h4" sx={{ fontWeight: 800, color: '#2D1B17', mb: 1 }}>
               ¡Tu Servicio Cloud está Activo!
             </Typography>
-            <Typography variant="body1" sx={{ color: '#9ca3af', mb: 3 }}>
+            <Typography variant="body1" sx={{ color: '#667085', mb: 3 }}>
               El pago fue verificado y tu infraestructura ha sido provisionada exitosamente.
             </Typography>
 
             {order?.orderNumber && (
               <Chip
                 label={`Orden #${order.orderNumber}`}
-                color="success"
-                variant="outlined"
-                sx={{ mb: 3, fontWeight: 700 }}
+                sx={{ mb: 3, fontWeight: 700, backgroundColor: '#D1FAE5', color: '#065F46' }}
               />
             )}
 
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
               <Button
                 variant="contained"
-                color="primary"
                 size="large"
                 endIcon={<ArrowForwardIcon />}
                 onClick={() => router.push('/')}
-                sx={{ py: 1.2, px: 4, fontWeight: 700, borderRadius: 2 }}
+                sx={{ py: 1.2, px: 4, fontWeight: 700, borderRadius: 2, backgroundColor: '#FF6B00', '&:hover': { backgroundColor: '#E85A00' } }}
               >
                 Ir al Dashboard
               </Button>
@@ -131,17 +128,17 @@ function ReturnContent() {
           </Box>
         ) : status === 'PAID' || status === 'PROVISIONING' ? (
           <Box>
-            <RocketLaunchIcon sx={{ fontSize: '4rem', color: '#06b6d4', mb: 2 }} />
-            <Typography variant="h4" sx={{ fontWeight: 800, color: '#fff', mb: 1 }}>
+            <RocketLaunchIcon sx={{ fontSize: '4rem', color: '#FF6B00', mb: 2 }} />
+            <Typography variant="h4" sx={{ fontWeight: 800, color: '#2D1B17', mb: 1 }}>
               ¡Pago Confirmado!
             </Typography>
-            <Typography variant="body1" sx={{ color: '#9ca3af', mb: 3 }}>
+            <Typography variant="body1" sx={{ color: '#667085', mb: 3 }}>
               Estamos configurando tu contenedor, zonas DNS y certificados SSL en tiempo real...
             </Typography>
 
             <Box sx={{ width: '100%', mb: 3 }}>
-              <LinearProgress color="primary" sx={{ height: 8, borderRadius: 4 }} />
-              <Typography variant="caption" sx={{ color: '#06b6d4', mt: 1, display: 'block', fontWeight: 600 }}>
+              <LinearProgress sx={{ height: 8, borderRadius: 4, backgroundColor: '#FFF4E5', '& .MuiLinearProgress-bar': { backgroundColor: '#FF6B00' } }} />
+              <Typography variant="caption" sx={{ color: '#FF6B00', mt: 1, display: 'block', fontWeight: 600 }}>
                 Aprovisionando infraestructura (BullMQ Worker activo)...
               </Typography>
             </Box>
@@ -150,42 +147,41 @@ function ReturnContent() {
               variant="outlined"
               startIcon={<ReplayIcon />}
               onClick={fetchOrderStatus}
-              sx={{ color: '#fff', borderColor: 'rgba(255,255,255,0.2)', textTransform: 'none' }}
+              sx={{ color: '#2D1B17', borderColor: '#F2E8DC', textTransform: 'none', borderRadius: 2, '&:hover': { borderColor: '#FF6B00', backgroundColor: '#FFF8ED' } }}
             >
               Actualizar Estado
             </Button>
           </Box>
         ) : status === 'FAILED' || status === 'CANCELLED' ? (
           <Box>
-            <ErrorOutlineIcon sx={{ fontSize: '4.5rem', color: '#ef4444', mb: 2 }} />
-            <Typography variant="h4" sx={{ fontWeight: 800, color: '#fff', mb: 1 }}>
+            <ErrorOutlineIcon sx={{ fontSize: '4.5rem', color: '#EF4444', mb: 2 }} />
+            <Typography variant="h4" sx={{ fontWeight: 800, color: '#2D1B17', mb: 1 }}>
               Pago No Aprobado
             </Typography>
-            <Typography variant="body1" sx={{ color: '#9ca3af', mb: 3 }}>
+            <Typography variant="body1" sx={{ color: '#667085', mb: 3 }}>
               La entidad bancaria rechazó la transacción o fue cancelada por el usuario. No se ha realizado ningún cobro.
             </Typography>
 
             <Button
               variant="contained"
-              color="primary"
               size="large"
               onClick={() => router.push('/cart')}
-              sx={{ py: 1.2, px: 4, fontWeight: 700, borderRadius: 2 }}
+              sx={{ py: 1.2, px: 4, fontWeight: 700, borderRadius: 2, backgroundColor: '#FF6B00', '&:hover': { backgroundColor: '#E85A00' } }}
             >
               Volver al Carrito y Reintentar
             </Button>
           </Box>
         ) : (
           <Box>
-            <HourglassEmptyIcon sx={{ fontSize: '4rem', color: '#f59e0b', mb: 2 }} />
-            <Typography variant="h4" sx={{ fontWeight: 800, color: '#fff', mb: 1 }}>
+            <HourglassEmptyIcon sx={{ fontSize: '4rem', color: '#F59E0B', mb: 2 }} />
+            <Typography variant="h4" sx={{ fontWeight: 800, color: '#2D1B17', mb: 1 }}>
               Validando Pago
             </Typography>
-            <Typography variant="body1" sx={{ color: '#9ca3af', mb: 3 }}>
+            <Typography variant="body1" sx={{ color: '#667085', mb: 3 }}>
               Estamos a la espera de la confirmación oficial del webhook firmado de Wompi. Esto suele tardar unos segundos.
             </Typography>
 
-            <CircularProgress size={24} sx={{ color: '#f59e0b', mb: 2 }} />
+            <CircularProgress size={24} sx={{ color: '#FF6B00', mb: 2 }} />
 
             <Box sx={{ mt: 2 }}>
               <Button
@@ -193,7 +189,7 @@ function ReturnContent() {
                 size="small"
                 startIcon={<ReplayIcon />}
                 onClick={fetchOrderStatus}
-                sx={{ color: '#fff', borderColor: 'rgba(255,255,255,0.2)', textTransform: 'none' }}
+                sx={{ color: '#2D1B17', borderColor: '#F2E8DC', textTransform: 'none', borderRadius: 2, '&:hover': { borderColor: '#FF6B00', backgroundColor: '#FFF8ED' } }}
               >
                 Comprobar ahora
               </Button>

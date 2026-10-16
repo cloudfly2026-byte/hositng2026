@@ -35,14 +35,14 @@ export default function HostingWebPage() {
       {/* Header */}
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, color: '#fff', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <LanguageRoundedIcon sx={{ color: '#06b6d4', fontSize: '2rem' }} /> Hosting Web
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#2D1B17', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <LanguageRoundedIcon sx={{ color: '#FF6B00', fontSize: '2rem' }} /> Hosting Web
           </Typography>
-          <Typography variant="body1" sx={{ color: '#9ca3af' }}>
+          <Typography variant="body1" sx={{ color: '#667085' }}>
             Administración centralizada de sitios web, WordPress, tiendas en línea y entornos PHP.
           </Typography>
         </Box>
-        <Button variant="contained" color="primary" startIcon={<AddRoundedIcon />} sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}>
+        <Button variant="contained" startIcon={<AddRoundedIcon />} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, backgroundColor: '#FF6B00', '&:hover': { backgroundColor: '#E85A00' } }}>
           Crear Nuevo Sitio
         </Button>
       </Box>
@@ -55,9 +55,10 @@ export default function HostingWebPage() {
               <Paper
                 sx={{
                   p: 3,
-                  backgroundColor: '#111827',
+                  backgroundColor: '#FFFFFF',
                   borderRadius: 3,
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  border: '1px solid #F2E8DC',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -67,14 +68,14 @@ export default function HostingWebPage() {
               >
                 <Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-                    <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700 }}>
+                    <Typography variant="h6" sx={{ color: '#2D1B17', fontWeight: 700 }}>
                       {site.domain}
                     </Typography>
-                    <Chip label={site.status} size="small" color="success" sx={{ fontWeight: 700, fontSize: '0.7rem' }} />
-                    <Chip label={site.type} size="small" sx={{ backgroundColor: 'rgba(6, 182, 212, 0.12)', color: '#67e8f9', fontWeight: 600, fontSize: '0.7rem' }} />
+                    <Chip label={site.status} size="small" sx={{ fontWeight: 700, fontSize: '0.75rem', backgroundColor: '#D1FAE5', color: '#065F46' }} />
+                    <Chip label={site.type} size="small" sx={{ backgroundColor: '#FFF4E5', color: '#FF6B00', fontWeight: 600, fontSize: '0.75rem' }} />
                   </Box>
-                  <Typography variant="body2" sx={{ color: '#9ca3af' }}>
-                    Entorno: <strong>{site.phpVersion}</strong> | SSL: <span style={{ color: '#10b981' }}>{site.ssl}</span> | Disco: {site.diskUsedMb} MB / {site.diskLimitMb} MB
+                  <Typography variant="body2" sx={{ color: '#667085' }}>
+                    Entorno: <strong>{site.phpVersion}</strong> | SSL: <span style={{ color: '#10B981' }}>{site.ssl}</span> | Disco: {site.diskUsedMb} MB / {site.diskLimitMb} MB
                   </Typography>
                 </Box>
 
@@ -83,15 +84,14 @@ export default function HostingWebPage() {
                     component={Link}
                     href={site.toolsUrl}
                     variant="contained"
-                    color="primary"
                     startIcon={<SettingsRoundedIcon />}
-                    sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}
+                    sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2, backgroundColor: '#FF6B00', '&:hover': { backgroundColor: '#E85A00' } }}
                   >
                     Site Tools
                   </Button>
                   <Button
                     variant="outlined"
-                    sx={{ borderColor: 'rgba(255, 255, 255, 0.15)', color: '#d1d5db', textTransform: 'none', borderRadius: '8px' }}
+                    sx={{ borderColor: '#F2E8DC', color: '#2D1B17', textTransform: 'none', borderRadius: 2, '&:hover': { borderColor: '#FF6B00', backgroundColor: '#FFF8ED' } }}
                     startIcon={<SpeedRoundedIcon />}
                   >
                     Métricas

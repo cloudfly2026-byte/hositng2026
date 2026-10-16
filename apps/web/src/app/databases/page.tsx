@@ -31,18 +31,18 @@ export default function DatabasesPage() {
     <Box>
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, color: '#fff', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <StorageRoundedIcon sx={{ color: '#06b6d4', fontSize: '2rem' }} /> Databases
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#2D1B17', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <StorageRoundedIcon sx={{ color: '#FF6B00', fontSize: '2rem' }} /> Databases
           </Typography>
-          <Typography variant="body1" sx={{ color: '#9ca3af' }}>
+          <Typography variant="body1" sx={{ color: '#667085' }}>
             Gestión segura de bases de datos MariaDB/MySQL, usuarios con privilegios acotados y acceso web.
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1.5 }}>
-          <Button variant="outlined" startIcon={<TerminalRoundedIcon />} sx={{ borderColor: 'rgba(255, 255, 255, 0.15)', color: '#d1d5db', textTransform: 'none', borderRadius: '8px' }}>
+          <Button variant="outlined" startIcon={<TerminalRoundedIcon />} sx={{ borderColor: '#F2E8DC', color: '#2D1B17', backgroundColor: '#FFFFFF', textTransform: 'none', borderRadius: 2, '&:hover': { borderColor: '#FF6B00', backgroundColor: '#FFFDF9' } }}>
             phpMyAdmin
           </Button>
-          <Button variant="contained" color="primary" startIcon={<AddRoundedIcon />} sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}>
+          <Button variant="contained" startIcon={<AddRoundedIcon />} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, backgroundColor: '#FF6B00', '&:hover': { backgroundColor: '#E85A00' } }}>
             Nueva Base de Datos
           </Button>
         </Box>
@@ -55,9 +55,10 @@ export default function DatabasesPage() {
               <Paper
                 sx={{
                   p: 3,
-                  backgroundColor: '#111827',
+                  backgroundColor: '#FFFFFF',
                   borderRadius: 3,
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  border: '1px solid #F2E8DC',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -67,21 +68,21 @@ export default function DatabasesPage() {
               >
                 <Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-                    <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700 }}>
+                    <Typography variant="h6" sx={{ color: '#2D1B17', fontWeight: 700 }}>
                       {db.name}
                     </Typography>
-                    <Chip label={db.type} size="small" color="primary" sx={{ fontWeight: 600, fontSize: '0.7rem' }} />
+                    <Chip label={db.type} size="small" sx={{ fontWeight: 600, fontSize: '0.75rem', backgroundColor: '#FFF4E5', color: '#FF6B00' }} />
                   </Box>
-                  <Typography variant="body2" sx={{ color: '#9ca3af' }}>
+                  <Typography variant="body2" sx={{ color: '#667085' }}>
                     Usuario: <strong>{db.user}</strong> | Cotejamiento: <code>{db.charset}</code> | Tamaño: {db.sizeMb} MB
                   </Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', gap: 1.5 }}>
-                  <Button variant="outlined" size="small" startIcon={<KeyRoundedIcon />} sx={{ borderColor: 'rgba(255, 255, 255, 0.15)', color: '#d1d5db', textTransform: 'none', borderRadius: '8px' }}>
+                  <Button variant="outlined" size="small" startIcon={<KeyRoundedIcon />} sx={{ borderColor: '#F2E8DC', color: '#2D1B17', textTransform: 'none', borderRadius: 2, '&:hover': { borderColor: '#FF6B00', backgroundColor: '#FFF8ED' } }}>
                     Cambiar Contraseña
                   </Button>
-                  <Button variant="outlined" size="small" color="error" sx={{ textTransform: 'none', borderRadius: '8px' }}>
+                  <Button variant="outlined" size="small" color="error" sx={{ textTransform: 'none', borderRadius: 2 }}>
                     Eliminar
                   </Button>
                 </Box>

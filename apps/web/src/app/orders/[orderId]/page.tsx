@@ -73,8 +73,8 @@ export default function OrderDetailPage() {
   if (loading) {
     return (
       <Box sx={{ p: 6, textAlign: 'center' }}>
-        <CircularProgress size={40} sx={{ color: '#06b6d4', mb: 2 }} />
-        <Typography variant="body1" sx={{ color: '#9ca3af' }}>
+        <CircularProgress size={40} sx={{ color: '#FF6B00', mb: 2 }} />
+        <Typography variant="body1" sx={{ color: '#667085' }}>
           Cargando detalles de la orden...
         </Typography>
       </Box>
@@ -108,16 +108,20 @@ export default function OrderDetailPage() {
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
         <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: '#fff' }}>
+            <Typography variant="h4" sx={{ fontWeight: 800, color: '#2D1B17' }}>
               Orden #{order.orderNumber}
             </Typography>
             <Chip
               label={order.status}
-              color={isCompleted ? 'success' : isPaid ? 'primary' : isFailed ? 'error' : 'warning'}
-              sx={{ fontWeight: 700, fontSize: '0.75rem' }}
+              sx={{
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                backgroundColor: isCompleted ? '#D1FAE5' : isPaid ? '#FFF4E5' : isFailed ? '#FEE2E2' : '#FEF3C7',
+                color: isCompleted ? '#065F46' : isPaid ? '#FF6B00' : isFailed ? '#991B1B' : '#92400E',
+              }}
             />
           </Box>
-          <Typography variant="body2" sx={{ color: '#9ca3af' }}>
+          <Typography variant="body2" sx={{ color: '#667085' }}>
             ID del Pedido: {order.id} · Moneda: {order.currency}
           </Typography>
         </Box>
@@ -127,7 +131,7 @@ export default function OrderDetailPage() {
           startIcon={<ReplayIcon />}
           onClick={loadData}
           size="small"
-          sx={{ color: '#fff', borderColor: 'rgba(255,255,255,0.2)', textTransform: 'none' }}
+          sx={{ color: '#2D1B17', borderColor: '#F2E8DC', textTransform: 'none', borderRadius: 2, '&:hover': { borderColor: '#FF6B00', backgroundColor: '#FFF8ED' } }}
         >
           Actualizar
         </Button>
@@ -139,20 +143,20 @@ export default function OrderDetailPage() {
           elevation={0}
           sx={{
             p: 3,
-            backgroundColor: 'rgba(6, 182, 212, 0.05)',
-            border: '1px solid rgba(6, 182, 212, 0.2)',
+            backgroundColor: '#FFFDF9',
+            border: '1px solid #F2E8DC',
             borderRadius: 3,
             mb: 3,
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
-            <RocketLaunchIcon sx={{ color: '#06b6d4' }} />
-            <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700 }}>
+            <RocketLaunchIcon sx={{ color: '#FF6B00' }} />
+            <Typography variant="h6" sx={{ color: '#2D1B17', fontWeight: 700 }}>
               {isCompleted ? 'Aprovisionamiento Exitoso' : 'Aprovisionamiento en Progreso'}
             </Typography>
           </Box>
 
-          <Typography variant="body2" sx={{ color: '#9ca3af', mb: 2 }}>
+          <Typography variant="body2" sx={{ color: '#667085', mb: 2 }}>
             {isCompleted
               ? 'Todos los componentes cloud (servidor, DNS y SSL) han sido verificados y están operativos.'
               : 'El worker BullMQ está desplegando los recursos y configurando certificados SSL TLS 1.3.'}
@@ -162,10 +166,10 @@ export default function OrderDetailPage() {
             <LinearProgress
               variant={job ? 'determinate' : 'indeterminate'}
               value={job?.progressPercentage || 65}
-              sx={{ height: 8, borderRadius: 4 }}
+              sx={{ height: 8, borderRadius: 4, backgroundColor: '#FFF4E5', '& .MuiLinearProgress-bar': { backgroundColor: '#FF6B00' } }}
             />
           </Box>
-          <Typography variant="caption" sx={{ color: '#06b6d4', fontWeight: 600 }}>
+          <Typography variant="caption" sx={{ color: '#FF6B00', fontWeight: 600 }}>
             Paso actual: {job?.currentStep || 'CONFIGURING_SERVICES'} ({job?.progressPercentage || 65}%)
           </Typography>
         </Paper>
@@ -176,47 +180,48 @@ export default function OrderDetailPage() {
         elevation={0}
         sx={{
           p: 3,
-          backgroundColor: '#111827',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          backgroundColor: '#FFFFFF',
+          border: '1px solid #F2E8DC',
           borderRadius: 3,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
         }}
       >
-        <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff', mb: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 700, color: '#2D1B17', mb: 2 }}>
           Líneas de la Orden
         </Typography>
 
         {order.items?.map((item: any, idx: number) => (
-          <Box key={idx} sx={{ mb: 2, p: 2, backgroundColor: 'rgba(255, 255, 255, 0.02)', borderRadius: 2 }}>
-            <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 700 }}>
+          <Box key={idx} sx={{ mb: 2, p: 2, backgroundColor: '#FFFDF9', borderRadius: 2, border: '1px solid #F2E8DC' }}>
+            <Typography variant="subtitle1" sx={{ color: '#2D1B17', fontWeight: 700 }}>
               Plan Version: {item.planVersionId}
             </Typography>
-            <Typography variant="caption" sx={{ color: '#9ca3af' }}>
+            <Typography variant="caption" sx={{ color: '#667085' }}>
               Ciclo: {item.billingCycle || order.billingCycle} · Cantidad: {item.quantity}
             </Typography>
           </Box>
         ))}
 
-        <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+        <Divider sx={{ my: 2, borderColor: '#F2E8DC' }} />
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-          <Typography variant="body2" sx={{ color: '#9ca3af' }}>Subtotal</Typography>
-          <Typography variant="body2" sx={{ color: '#fff', fontWeight: 600 }}>
+          <Typography variant="body2" sx={{ color: '#667085' }}>Subtotal</Typography>
+          <Typography variant="body2" sx={{ color: '#2D1B17', fontWeight: 600 }}>
             ${subtotalCop.toLocaleString('es-CO')} COP
           </Typography>
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-          <Typography variant="body2" sx={{ color: '#9ca3af' }}>IVA 19%</Typography>
-          <Typography variant="body2" sx={{ color: '#fff', fontWeight: 600 }}>
+          <Typography variant="body2" sx={{ color: '#667085' }}>IVA 19%</Typography>
+          <Typography variant="body2" sx={{ color: '#2D1B17', fontWeight: 600 }}>
             ${taxCop.toLocaleString('es-CO')} COP
           </Typography>
         </Box>
 
-        <Divider sx={{ my: 1.5, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+        <Divider sx={{ my: 1.5, borderColor: '#F2E8DC' }} />
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 700 }}>Total</Typography>
-          <Typography variant="h5" sx={{ color: '#06b6d4', fontWeight: 800 }}>
+          <Typography variant="subtitle1" sx={{ color: '#2D1B17', fontWeight: 700 }}>Total</Typography>
+          <Typography variant="h5" sx={{ color: '#FF6B00', fontWeight: 800 }}>
             ${totalCop.toLocaleString('es-CO')} COP
           </Typography>
         </Box>
@@ -224,16 +229,15 @@ export default function OrderDetailPage() {
         <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
           <Button
             variant="contained"
-            color="primary"
             onClick={() => router.push('/')}
-            sx={{ fontWeight: 700 }}
+            sx={{ fontWeight: 700, borderRadius: 2, backgroundColor: '#FF6B00', '&:hover': { backgroundColor: '#E85A00' } }}
           >
             Ir al Dashboard
           </Button>
           <Button
             variant="outlined"
             onClick={() => router.push('/billing')}
-            sx={{ color: '#fff', borderColor: 'rgba(255,255,255,0.2)' }}
+            sx={{ color: '#2D1B17', borderColor: '#F2E8DC', borderRadius: 2, '&:hover': { borderColor: '#FF6B00', backgroundColor: '#FFF8ED' } }}
           >
             Ver Todas las Facturas
           </Button>

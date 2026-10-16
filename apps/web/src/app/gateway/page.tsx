@@ -30,24 +30,24 @@ export default function ApplicationGatewayPage() {
     <Box>
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, color: '#fff', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <AltRouteRoundedIcon sx={{ color: '#06b6d4', fontSize: '2rem' }} /> Application Gateway
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#2D1B17', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <AltRouteRoundedIcon sx={{ color: '#FF6B00', fontSize: '2rem' }} /> Application Gateway
           </Typography>
-          <Typography variant="body1" sx={{ color: '#9ca3af' }}>
+          <Typography variant="body1" sx={{ color: '#667085' }}>
             Proxy inverso perimetral, balanceo de carga, enrutamiento dinámico de dominios y políticas TLS.
           </Typography>
         </Box>
-        <Button variant="contained" color="primary" startIcon={<AddRoundedIcon />} sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}>
+        <Button variant="contained" startIcon={<AddRoundedIcon />} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, backgroundColor: '#FF6B00', '&:hover': { backgroundColor: '#E85A00' } }}>
           Nueva Regla de Enrutamiento
         </Button>
       </Box>
 
       <ModuleStateContainer state={state}>
-        <Paper sx={{ backgroundColor: '#111827', borderRadius: 3, border: '1px solid rgba(255, 255, 255, 0.08)', overflow: 'hidden' }}>
+        <Paper sx={{ backgroundColor: '#FFFFFF', borderRadius: 3, border: '1px solid #F2E8DC', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
           <TableContainer>
             <Table>
               <TableHead>
-                <TableRow sx={{ '& th': { color: '#9ca3af', fontWeight: 600, fontSize: '0.8rem', borderColor: 'rgba(255, 255, 255, 0.06)' } }}>
+                <TableRow sx={{ backgroundColor: '#FAF6F0', '& th': { color: '#667085', fontWeight: 700, fontSize: '0.8rem', borderColor: '#F2E8DC' } }}>
                   <TableCell>Regla de Entrada (Host/Path)</TableCell>
                   <TableCell>Destino Interno</TableCell>
                   <TableCell>Terminación TLS</TableCell>
@@ -58,21 +58,21 @@ export default function ApplicationGatewayPage() {
               </TableHead>
               <TableBody>
                 {routes.map((r, i) => (
-                  <TableRow key={i} sx={{ '& td': { color: '#e5e7eb', borderColor: 'rgba(255, 255, 255, 0.04)' } }}>
-                    <TableCell sx={{ fontFamily: 'monospace', fontWeight: 600, color: '#67e8f9' }}>{r.rule}</TableCell>
-                    <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{r.target}</TableCell>
+                  <TableRow key={i} sx={{ '& td': { color: '#2D1B17', borderColor: '#F2E8DC' }, '&:hover': { backgroundColor: '#FFFDF9' } }}>
+                    <TableCell sx={{ fontFamily: 'monospace', fontWeight: 600, color: '#FF6B00' }}>{r.rule}</TableCell>
+                    <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.85rem', color: '#2D1B17' }}>{r.target}</TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <SecurityRoundedIcon fontSize="small" sx={{ color: '#10b981' }} />
-                        <Typography variant="caption" sx={{ color: '#d1d5db' }}>{r.tls}</Typography>
+                        <SecurityRoundedIcon fontSize="small" sx={{ color: '#10B981' }} />
+                        <Typography variant="caption" sx={{ color: '#667085' }}>{r.tls}</Typography>
                       </Box>
                     </TableCell>
-                    <TableCell sx={{ color: '#9ca3af', fontSize: '0.85rem' }}>{r.middleware}</TableCell>
+                    <TableCell sx={{ color: '#667085', fontSize: '0.85rem' }}>{r.middleware}</TableCell>
                     <TableCell>
-                      <Chip label={r.status} size="small" color="success" sx={{ fontSize: '0.7rem', fontWeight: 700 }} />
+                      <Chip label={r.status} size="small" sx={{ fontSize: '0.75rem', fontWeight: 700, backgroundColor: '#D1FAE5', color: '#065F46' }} />
                     </TableCell>
                     <TableCell align="right">
-                      <Button size="small" sx={{ textTransform: 'none', color: '#06b6d4', fontWeight: 600 }}>
+                      <Button size="small" sx={{ textTransform: 'none', color: '#FF6B00', fontWeight: 600, '&:hover': { backgroundColor: '#FFF8ED' } }}>
                         Configurar
                       </Button>
                     </TableCell>

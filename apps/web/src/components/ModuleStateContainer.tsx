@@ -47,8 +47,8 @@ export function ModuleStateContainer({
           gap: 2,
         }}
       >
-        <CircularProgress size={36} sx={{ color: '#06b6d4' }} />
-        <Typography variant="body2" sx={{ color: '#9ca3af', fontWeight: 500 }}>
+        <CircularProgress size={36} sx={{ color: '#FF6B00' }} />
+        <Typography variant="body2" sx={{ color: '#667085', fontWeight: 500 }}>
           {loadingMessage}
         </Typography>
       </Box>
@@ -62,9 +62,10 @@ export function ModuleStateContainer({
           severity="error"
           variant="outlined"
           sx={{
-            backgroundColor: 'rgba(239, 68, 68, 0.08)',
-            borderColor: 'rgba(239, 68, 68, 0.3)',
-            color: '#fca5a5',
+            backgroundColor: '#FEE2E2',
+            borderColor: '#FCA5A5',
+            color: '#991B1B',
+            borderRadius: 2,
           }}
           action={
             onRetry && (
@@ -98,43 +99,43 @@ export function ModuleStateContainer({
           py: 10,
           px: 3,
           textAlign: 'center',
-          border: '1px dashed rgba(255, 255, 255, 0.12)',
-          borderRadius: '16px',
-          backgroundColor: 'rgba(255, 255, 255, 0.01)',
+          border: '1px dashed #F2E8DC',
+          borderRadius: 3,
+          backgroundColor: '#FFFFFF',
         }}
       >
         <Box
           sx={{
             width: 56,
             height: 56,
-            borderRadius: '16px',
-            backgroundColor: 'rgba(6, 182, 212, 0.08)',
+            borderRadius: 3,
+            backgroundColor: '#FFF4E5',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#06b6d4',
+            color: '#FF6B00',
             mb: 2,
           }}
         >
           <InboxRoundedIcon sx={{ fontSize: 30 }} />
         </Box>
-        <Typography variant="h6" sx={{ color: '#f3f4f6', fontWeight: 700, mb: 1, fontSize: '1.05rem' }}>
+        <Typography variant="h6" sx={{ color: '#2D1B17', fontWeight: 700, mb: 1, fontSize: '1.05rem' }}>
           {emptyTitle}
         </Typography>
-        <Typography variant="body2" sx={{ color: '#9ca3af', maxWidth: 440, mb: 3 }}>
+        <Typography variant="body2" sx={{ color: '#667085', maxWidth: 440, mb: 3 }}>
           {emptyMessage}
         </Typography>
         {emptyActionLabel && onEmptyAction && (
           <Button
             variant="contained"
-            color="primary"
             onClick={onEmptyAction}
             sx={{
               textTransform: 'none',
               fontWeight: 600,
-              borderRadius: '8px',
+              borderRadius: 2,
               px: 3,
-              boxShadow: '0 4px 14px rgba(6, 182, 212, 0.25)',
+              backgroundColor: '#FF6B00',
+              '&:hover': { backgroundColor: '#E85A00' },
             }}
           >
             {emptyActionLabel}

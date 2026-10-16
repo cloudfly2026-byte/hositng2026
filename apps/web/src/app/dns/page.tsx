@@ -205,13 +205,14 @@ export default function DnsManagerPage() {
   });
 
   return (
+  return (
     <Box>
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, color: '#fff', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <DnsRoundedIcon sx={{ color: '#06b6d4', fontSize: '2rem' }} /> DNS Manager
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#2D1B17', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <DnsRoundedIcon sx={{ color: '#FF6B00', fontSize: '2rem' }} /> DNS Manager
           </Typography>
-          <Typography variant="body1" sx={{ color: '#9ca3af' }}>
+          <Typography variant="body1" sx={{ color: '#667085' }}>
             Servidores de nombres autoritativos, administración integral de zonas DNS y propagación global de registros.
           </Typography>
         </Box>
@@ -220,13 +221,15 @@ export default function DnsManagerPage() {
             variant="outlined"
             onClick={handleSyncDns}
             disabled={syncing}
-            startIcon={syncing ? <CircularProgress size={16} sx={{ color: '#06b6d4' }} /> : <SyncRoundedIcon />}
+            startIcon={syncing ? <CircularProgress size={16} sx={{ color: '#FF6B00' }} /> : <SyncRoundedIcon />}
             sx={{
               borderRadius: '8px',
               textTransform: 'none',
-              borderColor: 'rgba(6, 182, 212, 0.4)',
-              color: '#06b6d4',
-              '&:hover': { borderColor: '#06b6d4', backgroundColor: 'rgba(6, 182, 212, 0.05)' },
+              borderColor: '#F2E8DC',
+              color: '#2D1B17',
+              backgroundColor: '#FFFFFF',
+              fontWeight: 600,
+              '&:hover': { borderColor: '#FF6B00', backgroundColor: 'rgba(255, 107, 0, 0.04)' },
             }}
           >
             {syncing ? 'Sincronizando...' : 'Reconciliar DNS'}
@@ -236,7 +239,7 @@ export default function DnsManagerPage() {
             color="primary"
             onClick={handleOpenAdd}
             startIcon={<AddRoundedIcon />}
-            sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
+            sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 700 }}
           >
             Agregar Registro
           </Button>
@@ -249,22 +252,24 @@ export default function DnsManagerPage() {
         variant="outlined"
         sx={{
           mb: 3,
-          backgroundColor: 'rgba(6, 182, 212, 0.08)',
-          borderColor: 'rgba(6, 182, 212, 0.3)',
-          color: '#e5e7eb',
+          backgroundColor: '#FFFFFF',
+          borderColor: '#F2E8DC',
+          color: '#2D1B17',
+          borderRadius: 2,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
         }}
       >
         <strong>Servidores de Nombres Autoritativos de Velupi:</strong> <code>ns1.velupi.com</code> y <code>ns2.velupi.com</code>
       </Alert>
 
       {syncSuccess && (
-        <Alert severity="success" sx={{ mb: 3 }}>
+        <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }}>
           {syncSuccess}
         </Alert>
       )}
 
       {/* Filters and search bar */}
-      <Paper sx={{ p: 2, mb: 3, backgroundColor: '#111827', borderRadius: 3, border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+      <Paper sx={{ p: 2, mb: 3, backgroundColor: '#FFFFFF', borderRadius: 3, border: '1px solid #F2E8DC', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
         <TextField
           size="small"
           placeholder="Buscar por host o destino..."
@@ -273,16 +278,11 @@ export default function DnsManagerPage() {
           sx={{
             flexGrow: 1,
             minWidth: 220,
-            '& .MuiOutlinedInput-root': {
-              backgroundColor: '#1f2937',
-              color: '#fff',
-              '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
-            },
           }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchRoundedIcon sx={{ color: '#9ca3af' }} />
+                <SearchRoundedIcon sx={{ color: '#667085' }} />
               </InputAdornment>
             ),
           }}
@@ -296,12 +296,6 @@ export default function DnsManagerPage() {
           onChange={(e) => setFilterType(e.target.value)}
           sx={{
             width: 180,
-            '& .MuiOutlinedInput-root': {
-              backgroundColor: '#1f2937',
-              color: '#fff',
-              '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
-            },
-            '& .MuiInputLabel-root': { color: '#9ca3af' },
           }}
         >
           <MenuItem value="ALL">Todos los tipos</MenuItem>
@@ -316,17 +310,17 @@ export default function DnsManagerPage() {
       </Paper>
 
       <ModuleStateContainer state="success">
-        <Paper sx={{ backgroundColor: '#111827', borderRadius: 3, border: '1px solid rgba(255, 255, 255, 0.08)', overflow: 'hidden' }}>
-          <Box sx={{ p: 2, borderBottom: '1px solid rgba(255, 255, 255, 0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="subtitle2" sx={{ color: '#fff', fontWeight: 700 }}>
+        <Paper sx={{ backgroundColor: '#FFFFFF', borderRadius: 3, border: '1px solid #F2E8DC', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
+          <Box sx={{ p: 2, borderBottom: '1px solid #F2E8DC', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="subtitle2" sx={{ color: '#2D1B17', fontWeight: 800 }}>
               Zona Activa: velupi.com ({filteredRecords.length} registros)
             </Typography>
-            <Chip label="DNS Autoritativo Cloud" size="small" sx={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#34d399', fontWeight: 700 }} />
+            <Chip label="DNS Autoritativo Cloud" size="small" color="success" sx={{ fontWeight: 700 }} />
           </Box>
           <TableContainer>
             <Table>
-              <TableHead>
-                <TableRow sx={{ '& th': { color: '#9ca3af', fontWeight: 600, fontSize: '0.8rem', borderColor: 'rgba(255, 255, 255, 0.06)' } }}>
+              <TableHead sx={{ backgroundColor: '#FAF6F0' }}>
+                <TableRow sx={{ '& th': { color: '#667085', fontWeight: 700, fontSize: '0.8rem', borderColor: '#F2E8DC' } }}>
                   <TableCell>Host / Nombre</TableCell>
                   <TableCell>Tipo</TableCell>
                   <TableCell>Destino / Valor</TableCell>
@@ -337,8 +331,8 @@ export default function DnsManagerPage() {
               </TableHead>
               <TableBody>
                 {filteredRecords.map((r) => (
-                  <TableRow key={r.id} sx={{ '& td': { color: '#e5e7eb', borderColor: 'rgba(255, 255, 255, 0.04)' } }}>
-                    <TableCell sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{r.name}</TableCell>
+                  <TableRow key={r.id} sx={{ '& td': { color: '#2D1B17', borderColor: '#F2E8DC' } }}>
+                    <TableCell sx={{ fontFamily: 'monospace', fontWeight: 700 }}>{r.name}</TableCell>
                     <TableCell>
                       <Chip
                         label={r.type}
@@ -348,34 +342,34 @@ export default function DnsManagerPage() {
                           fontSize: '0.7rem',
                           backgroundColor:
                             r.type === 'A'
-                              ? 'rgba(6, 182, 212, 0.15)'
+                              ? 'rgba(255, 107, 0, 0.12)'
                               : r.type === 'MX'
                               ? 'rgba(234, 179, 8, 0.15)'
                               : r.type === 'TXT'
-                              ? 'rgba(168, 85, 247, 0.15)'
-                              : 'rgba(99, 102, 241, 0.15)',
+                              ? 'rgba(16, 185, 129, 0.15)'
+                              : 'rgba(255, 184, 0, 0.15)',
                           color:
                             r.type === 'A'
-                              ? '#67e8f9'
+                              ? '#FF6B00'
                               : r.type === 'MX'
-                              ? '#fde047'
+                              ? '#B45309'
                               : r.type === 'TXT'
-                              ? '#d8b4fe'
-                              : '#a5b4fc',
+                              ? '#059669'
+                              : '#D97706',
                         }}
                       />
                     </TableCell>
                     <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{r.value}</TableCell>
-                    <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.85rem', color: '#9ca3af' }}>
+                    <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.85rem', color: '#667085' }}>
                       {r.priority !== undefined ? r.priority : '-'}
                     </TableCell>
-                    <TableCell>{r.ttl}s</TableCell>
+                    <TableCell sx={{ color: '#667085' }}>{r.ttl}s</TableCell>
                     <TableCell align="right">
                       <Tooltip title="Eliminar registro">
                         <IconButton
                           size="small"
                           onClick={() => handleDeleteRecord(r.id)}
-                          sx={{ color: '#ef4444', '&:hover': { backgroundColor: 'rgba(239, 68, 68, 0.1)' } }}
+                          sx={{ color: '#EF4444', '&:hover': { backgroundColor: 'rgba(239, 68, 68, 0.08)' } }}
                         >
                           <DeleteOutlineRoundedIcon fontSize="small" />
                         </IconButton>
@@ -390,8 +384,8 @@ export default function DnsManagerPage() {
       </ModuleStateContainer>
 
       {/* Modal Dialog for Adding Record */}
-      <Dialog open={openModal} onClose={handleCloseModal} maxWidth="sm" fullWidth PaperProps={{ sx: { backgroundColor: '#111827', color: '#fff', borderRadius: 3, border: '1px solid rgba(255, 255, 255, 0.1)' } }}>
-        <DialogTitle sx={{ fontWeight: 700 }}>Agregar Registro DNS</DialogTitle>
+      <Dialog open={openModal} onClose={handleCloseModal} maxWidth="sm" fullWidth PaperProps={{ sx: { backgroundColor: '#FFFFFF', color: '#2D1B17', borderRadius: 3, border: '1px solid #F2E8DC' } }}>
+        <DialogTitle sx={{ fontWeight: 800, color: '#2D1B17' }}>Agregar Registro DNS</DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
           {formError && <Alert severity="error">{formError}</Alert>}
 
@@ -402,14 +396,15 @@ export default function DnsManagerPage() {
               onChange={(e) => setFormName(e.target.value)}
               helperText="Usa '@' para la raíz del dominio"
               fullWidth
-              sx={{ '& .MuiOutlinedInput-root': { backgroundColor: '#1f2937', color: '#fff' }, '& .MuiInputLabel-root': { color: '#9ca3af' }, '& .MuiFormHelperText-root': { color: '#6b7280' } }}
+              size="small"
             />
             <TextField
               select
               label="Tipo de Registro"
               value={formType}
               onChange={(e) => setFormType(e.target.value as DnsType)}
-              sx={{ width: 180, '& .MuiOutlinedInput-root': { backgroundColor: '#1f2937', color: '#fff' }, '& .MuiInputLabel-root': { color: '#9ca3af' } }}
+              sx={{ width: 180 }}
+              size="small"
             >
               <MenuItem value="A">A (IPv4)</MenuItem>
               <MenuItem value="AAAA">AAAA (IPv6)</MenuItem>
@@ -427,7 +422,7 @@ export default function DnsManagerPage() {
             onChange={(e) => setFormValue(e.target.value)}
             placeholder={formType === 'A' ? '169.58.220.244' : formType === 'CNAME' ? 'lb.velupi.com.' : 'Valor del registro'}
             fullWidth
-            sx={{ '& .MuiOutlinedInput-root': { backgroundColor: '#1f2937', color: '#fff' }, '& .MuiInputLabel-root': { color: '#9ca3af' } }}
+            size="small"
           />
 
           <Box sx={{ display: 'flex', gap: 2 }}>
@@ -438,7 +433,7 @@ export default function DnsManagerPage() {
               onChange={(e) => setFormTtl(Number(e.target.value))}
               helperText="Min: 60s, Max: 86400s"
               fullWidth
-              sx={{ '& .MuiOutlinedInput-root': { backgroundColor: '#1f2937', color: '#fff' }, '& .MuiInputLabel-root': { color: '#9ca3af' }, '& .MuiFormHelperText-root': { color: '#6b7280' } }}
+              size="small"
             />
             {(formType === 'MX' || formType === 'SRV') && (
               <TextField
@@ -446,16 +441,17 @@ export default function DnsManagerPage() {
                 type="number"
                 value={formPriority}
                 onChange={(e) => setFormPriority(Number(e.target.value))}
-                sx={{ width: 180, '& .MuiOutlinedInput-root': { backgroundColor: '#1f2937', color: '#fff' }, '& .MuiInputLabel-root': { color: '#9ca3af' } }}
+                sx={{ width: 180 }}
+                size="small"
               />
             )}
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 2, borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
-          <Button onClick={handleCloseModal} sx={{ color: '#9ca3af', textTransform: 'none' }}>
+        <DialogActions sx={{ p: 2, borderTop: '1px solid #F2E8DC' }}>
+          <Button onClick={handleCloseModal} sx={{ color: '#667085', textTransform: 'none', fontWeight: 600 }}>
             Cancelar
           </Button>
-          <Button onClick={handleSaveRecord} variant="contained" color="primary" sx={{ textTransform: 'none', fontWeight: 600 }}>
+          <Button onClick={handleSaveRecord} variant="contained" color="primary" sx={{ textTransform: 'none', fontWeight: 700 }}>
             Guardar Registro
           </Button>
         </DialogActions>

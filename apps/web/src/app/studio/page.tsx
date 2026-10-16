@@ -37,18 +37,18 @@ export default function MicroservicesStudioPage() {
       {/* Header */}
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, color: '#fff', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <HubRoundedIcon sx={{ color: '#06b6d4', fontSize: '2rem' }} /> Microservices Studio
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#2D1B17', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <HubRoundedIcon sx={{ color: '#FF6B00', fontSize: '2rem' }} /> Microservices Studio
           </Typography>
-          <Typography variant="body1" sx={{ color: '#9ca3af' }}>
+          <Typography variant="body1" sx={{ color: '#667085' }}>
             Diseño gráfico, orquestación distribuida y despliegue declarativo de arquitecturas multicomponente en Velupi Cloud.
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1.5 }}>
-          <Button variant="outlined" startIcon={<SchemaRoundedIcon />} sx={{ borderRadius: '8px', textTransform: 'none', borderColor: 'rgba(255,255,255,0.2)', color: '#fff' }}>
+          <Button variant="outlined" startIcon={<SchemaRoundedIcon />} sx={{ borderRadius: 2, textTransform: 'none', borderColor: '#F2E8DC', color: '#2D1B17', backgroundColor: '#FFFFFF', '&:hover': { borderColor: '#FF6B00', backgroundColor: '#FFFDF9' } }}>
             Importar Blueprint
           </Button>
-          <Button variant="contained" color="primary" startIcon={<AddRoundedIcon />} sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}>
+          <Button variant="contained" startIcon={<AddRoundedIcon />} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, backgroundColor: '#FF6B00', '&:hover': { backgroundColor: '#E85A00' } }}>
             Nuevo Stack
           </Button>
         </Box>
@@ -62,33 +62,34 @@ export default function MicroservicesStudioPage() {
               <Paper
                 sx={{
                   p: 3,
-                  backgroundColor: '#111827',
+                  backgroundColor: '#FFFFFF',
                   borderRadius: 3,
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  border: '1px solid #F2E8DC',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
                 }}
               >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5, flexWrap: 'wrap', gap: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <LayersRoundedIcon sx={{ color: '#06b6d4', fontSize: '1.75rem' }} />
+                    <LayersRoundedIcon sx={{ color: '#FF6B00', fontSize: '1.75rem' }} />
                     <Box>
-                      <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 700, color: '#2D1B17' }}>
                         {stack.name}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                      <Typography variant="caption" sx={{ color: '#667085' }}>
                         ID: {stack.id} &bull; Último despliegue: {stack.lastDeployment}
                       </Typography>
                     </Box>
                   </Box>
                   <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
-                    <Chip label={stack.status} size="small" sx={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#34d399', fontWeight: 600 }} />
-                    <Button size="small" variant="outlined" startIcon={<PlayArrowRoundedIcon />} sx={{ borderRadius: '6px', textTransform: 'none', borderColor: 'rgba(255,255,255,0.2)', color: '#fff' }}>
+                    <Chip label={stack.status} size="small" sx={{ backgroundColor: '#D1FAE5', color: '#065F46', fontWeight: 600 }} />
+                    <Button size="small" variant="outlined" startIcon={<PlayArrowRoundedIcon />} sx={{ borderRadius: 2, textTransform: 'none', borderColor: '#F2E8DC', color: '#2D1B17', '&:hover': { borderColor: '#FF6B00', backgroundColor: '#FFF8ED' } }}>
                       Re-desplegar Grafo
                     </Button>
                   </Box>
                 </Box>
 
                 {/* Graph preview nodes */}
-                <Typography variant="caption" sx={{ color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, mb: 1.5, display: 'block' }}>
+                <Typography variant="caption" sx={{ color: '#667085', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, mb: 1.5, display: 'block' }}>
                   Nodos del Grafo Conectados ({stack.components})
                 </Typography>
                 <Grid container spacing={2}>
@@ -98,20 +99,20 @@ export default function MicroservicesStudioPage() {
                         sx={{
                           p: 2,
                           borderRadius: 2,
-                          backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                          border: '1px solid rgba(255, 255, 255, 0.06)',
+                          backgroundColor: '#FFFDF9',
+                          border: '1px solid #F2E8DC',
                         }}
                       >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 700, color: '#f3f4f6' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: '#2D1B17' }}>
                             {node.name}
                           </Typography>
-                          <Chip label={node.type} size="small" sx={{ fontSize: '0.65rem', height: 20, backgroundColor: 'rgba(6, 182, 212, 0.15)', color: '#22d3ee' }} />
+                          <Chip label={node.type} size="small" sx={{ fontSize: '0.65rem', height: 20, backgroundColor: '#FFF4E5', color: '#FF6B00' }} />
                         </Box>
-                        <Typography variant="caption" sx={{ color: '#9ca3af', display: 'block' }}>
+                        <Typography variant="caption" sx={{ color: '#667085', display: 'block' }}>
                           Puerto Interno: {node.port}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: '#34d399', fontWeight: 600 }}>
+                        <Typography variant="caption" sx={{ color: '#10B981', fontWeight: 600 }}>
                           &bull; {node.status}
                         </Typography>
                       </Box>

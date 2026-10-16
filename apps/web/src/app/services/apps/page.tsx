@@ -231,8 +231,8 @@ export default function CloudAppsPage() {
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
         <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <RocketLaunchRoundedIcon sx={{ color: '#06b6d4', fontSize: '2rem' }} /> Cloud Apps
+            <Typography variant="h4" sx={{ fontWeight: 800, color: '#2D1B17', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <RocketLaunchRoundedIcon sx={{ color: '#FF6B00', fontSize: '2rem' }} /> Cloud Apps
             </Typography>
             <Chip
               label={currentApp.status}
@@ -241,7 +241,7 @@ export default function CloudAppsPage() {
               sx={{ fontWeight: 700 }}
             />
           </Box>
-          <Typography variant="body2" sx={{ color: '#9ca3af' }}>
+          <Typography variant="body2" sx={{ color: '#667085' }}>
             Despliegue ágil de aplicaciones Docker, Node.js y Python con enrutamiento HTTPS automático.
           </Typography>
         </Box>
@@ -252,7 +252,7 @@ export default function CloudAppsPage() {
             color="primary"
             startIcon={<AddRoundedIcon />}
             onClick={() => setOpenCreateModal(true)}
-            sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
+            sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 700 }}
           >
             Nueva Cloud App
           </Button>
@@ -260,7 +260,7 @@ export default function CloudAppsPage() {
             variant="outlined"
             startIcon={<LanguageRoundedIcon />}
             onClick={() => setOpenDomainModal(true)}
-            sx={{ borderRadius: '8px', textTransform: 'none', borderColor: 'rgba(255, 255, 255, 0.2)', color: '#fff' }}
+            sx={{ borderRadius: '8px', textTransform: 'none', borderColor: '#F2E8DC', color: '#2D1B17', backgroundColor: '#FFFFFF', fontWeight: 600 }}
           >
             Vincular Dominio
           </Button>
@@ -269,16 +269,16 @@ export default function CloudAppsPage() {
             color="success"
             startIcon={<PlayArrowIcon />}
             onClick={handleDeploy}
-            sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
+            sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 700 }}
           >
             Desplegar
           </Button>
           <Button
             variant="outlined"
-            color="info"
+            color="primary"
             startIcon={<RefreshIcon />}
             onClick={handleRestart}
-            sx={{ borderRadius: '8px', textTransform: 'none' }}
+            sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
           >
             Reiniciar
           </Button>
@@ -288,7 +288,7 @@ export default function CloudAppsPage() {
               color="error"
               startIcon={<StopRoundedIcon />}
               onClick={handleStop}
-              sx={{ borderRadius: '8px', textTransform: 'none' }}
+              sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
             >
               Detener
             </Button>
@@ -297,13 +297,13 @@ export default function CloudAppsPage() {
       </Box>
 
       {actionNotice && (
-        <Alert severity="info" sx={{ mb: 3 }}>
+        <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
           {actionNotice}
         </Alert>
       )}
 
       {/* App Selector Tabs */}
-      <Box sx={{ display: 'flex', gap: 1, mb: 3, overflowX: 'auto', pb: 1 }}>
+      <Box sx={{ display: 'flex', gap: 1.5, mb: 3, overflowX: 'auto', pb: 1 }}>
         {apps.map((a) => (
           <Paper
             key={a.id}
@@ -312,20 +312,25 @@ export default function CloudAppsPage() {
               px: 2.5,
               py: 1.5,
               cursor: 'pointer',
-              backgroundColor: a.id === selectedAppId ? '#1f2937' : '#111827',
-              border: a.id === selectedAppId ? '1px solid #06b6d4' : '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: 2,
+              backgroundColor: '#FFFFFF',
+              border: a.id === selectedAppId ? '2px solid #FF6B00' : '1px solid #F2E8DC',
+              boxShadow: a.id === selectedAppId ? '0 4px 12px rgba(255, 107, 0, 0.12)' : '0 2px 8px rgba(0,0,0,0.02)',
+              borderRadius: 3,
               display: 'flex',
               alignItems: 'center',
               gap: 1.5,
               minWidth: 200,
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                borderColor: '#FF6B00',
+              },
             }}
           >
             <Box>
-              <Typography variant="subtitle2" sx={{ color: '#fff', fontWeight: 700 }}>
+              <Typography variant="subtitle2" sx={{ color: '#2D1B17', fontWeight: 800 }}>
                 {a.name}
               </Typography>
-              <Typography variant="caption" sx={{ color: '#9ca3af' }}>
+              <Typography variant="caption" sx={{ color: '#667085', fontWeight: 500 }}>
                 {a.runtime}
               </Typography>
             </Box>
@@ -333,7 +338,7 @@ export default function CloudAppsPage() {
               size="small"
               label={a.status}
               color={a.status === 'HEALTHY' ? 'success' : 'default'}
-              sx={{ ml: 'auto', height: 20, fontSize: '0.65rem' }}
+              sx={{ ml: 'auto', height: 20, fontSize: '0.65rem', fontWeight: 700 }}
             />
           </Paper>
         ))}
@@ -342,35 +347,35 @@ export default function CloudAppsPage() {
       {/* Grid: Git info and Env Vars */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, backgroundColor: '#111827', borderRadius: 3, height: '100%', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-            <Typography variant="h6" sx={{ color: '#fff', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <GitHubIcon sx={{ color: '#06b6d4' }} /> Origen del Código (Git)
+          <Paper sx={{ p: 3, backgroundColor: '#FFFFFF', borderRadius: 3, height: '100%', border: '1px solid #F2E8DC', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+            <Typography variant="h6" sx={{ color: '#2D1B17', fontWeight: 800, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <GitHubIcon sx={{ color: '#FF6B00' }} /> Origen del Código (Git)
             </Typography>
-            <Typography variant="body2" sx={{ color: '#9ca3af', mb: 1 }}>
-              Repositorio: <code>{currentApp.repoUrl}</code>
+            <Typography variant="body2" sx={{ color: '#667085', mb: 1 }}>
+              Repositorio: <code style={{ color: '#2D1B17', backgroundColor: '#FAF6F0', padding: '2px 6px', borderRadius: '4px' }}>{currentApp.repoUrl}</code>
             </Typography>
-            <Typography variant="body2" sx={{ color: '#9ca3af', mb: 1 }}>
-              Rama de producción: <strong>{currentApp.branch}</strong>
+            <Typography variant="body2" sx={{ color: '#667085', mb: 1 }}>
+              Rama de producción: <strong style={{ color: '#2D1B17' }}>{currentApp.branch}</strong>
             </Typography>
-            <Typography variant="body2" sx={{ color: '#9ca3af', mb: 2 }}>
-              Dominio vinculado: <strong>{currentApp.domain ? `https://${currentApp.domain}` : 'Sin dominio asignado'}</strong>
+            <Typography variant="body2" sx={{ color: '#667085', mb: 2 }}>
+              Dominio vinculado: <strong style={{ color: '#FF6B00' }}>{currentApp.domain ? `https://${currentApp.domain}` : 'Sin dominio asignado'}</strong>
             </Typography>
-            <Chip label="Despliegue Automático Activo" size="small" sx={{ backgroundColor: 'rgba(6, 182, 212, 0.15)', color: '#67e8f9', fontWeight: 600 }} />
+            <Chip label="Despliegue Automático Activo" size="small" sx={{ backgroundColor: 'rgba(255, 107, 0, 0.1)', color: '#FF6B00', fontWeight: 700 }} />
           </Paper>
         </Grid>
 
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, backgroundColor: '#111827', borderRadius: 3, height: '100%', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-            <Typography variant="h6" sx={{ color: '#fff', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <KeyIcon sx={{ color: '#818cf8' }} /> Variables de Entorno y Secretos
+          <Paper sx={{ p: 3, backgroundColor: '#FFFFFF', borderRadius: 3, height: '100%', border: '1px solid #F2E8DC', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+            <Typography variant="h6" sx={{ color: '#2D1B17', fontWeight: 800, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <KeyIcon sx={{ color: '#FFB800' }} /> Variables de Entorno y Secretos
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {currentApp.env.map((e, i) => (
-                <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: 'rgba(255, 255, 255, 0.03)', borderRadius: 1 }}>
-                  <Typography variant="caption" sx={{ color: '#06b6d4', fontFamily: 'monospace', fontWeight: 600 }}>
+                <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', p: 1.2, backgroundColor: '#FAF6F0', borderRadius: 2, border: '1px solid #F2E8DC' }}>
+                  <Typography variant="caption" sx={{ color: '#FF6B00', fontFamily: 'monospace', fontWeight: 700 }}>
                     {e.key}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: e.isSecret ? '#6b7280' : '#e5e7eb', fontFamily: 'monospace' }}>
+                  <Typography variant="caption" sx={{ color: e.isSecret ? '#9CA3AF' : '#2D1B17', fontFamily: 'monospace', fontWeight: 600 }}>
                     {e.value}
                   </Typography>
                 </Box>
@@ -381,15 +386,15 @@ export default function CloudAppsPage() {
       </Grid>
 
       {/* Live Logs Terminal */}
-      <Paper sx={{ p: 3, backgroundColor: '#0d1117', borderRadius: 3, border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+      <Paper sx={{ p: 3, backgroundColor: '#1A1311', borderRadius: 3, border: '1px solid #2D1B17', boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6" sx={{ color: '#fff', display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.95rem' }}>
-            <TerminalIcon sx={{ color: '#10b981' }} /> Consola de Logs en Vivo
+          <Typography variant="h6" sx={{ color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.95rem', fontWeight: 700 }}>
+            <TerminalIcon sx={{ color: '#10B981' }} /> Consola de Logs en Vivo
           </Typography>
-          <Chip label="STREAMING ACTIVO" size="small" color="success" sx={{ fontSize: '0.65rem', height: 20 }} />
+          <Chip label="STREAMING ACTIVO" size="small" color="success" sx={{ fontSize: '0.65rem', height: 20, fontWeight: 700 }} />
         </Box>
 
-        <Box sx={{ fontFamily: 'monospace', fontSize: '0.82rem', color: '#10b981', maxHeight: 260, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+        <Box sx={{ fontFamily: 'monospace', fontSize: '0.82rem', color: '#10B981', maxHeight: 260, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 0.5 }}>
           {currentApp.logs.map((log, index) => (
             <Typography key={index} variant="inherit" sx={{ wordBreak: 'break-all' }}>
               {log}
@@ -399,22 +404,23 @@ export default function CloudAppsPage() {
       </Paper>
 
       {/* Modal: Crear Cloud App */}
-      <Dialog open={openCreateModal} onClose={() => setOpenCreateModal(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { backgroundColor: '#111827', color: '#fff', borderRadius: 3 } }}>
-        <DialogTitle sx={{ fontWeight: 700 }}>Crear Nueva Cloud App</DialogTitle>
+      <Dialog open={openCreateModal} onClose={() => setOpenCreateModal(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { backgroundColor: '#FFFFFF', color: '#2D1B17', borderRadius: 3, border: '1px solid #F2E8DC' } }}>
+        <DialogTitle sx={{ fontWeight: 800, color: '#2D1B17' }}>Crear Nueva Cloud App</DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
           <TextField
             label="Nombre de la Aplicación"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             fullWidth
-            sx={{ '& .MuiOutlinedInput-root': { backgroundColor: '#1f2937', color: '#fff' } }}
+            size="small"
           />
           <TextField
             select
             label="Runtime / Entorno"
             value={newRuntime}
             onChange={(e) => setNewRuntime(e.target.value)}
-            sx={{ '& .MuiOutlinedInput-root': { backgroundColor: '#1f2937', color: '#fff' } }}
+            fullWidth
+            size="small"
           >
             <MenuItem value="Node.js 20 LTS">Node.js 20 LTS (Next.js / NestJS / Express)</MenuItem>
             <MenuItem value="Python 3.12 (FastAPI)">Python 3.12 (FastAPI / Django)</MenuItem>
@@ -426,27 +432,27 @@ export default function CloudAppsPage() {
             onChange={(e) => setNewRepo(e.target.value)}
             placeholder="https://github.com/usuario/repositorio.git"
             fullWidth
-            sx={{ '& .MuiOutlinedInput-root': { backgroundColor: '#1f2937', color: '#fff' } }}
+            size="small"
           />
           <TextField
             label="Rama (Branch)"
             value={newBranch}
             onChange={(e) => setNewBranch(e.target.value)}
             fullWidth
-            sx={{ '& .MuiOutlinedInput-root': { backgroundColor: '#1f2937', color: '#fff' } }}
+            size="small"
           />
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setOpenCreateModal(false)} sx={{ color: '#9ca3af' }}>Cancelar</Button>
-          <Button onClick={handleCreateApp} variant="contained" color="primary">Crear Aplicación</Button>
+          <Button onClick={() => setOpenCreateModal(false)} sx={{ color: '#667085', fontWeight: 600 }}>Cancelar</Button>
+          <Button onClick={handleCreateApp} variant="contained" color="primary" sx={{ fontWeight: 700 }}>Crear Aplicación</Button>
         </DialogActions>
       </Dialog>
 
       {/* Modal: Vincular Dominio */}
-      <Dialog open={openDomainModal} onClose={() => setOpenDomainModal(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { backgroundColor: '#111827', color: '#fff', borderRadius: 3 } }}>
-        <DialogTitle sx={{ fontWeight: 700 }}>Vincular Dominio Personalizado</DialogTitle>
+      <Dialog open={openDomainModal} onClose={() => setOpenDomainModal(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { backgroundColor: '#FFFFFF', color: '#2D1B17', borderRadius: 3, border: '1px solid #F2E8DC' } }}>
+        <DialogTitle sx={{ fontWeight: 800, color: '#2D1B17' }}>Vincular Dominio Personalizado</DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-          <Typography variant="body2" sx={{ color: '#9ca3af' }}>
+          <Typography variant="body2" sx={{ color: '#667085' }}>
             Asigna un dominio o subdominio. Velupi configurará automáticamente el enrutamiento seguro con certificado SSL Let&apos;s Encrypt.
           </Typography>
           <TextField
@@ -455,12 +461,12 @@ export default function CloudAppsPage() {
             value={newDomain}
             onChange={(e) => setNewDomain(e.target.value)}
             fullWidth
-            sx={{ '& .MuiOutlinedInput-root': { backgroundColor: '#1f2937', color: '#fff' } }}
+            size="small"
           />
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setOpenDomainModal(false)} sx={{ color: '#9ca3af' }}>Cancelar</Button>
-          <Button onClick={handleBindDomain} variant="contained" color="primary">Vincular Dominio</Button>
+          <Button onClick={() => setOpenDomainModal(false)} sx={{ color: '#667085', fontWeight: 600 }}>Cancelar</Button>
+          <Button onClick={handleBindDomain} variant="contained" color="primary" sx={{ fontWeight: 700 }}>Vincular Dominio</Button>
         </DialogActions>
       </Dialog>
     </Box>
