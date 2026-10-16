@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Headers, HttpCode, Optional } from '@nestjs/common';
+import { Controller, Post, Body, Headers, HttpCode, Optional, HttpException, HttpStatus } from '@nestjs/common';
 import {
   PaymentProcessorService,
   ProvisioningOrchestrator,
@@ -21,7 +21,15 @@ export class WebhooksController {
     @Body() payload: unknown,
     @Headers() headers: Record<string, string>
   ): { status: string; orderId: string } {
-    const updatedOrder: Order = this.paymentProcessor.processWebhook(payload, headers);
+    let updatedOrder: Order;
+    try {
+      updatedOrder = this.paymentProcessor.processWebhook(payload, headers);
+    } catch (err: any) {
+      if (err.name === 'InvalidWebhookSignatureError' || err.message?.includes('signature')) {
+        throw new HttpException('Invalid webhook cryptographic signature', HttpStatus.BAD_REQUEST);
+      }
+      throw new HttpException(err.message || 'Webhook processing failed', HttpStatus.BAD_REQUEST);
+    }
 
     // If order transitioned to PAID, trigger provisioning orchestration and commerce lifecycle
     if (updatedOrder.status === OrderStatus.PAID) {

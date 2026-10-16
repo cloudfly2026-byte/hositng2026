@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { HttpException } from '@nestjs/common';
 import { WebhooksController } from './webhooks.controller';
 import {
   WompiPaymentAdapter,
@@ -112,7 +113,7 @@ describe('WebhooksController (Authenticated Wompi Webhooks & Commerce Engine)', 
 
     expect(() => {
       controller.handleWompiWebhook(payload, { 'x-event-checksum': 'bad-signature' });
-    }).toThrow(InvalidWebhookSignatureError);
+    }).toThrow(HttpException);
   });
 
   it('processes verified APPROVED webhook: updates order to PAID, triggers provisioning, subscription & invoice', () => {

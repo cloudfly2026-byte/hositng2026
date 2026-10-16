@@ -24,7 +24,7 @@ import { AuthController } from './auth/auth.controller';
 import { CheckoutController } from './checkout/checkout.controller';
 import { OrdersController } from './orders/orders.controller';
 import { WebhooksController } from './webhooks/webhooks.controller';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, HttpException } from '@nestjs/common';
 
 describe('UC-NEW-001: End-to-End Real Commercial Checkout Flow Validation', () => {
   let catalog: ProductCatalogService;
@@ -296,7 +296,7 @@ describe('UC-NEW-001: End-to-End Real Commercial Checkout Flow Validation', () =
         webhooksController.handleWompiWebhook(fakePayload, {
           'x-event-checksum': 'bad-checksum-forged',
         });
-      }).toThrow(InvalidWebhookSignatureError);
+      }).toThrow(HttpException);
 
       // Order remains PENDING_PAYMENT
       const unchangedOrder = ordersController.getOrder(order.id);
