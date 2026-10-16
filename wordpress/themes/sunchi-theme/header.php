@@ -23,7 +23,7 @@
             if (has_custom_logo()) {
                 the_custom_logo();
             } else {
-                $logo_src = get_template_directory_uri() . '/assets/images/logo.png';
+                $logo_src = get_template_directory_uri() . '/assets/images/logo.png?v=20261016';
                 echo '<img src="' . esc_url($logo_src) . '" alt="' . esc_attr(get_bloginfo('name', 'display')) . ' — Velupi Cloud Platform" class="sunchi-logo-img" width="160" height="56">';
             }
             ?>

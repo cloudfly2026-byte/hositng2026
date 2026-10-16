@@ -12,7 +12,7 @@
             <div class="sunchi-footer-brand">
                 <a href="<?php echo esc_url(home_url('/')); ?>" rel="home">
                     <?php
-                    $logo_src = get_template_directory_uri() . '/assets/images/logo.png';
+                    $logo_src = get_template_directory_uri() . '/assets/images/logo.png?v=20261016';
                     echo '<img src="' . esc_url($logo_src) . '" alt="' . esc_attr(get_bloginfo('name', 'display')) . ' — Velupi" class="sunchi-logo-img" width="140" height="50">';
                     ?>
                 </a>
