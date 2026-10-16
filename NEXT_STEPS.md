@@ -1,16 +1,14 @@
 # NEXT_STEPS.md — Plan Técnico Priorizado y Hoja de Ruta Operativa
 
 **Proyecto**: Velupi Cloud Platform / Microservices Studio & Commerce Engine  
-**Fecha de actualización**: 15 de Octubre de 2026 (Consolidación de Producción y MVP Operativo)  
+**Fecha de actualización**: 16 de Octubre de 2026 (Cierre de Prioridades 0 y 1 / Sprint Final del MVP Comercial)  
 **Metodología**: TDD Obligatorio (Red → Green → Refactor)  
 **Documento rector**: `AGENTS.md`  
-**Métricas acumuladas**: 37 suites de prueba, 246 pruebas aprobadas (100% GREEN, 0 fallos).
+**Métricas acumuladas**: 46 suites de prueba, 323 pruebas aprobadas (100% GREEN, 0 fallos). Base de datos migrada a 16 tablas relacionales activas en PostgreSQL.
 
 ---
 
 ## 1. Visión general del estado consolidado
-
-Habiendo alcanzado la publicación HTTPS en vivo para todos los dominios comerciales y de control (`velupi.com`, `app.velupi.com`, `api.velupi.com`, `portainer.velupi.com`), la resolución autoritativa en BIND9, la integración desacoplada con HestiaCP sobre HTTPS y el nuevo **Motor de Escrituras Controladas con Auditoría**, la plataforma se encuentra lista para la validación del primer flujo operativo de cliente.
 
 ```text
 [Infraestructura HTTPS & Traefik v3.7 en VPS] ✅ CONSOLIDADO
@@ -19,34 +17,42 @@ Habiendo alcanzado la publicación HTTPS en vivo para todos los dominios comerci
 [BIND9 DNS Autoritativo & SSL Let's Encrypt]  ✅ CONSOLIDADO
                          │
                          ▼
-[Motor de Escrituras Controladas & Auditoría] ✅ CONSOLIDADO
+[Re-Branding Velupi & Warm Solar Light System]✅ CONSOLIDADO (14/14 pantallas)
                          │
                          ▼
-[Flujo Operativo de Autoservicio en app.velupi.com] ◀── SIGUIENTE PASO OPERATIVO
+[Prioridad 0: Auditoría y Saneamiento Llaves] ✅ CONSOLIDADO
                          │
                          ▼
-[Endurecimiento de Puertos & Sandbox Wompi] ──── (A la espera de autorización)
+[Prioridad 1: Persistencia Relacional 16 DBs] ✅ CONSOLIDADO (PostgreSQL en VPS)
+                         │
+                         ▼
+[Prioridad 2: Validación E2E Wompi Sandbox]   ◀── SIGUIENTE PASO OPERATIVO
+                         │
+                         ▼
+[Prioridad 3: Aprovisionamiento Físico BullMQ]◀── PENDIENTE VALIDACIÓN EN VIVO
 ```
 
 ---
 
-## 2. Próximo Flujo E2E Recomendado (De Cara al Cliente en `app.velupi.com`)
+## 2. Próximos Hitos del Sprint Final (Prioridades 2 y 3)
 
-El objetivo inmediato es permitir que un usuario autenticado complete el ciclo completo de administración de hosting y DNS sin requerir soporte manual ni ver paneles externos:
+1. **Prioridad 2 — Validación E2E de Wompi Sandbox (UC-NEW-001)**:
+   - Probar flujo completo: Carrito persistido (`/cart`) $\rightarrow$ Registro/OAuth $\rightarrow$ Datos Fiscales (`/checkout`) $\rightarrow$ Checkout Wompi Sandbox $\rightarrow$ Webhook firmado HMAC SHA-256 $\rightarrow$ Orden pasa a `PAID`.
+   - Verificar persistencia automática del `PaymentRecord` y `Subscription` en las tablas `payments` y `subscriptions` de PostgreSQL.
+   - Confirmar comportamiento no-autoritativo de la pantalla `/checkout/return` (solo polling, nunca auto-aprobación por redirect).
 
-1. **Autenticación en el Portal**:
-   - Ingreso a `https://app.velupi.com/login` utilizando credenciales del tenant u organización piloto.
-   - Verificación de sesión con token Bearer JWT y asignación de rol (`OWNER` o `ADMIN`).
-2. **Dashboard de Servicios**:
-   - Visualización de la tarjeta de servicio *Web Hosting* asociada al tenant.
-   - Comprobación de cuotas de recursos (sitios activos, bases de datos creadas, espacio en disco).
-3. **Gestión de Sitio Web (WordPress / PHP)**:
-   - Navegación a `/services/wordpress` o `/hosting/sites`.
-   - Consulta en tiempo real del sitio `velupi.com` con transporte HTTPS autenticado: estado de SSL Let's Encrypt, versión PHP activa y almacenamiento.
-4. **Administración Centralizada de DNS**:
-   - Navegación a `/dns` para consultar la zona `velupi.com`.
-   - Reconciliación en un clic contra BIND9 (`POST /dns/zones/:zoneId/reconcile`) mostrando los registros autoritativos (`A`, `CNAME`, `MX`, `CAA`).
-   - Prueba de adición de un registro controlado (ej. `dev.velupi.com` A `169.58.220.244`) con validación RFC 1912 y registro inmutable en `AuditEvent`.
+2. **Prioridad 3 — Aprovisionamiento Físico Duradero con BullMQ y Redis Real**:
+   - Conectar el worker de aprovisionamiento en vivo contra `velupi-redis:6379`.
+   - Validar ejecución para el tenant de prueba:
+     1. Disparo de `ProvisioningJob` tras orden `PAID`.
+     2. Creación de cuenta y sitio web en HestiaCP (`89.117.147.134`).
+     3. Creación de registros autoritativos en BIND9.
+     4. Emisión de SSL Let's Encrypt.
+     5. Notificación y reflejo en el Dashboard del cliente en `https://app.velupi.com`.
+
+3. **Prioridad 4 — Consola de Operador Mínima y Notificaciones Transaccionales**:
+   - Configuración de templates de correo transaccional (bienvenida, confirmación de orden, factura generada, servicio activo).
+   - Vista mínima de operador para supervisar jobs de provisión y estado de nodos.
 
 ---
 
