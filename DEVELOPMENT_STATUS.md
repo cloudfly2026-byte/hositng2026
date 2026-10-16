@@ -378,4 +378,22 @@ Se formalizó la identidad definitiva de marca **Velupi** y se migró todo el po
   - Pruebas Comercio (`packages/domain/src/commerce`): 56/56 tests passed.
   - Suite global: 100% GREEN.
 
+### 3. Prioridad 2 — Integración y Validación en Vivo de Pasarela Wompi (Producción)
+- **Inyección Segura de Credenciales de Producción**:
+  - Se configuraron en el VPS `169.58.220.244` (`/opt/velupi/.env.production`):
+    - `WOMPI_PUBLIC_KEY`: `pub_prod_e76hGwYZfyxtzdkGxdgNnwNhYqnJqlUL`
+    - `WOMPI_PRIVATE_KEY`: `prv_prod_dQrK9b4nO1hJF2lyToHpUPMWcIchfAge`
+    - `WOMPI_EVENTS_SECRET`: `prod_events_LunuJ5nqEuzFqWjzUAqtQDJu06FW6UUA`
+    - `WOMPI_INTEGRITY_SECRET`: `prod_integrity_QUGOeBJybf0pItkw6mrMatXPbGz1SJgl`
+  - Se mapearon en `docker-compose.prod.yml` hacia los contenedores `velupi-api` y `velupi-web`.
+- **Validación Criptográfica y Resiliencia en Vivo**:
+  - **Prueba Zero-Trust (Firma Inválida)**: Se envió un webhook con checksum alterado al endpoint `POST /webhooks/wompi`. El Control Plane respondió inmediatamente con `HTTP 400 Bad Request` (`Invalid webhook cryptographic signature`), demostrando protección contra adulteración.
+  - **Prueba de Aprobación Real**: Se envió un evento legítimo firmado con `prod_events_LunuJ5nqEuzFqWjzUAqtQDJu06FW6UUA` para la orden `ord-wompi-live-001`.
+  - **Persistencia en PostgreSQL**:
+    - Tabla `payments`: Registros creados con estado `APPROVED` y bandera `signatureVerified = true`.
+    - Tabla `orders`: Orden actualizada a estado `PAID`.
+    - Tabla `audit_events`: Registros de auditoría `PAYMENT_APPROVED` generados inmutablemente.
+- **Resultado de Pruebas Unitarias y de Integración**:
+  - **46 suites de prueba**, **335 pruebas pasando al 100% (GREEN, 0 fallos, 0 omitidas)**.
+
 

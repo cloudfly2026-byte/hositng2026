@@ -434,7 +434,7 @@ describe('E2E Platform Integration: Auth -> Hosting -> DNS -> Cloud Apps', () =>
     expect(isValidSignature).toBe(true);
 
     // Process payment and transition order to PAID
-    const processedOrder = paymentProcessor.processWebhook(wompiPayload, {});
+    const processedOrder = await paymentProcessor.processWebhook(wompiPayload, {});
     expect(processedOrder.status).toBe(OrderStatus.PAID);
 
     // 5. BULLMQ PROVISIONING ORCHESTRATOR

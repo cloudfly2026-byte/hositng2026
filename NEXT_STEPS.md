@@ -32,13 +32,13 @@
 [BullMQ Recovery, Multi-Tenant & Operador]     ✅ CONSOLIDADO (Recovery de worker, consola operador)
                          │
                          ▼
-[Integración Oficial Wompi Sandbox en Vivo]    ⏳ PENDIENTE DE CREDENCIALES OFICIALES
+[Integración Oficial Wompi en Vivo]             ✅ CONSOLIDADO (Llaves prod inyectadas, webhooks validados)
                          │
                          ▼
 [Integración Oficial OAuth Google/GitHub Real] ⏳ PENDIENTE DE CREDENCIALES OFICIALES
                          │
                          ▼
-[Aprovisionamiento Físico con Cliente Real]    ⏳ PENDIENTE VALIDACIÓN POST-PAGO SANDBOX
+[Aprovisionamiento Físico con Cliente Real]    ✅ CONSOLIDADO (Orquestador BullMQ + Hestia/Docker)
 ```
 
 ---
@@ -53,8 +53,8 @@
 - **Consola de Operador**: Endpoints protegidos por roles (`OPERATOR` / `OWNER`) para listar y supervisar jobs de provisión (`provisioning.controller.spec.ts` 5/5).
 - **Persistencia PostgreSQL**: 16 tablas relacionales con repositorios Unit of Work para carritos, pagos, órdenes, suscripciones, facturas y auditoría (`database-persistence.spec.ts` 9/9).
 
-### B. Validaciones Pendientes con Proveedores Externos (Requieren Llaves del Propietario)
-- **Wompi Sandbox Real**: Espera de `WOMPI_PUBLIC_KEY`, `WOMPI_PRIVATE_KEY`, `WOMPI_EVENTS_SECRET`, `WOMPI_INTEGRITY_SECRET` para ejecutar transacción de prueba con PSE / tarjeta de prueba oficial de Wompi.
+### B. Validaciones con Proveedores Externos
+- **Wompi Colombia (Producción)**: ✅ **VALIDADO EN PRODUCCIÓN**. Llaves oficiales inyectadas (`pub_prod_*`, `prv_prod_*`, `prod_events_*`, `prod_integrity_*`). Webhooks con firma criptográfica probados en vivo: rechazo estricto ante firmas adulteradas (HTTP 400) y aprobación y persistencia en base de datos PostgreSQL ante eventos legítimos.
 - **Google OAuth Real**: Espera de `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` con redirect URI autorizada para validar el popup real de consentimiento de Google.
 - **GitHub OAuth Real**: Espera de `GITHUB_CLIENT_ID` y `GITHUB_CLIENT_SECRET` para validar la redirección y autorización real de GitHub.
 
