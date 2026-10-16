@@ -133,8 +133,9 @@ import { PrismaUnitOfWork, PrismaDatabaseUnitOfWork } from '@cloudfly/persistenc
     },
     {
       provide: CartService,
-      useFactory: (catalog: ProductCatalogService) => new CartService(catalog),
-      inject: [ProductCatalogService],
+      useFactory: (catalog: ProductCatalogService, uow: any) =>
+        new CartService(catalog, undefined, uow),
+      inject: [ProductCatalogService, 'IUnitOfWork'],
     },
     {
       provide: OnboardingService,
@@ -142,7 +143,7 @@ import { PrismaUnitOfWork, PrismaDatabaseUnitOfWork } from '@cloudfly/persistenc
     },
     {
       provide: OrderService,
-      useFactory: (catalog: ProductCatalogService, uow: PrismaUnitOfWork) =>
+      useFactory: (catalog: ProductCatalogService, uow: any) =>
         new OrderService(catalog, uow),
       inject: [ProductCatalogService, 'IUnitOfWork'],
     },
@@ -163,20 +164,21 @@ import { PrismaUnitOfWork, PrismaDatabaseUnitOfWork } from '@cloudfly/persistenc
     },
     {
       provide: PaymentProcessorService,
-      useFactory: (adapter: WompiPaymentAdapter, ordersStore: Map<string, Order>) =>
-        new PaymentProcessorService(adapter, ordersStore),
-      inject: [WompiPaymentAdapter, 'ORDERS_STORE'],
+      useFactory: (adapter: WompiPaymentAdapter, ordersStore: Map<string, Order>, uow: any) =>
+        new PaymentProcessorService(adapter, ordersStore, uow),
+      inject: [WompiPaymentAdapter, 'ORDERS_STORE', 'IUnitOfWork'],
     },
     {
       provide: ProvisioningOrchestrator,
-      useFactory: (catalog: ProductCatalogService, uow: PrismaUnitOfWork) =>
+      useFactory: (catalog: ProductCatalogService, uow: any) =>
         new ProvisioningOrchestrator(catalog, uow),
       inject: [ProductCatalogService, 'IUnitOfWork'],
     },
 
     {
       provide: SubscriptionService,
-      useFactory: () => new SubscriptionService(),
+      useFactory: (uow: any) => new SubscriptionService(uow),
+      inject: ['IUnitOfWork'],
     },
     {
       provide: DnsManagerService,

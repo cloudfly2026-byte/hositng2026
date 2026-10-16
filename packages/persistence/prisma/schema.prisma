@@ -35,6 +35,10 @@ model Organization {
   entitlements    CustomerEntitlement[]
   projects        Project[]
   services        Service[]
+  cartDrafts      CartDraft[]
+  subscriptions   Subscription[]
+  invoices        Invoice[]
+  auditEvents     AuditEvent[]
 
   @@map("organizations")
 }
@@ -88,8 +92,9 @@ model PlanVersion {
   quotas    Json
   prices    Json
   createdAt DateTime    @default(now())
-  plan      Plan        @relation(fields: [planId], references: [id], onDelete: Cascade)
-  items     OrderItem[]
+  plan          Plan           @relation(fields: [planId], references: [id], onDelete: Cascade)
+  items         OrderItem[]
+  subscriptions Subscription[]
 
   @@unique([planId, version])
   @@index([planId])
@@ -111,6 +116,8 @@ model Order {
   organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   items          OrderItem[]
   entitlements   CustomerEntitlement[]
+  payments       Payment[]
+  invoices       Invoice[]
 
   @@index([organizationId, status])
   @@index([organizationId])
@@ -186,3 +193,107 @@ model Service {
   @@index([organizationId])
   @@map("services")
 }
+
+model CartDraft {
+  id                 String       @id
+  anonymousTokenHash String
+  userId             String?
+  organizationId     String?
+  currency           String
+  items              Json
+  subtotalCents      Int
+  taxCents           Int
+  totalCents         Int
+  expiresAt          DateTime
+  status             String
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  organization       Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([anonymousTokenHash])
+  @@index([organizationId])
+  @@index([status])
+  @@map("cart_drafts")
+}
+
+model Payment {
+  id                    String   @id
+  orderId               String
+  provider              String
+  providerTransactionId String?
+  status                String
+  amountCents           Int
+  currency              String
+  signatureVerified     Boolean  @default(false)
+  rawPayload            Json?
+  createdAt             DateTime @default(now())
+  order                 Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([provider, providerTransactionId])
+  @@index([status])
+  @@map("payments")
+}
+
+model Subscription {
+  id                 String       @id
+  organizationId     String
+  planVersionId      String
+  orderId            String
+  status             String
+  billingCycle       String
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  gracePeriodUntil   DateTime?
+  suspendedAt        DateTime?
+  cancelledAt        DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  organization       Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  planVersion        PlanVersion  @relation(fields: [planVersionId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, status])
+  @@index([planVersionId])
+  @@map("subscriptions")
+}
+
+model Invoice {
+  id             String       @id
+  invoiceNumber  String       @unique
+  organizationId String
+  orderId        String
+  subscriptionId String?
+  status         String
+  currency       String
+  subtotalCents  Int
+  taxCents       Int
+  totalCents     Int
+  items          Json
+  issuedAt       DateTime     @default(now())
+  dueDate        DateTime
+  paidAt         DateTime?
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  order          Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([orderId])
+  @@index([status])
+  @@map("invoices")
+}
+
+model AuditEvent {
+  id             String        @id
+  organizationId String?
+  actorUserId    String?
+  action         String
+  resource       String
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([actorUserId])
+  @@index([action])
+  @@map("audit_events")
+}
+

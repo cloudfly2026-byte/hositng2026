@@ -321,3 +321,61 @@ Se formalizó la identidad definitiva de marca **Velupi** y se migró todo el po
   - `billing_theme_1792164799006.png`: Facturación y suscripciones con diseño cálido y tarjetas blancas.
   - `verify_screens_vps_1792164768747.webp`: Grabación en video de la navegación fluida entre módulos en el VPS de producción.
 
+---
+
+## N. Sprint N — Cierre de Prioridad 0 (Auditoría de Seguridad) y Prioridad 1 (Persistencia Relacional PostgreSQL)
+**Fecha**: 16 de Octubre de 2026  
+**Objetivo**: Verificar el estado de la credencial HestiaCP expuesta y migrar toda la capa de comercio (carritos, pagos, suscripciones, facturas y auditoría) desde memoria hacia persistencia definitiva en PostgreSQL.
+
+### 1. Prioridad 0 — Auditoría de Credenciales HestiaCP
+- **Verificación de la clave en VPS 1 (`89.117.147.134:8083`)**:
+  - Se auditó el llavero de HestiaCP con `/usr/local/hestia/bin/v-list-access-keys`.
+  - La clave expuesta histórica no se encuentra activa en el usuario `admin` ni en el sistema.
+  - Se constató una clave activa para el usuario `manager`: `k4HHLIiCDxj9pIf1QwQK` (creada el 2026-10-15 como "Velupi Control Plane"), restringida a consultas del Control Plane.
+- **Verificación en VPS 2 (`169.58.220.244`)**:
+  - Inspección del contenedor `velupi-api`: `HESTIA_ACCESS_KEY` y `HESTIA_SECRET_KEY` no tienen valores hardcodeados en la imagen Docker ni en el docker-compose.
+  - No hay exposición de credenciales en el bundle frontend ni en respuestas API.
+
+### 2. Prioridad 1 — Persistencia Definitiva en PostgreSQL (16 Tablas Reales)
+- **Modelado en `schema.prisma` y Extensión de `IUnitOfWork`**:
+  - Se agregaron las entidades requeridas de comercio y auditoría:
+    1. `CartDraft` (`cart_drafts`): `id`, `anonymousTokenHash`, `userId`, `organizationId`, `currency`, `items`, `subtotalCents`, `taxCents`, `totalCents`, `expiresAt`, `status`, `createdAt`, `updatedAt`.
+    2. `Payment` (`payments`): `id`, `orderId`, `provider`, `providerTransactionId`, `status`, `amountCents`, `currency`, `signatureVerified`, `rawPayload`, `createdAt`.
+    3. `Subscription` (`subscriptions`): `id`, `organizationId`, `planVersionId`, `orderId`, `status`, `billingCycle`, `currentPeriodStart`, `currentPeriodEnd`, `gracePeriodUntil`, `suspendedAt`, `cancelledAt`, `createdAt`, `updatedAt`.
+    4. `Invoice` (`invoices`): `id`, `invoiceNumber`, `organizationId`, `orderId`, `subscriptionId`, `status`, `currency`, `subtotalCents`, `taxCents`, `totalCents`, `items`, `issuedAt`, `dueDate`, `paidAt`.
+    5. `AuditEvent` (`audit_events`): `id`, `organizationId`, `actorUserId`, `action`, `resource`, `metadata`, `createdAt`.
+  - Se implementaron los repositorios relacionales en `PrismaDatabaseUnitOfWork`:
+    - `DatabaseCartDraftRepository`
+    - `DatabasePaymentRepository`
+    - `DatabaseSubscriptionRepository`
+    - `DatabaseInvoiceRepository`
+    - `DatabaseAuditEventRepository`
+  - Se conectaron los servicios de dominio a `IUnitOfWork` (`CartService`, `PaymentProcessorService`, `SubscriptionService`) para que persistan y lean de la base de datos real.
+- **Migración Ejecutada en Contenedor PostgreSQL (`velupi-postgres`)**:
+  - Archivo de migración: `packages/persistence/prisma/migrations/20261016120000_add_commercial_entities/migration.sql`.
+  - Aplicada exitosamente en el VPS de producción (`169.58.220.244`).
+  - **Auditoría física de tablas (`\dt` en `velupi_production`)**: De 11 tablas se pasó exactamente a las **16 tablas activas**:
+    1. `audit_events`
+    2. `cart_drafts`
+    3. `customer_entitlements`
+    4. `invoices`
+    5. `memberships`
+    6. `order_items`
+    7. `orders`
+    8. `organizations`
+    9. `payments`
+    10. `plan_versions`
+    11. `plans`
+    12. `products`
+    13. `projects`
+    14. `services`
+    15. `subscriptions`
+    16. `users`
+- **Resultados de Pruebas**:
+  - Pruebas de persistencia en PostgreSQL (`database-persistence.spec.ts`): 9/9 tests passed.
+  - Pruebas de persistencia general (`packages/persistence`): 17/17 tests passed.
+  - Pruebas API (`apps/api`): 109/109 tests passed.
+  - Pruebas Comercio (`packages/domain/src/commerce`): 56/56 tests passed.
+  - Suite global: 100% GREEN.
+
+

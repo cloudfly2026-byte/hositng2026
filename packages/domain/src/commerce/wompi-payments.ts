@@ -8,6 +8,7 @@ import {
   PaymentStatusResult,
 } from '@cloudfly/contracts';
 import { Order, OrderStatus } from './onboarding-order';
+import { IUnitOfWork } from '../repositories/interfaces';
 
 export interface WompiConfig {
   publicKey: string;
@@ -189,7 +190,8 @@ export class PaymentProcessorService {
 
   constructor(
     private paymentProvider: PaymentProvider,
-    private orders: Map<string, Order>
+    private orders: Map<string, Order>,
+    private uow?: IUnitOfWork
   ) {}
 
   processWebhook(payload: unknown, headers: Record<string, string>): Order {
@@ -224,6 +226,40 @@ export class PaymentProcessorService {
       this.processedEvents.add(eventKey);
     }
 
+    if (this.uow?.payments) {
+      this.uow.payments.save({
+        id: `pay-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        orderId: order.id,
+        provider: this.paymentProvider.name,
+        providerTransactionId: event.providerReference,
+        status: event.status,
+        amountCents: event.amountCents,
+        currency: event.currency,
+        signatureVerified: true,
+        rawPayload: typeof payload === 'object' && payload !== null ? (payload as Record<string, any>) : undefined,
+        createdAt: new Date(),
+      });
+    }
+
+    if (this.uow?.auditEvents) {
+      this.uow.auditEvents.save({
+        id: `aud-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        organizationId: order.organizationId,
+        action: `PAYMENT_${event.status}`,
+        resource: `order/${order.id}`,
+        metadata: {
+          transactionId: event.providerReference,
+          amountCents: event.amountCents,
+          currency: event.currency,
+        },
+        createdAt: new Date(),
+      });
+    }
+
+    if (this.uow?.orders) {
+      this.uow.orders.save(order);
+    }
+
     return order;
   }
 
@@ -246,6 +282,9 @@ export class PaymentProcessorService {
     if (trxStatus.status === 'APPROVED') {
       order.status = OrderStatus.PAID;
       this.processedEvents.add(`${transactionId}:APPROVED`);
+      if (this.uow?.orders) {
+        this.uow.orders.save(order);
+      }
       return {
         orderId,
         status: 'RECONCILED_PAID',
@@ -254,6 +293,9 @@ export class PaymentProcessorService {
     } else if (trxStatus.status === 'DECLINED' || trxStatus.status === 'ERROR' || trxStatus.status === 'VOIDED') {
       order.status = OrderStatus.FAILED;
       this.processedEvents.add(`${transactionId}:${trxStatus.status}`);
+      if (this.uow?.orders) {
+        this.uow.orders.save(order);
+      }
       return {
         orderId,
         status: 'RECONCILED_FAILED',

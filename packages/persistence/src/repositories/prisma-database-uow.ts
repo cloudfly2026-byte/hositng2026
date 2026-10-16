@@ -9,6 +9,16 @@ import {
   CustomerEntitlement,
   Project,
   Service,
+  CartDraft,
+  PaymentRecord,
+  Subscription,
+  Invoice,
+  AuditRecord,
+  ICartDraftRepository,
+  IPaymentRepository,
+  ISubscriptionRepository,
+  IInvoiceRepository,
+  IAuditEventRepository,
   IUserRepository,
   IOrganizationRepository,
   IMembershipRepository,
@@ -652,6 +662,374 @@ export class DatabaseServiceRepository implements IServiceRepository {
   }
 }
 
+export class DatabaseCartDraftRepository implements ICartDraftRepository {
+  constructor(private readonly prisma: any) {}
+
+  async save(draft: CartDraft): Promise<void> {
+    await this.prisma.cartDraft.upsert({
+      where: { id: draft.id },
+      create: {
+        id: draft.id,
+        anonymousTokenHash: draft.anonymousTokenHash,
+        userId: draft.userId || null,
+        organizationId: draft.organizationId || null,
+        currency: draft.currency,
+        items: draft.items,
+        subtotalCents: draft.subtotalCents,
+        taxCents: draft.taxCents,
+        totalCents: draft.totalCents,
+        expiresAt: draft.expiresAt,
+        status: draft.status,
+        createdAt: draft.createdAt,
+        updatedAt: draft.updatedAt || new Date(),
+      },
+      update: {
+        userId: draft.userId || null,
+        organizationId: draft.organizationId || null,
+        currency: draft.currency,
+        items: draft.items,
+        subtotalCents: draft.subtotalCents,
+        taxCents: draft.taxCents,
+        totalCents: draft.totalCents,
+        expiresAt: draft.expiresAt,
+        status: draft.status,
+        updatedAt: draft.updatedAt || new Date(),
+      },
+    });
+  }
+
+  async findById(id: string): Promise<CartDraft | null> {
+    const record = await this.prisma.cartDraft.findUnique({ where: { id } });
+    if (!record) return null;
+    return {
+      id: record.id,
+      anonymousTokenHash: record.anonymousTokenHash,
+      userId: record.userId || undefined,
+      organizationId: record.organizationId || undefined,
+      currency: record.currency,
+      items: record.items,
+      subtotalCents: record.subtotalCents,
+      taxCents: record.taxCents,
+      totalCents: record.totalCents,
+      expiresAt: record.expiresAt,
+      status: record.status as any,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+    };
+  }
+
+  async findByAnonymousTokenHash(hash: string): Promise<CartDraft | null> {
+    const record = await this.prisma.cartDraft.findFirst({
+      where: { anonymousTokenHash: hash },
+    });
+    if (!record) return null;
+    return {
+      id: record.id,
+      anonymousTokenHash: record.anonymousTokenHash,
+      userId: record.userId || undefined,
+      organizationId: record.organizationId || undefined,
+      currency: record.currency,
+      items: record.items,
+      subtotalCents: record.subtotalCents,
+      taxCents: record.taxCents,
+      totalCents: record.totalCents,
+      expiresAt: record.expiresAt,
+      status: record.status as any,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+    };
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.prisma.cartDraft.delete({ where: { id } });
+  }
+}
+
+export class DatabasePaymentRepository implements IPaymentRepository {
+  constructor(private readonly prisma: any) {}
+
+  async save(payment: PaymentRecord): Promise<void> {
+    await this.prisma.payment.upsert({
+      where: { id: payment.id },
+      create: {
+        id: payment.id,
+        orderId: payment.orderId,
+        provider: payment.provider,
+        providerTransactionId: payment.providerTransactionId || null,
+        status: payment.status,
+        amountCents: payment.amountCents,
+        currency: payment.currency,
+        signatureVerified: payment.signatureVerified,
+        rawPayload: payment.rawPayload || undefined,
+        createdAt: payment.createdAt,
+      },
+      update: {
+        providerTransactionId: payment.providerTransactionId || null,
+        status: payment.status,
+        amountCents: payment.amountCents,
+        currency: payment.currency,
+        signatureVerified: payment.signatureVerified,
+        rawPayload: payment.rawPayload || undefined,
+      },
+    });
+  }
+
+  async findById(id: string): Promise<PaymentRecord | null> {
+    const r = await this.prisma.payment.findUnique({ where: { id } });
+    if (!r) return null;
+    return {
+      id: r.id,
+      orderId: r.orderId,
+      provider: r.provider,
+      providerTransactionId: r.providerTransactionId || undefined,
+      status: r.status,
+      amountCents: r.amountCents,
+      currency: r.currency,
+      signatureVerified: r.signatureVerified,
+      rawPayload: r.rawPayload,
+      createdAt: r.createdAt,
+    };
+  }
+
+  async findByOrderId(orderId: string): Promise<PaymentRecord[]> {
+    const records = await this.prisma.payment.findMany({ where: { orderId } });
+    return records.map((r: any) => ({
+      id: r.id,
+      orderId: r.orderId,
+      provider: r.provider,
+      providerTransactionId: r.providerTransactionId || undefined,
+      status: r.status,
+      amountCents: r.amountCents,
+      currency: r.currency,
+      signatureVerified: r.signatureVerified,
+      rawPayload: r.rawPayload,
+      createdAt: r.createdAt,
+    }));
+  }
+}
+
+export class DatabaseSubscriptionRepository implements ISubscriptionRepository {
+  constructor(private readonly prisma: any) {}
+
+  async save(sub: Subscription): Promise<void> {
+    await this.prisma.subscription.upsert({
+      where: { id: sub.id },
+      create: {
+        id: sub.id,
+        organizationId: sub.organizationId,
+        planVersionId: sub.planVersionId,
+        orderId: sub.orderId,
+        status: sub.status,
+        billingCycle: sub.billingCycle,
+        currentPeriodStart: sub.currentPeriodStart,
+        currentPeriodEnd: sub.currentPeriodEnd,
+        gracePeriodUntil: sub.gracePeriodUntil || null,
+        suspendedAt: sub.suspendedAt || null,
+        cancelledAt: sub.cancelledAt || null,
+        createdAt: sub.createdAt,
+        updatedAt: new Date(),
+      },
+      update: {
+        status: sub.status,
+        billingCycle: sub.billingCycle,
+        currentPeriodStart: sub.currentPeriodStart,
+        currentPeriodEnd: sub.currentPeriodEnd,
+        gracePeriodUntil: sub.gracePeriodUntil || null,
+        suspendedAt: sub.suspendedAt || null,
+        cancelledAt: sub.cancelledAt || null,
+        updatedAt: new Date(),
+      },
+    });
+  }
+
+  async findById(id: string): Promise<Subscription | null> {
+    const r = await this.prisma.subscription.findUnique({ where: { id } });
+    if (!r) return null;
+    return {
+      id: r.id,
+      organizationId: r.organizationId,
+      planVersionId: r.planVersionId,
+      orderId: r.orderId,
+      status: r.status as any,
+      billingCycle: r.billingCycle as any,
+      currentPeriodStart: r.currentPeriodStart,
+      currentPeriodEnd: r.currentPeriodEnd,
+      gracePeriodUntil: r.gracePeriodUntil || null,
+      suspendedAt: r.suspendedAt || null,
+      cancelledAt: r.cancelledAt || null,
+      createdAt: r.createdAt,
+    };
+  }
+
+  async listByOrganization(organizationId: string): Promise<Subscription[]> {
+    const records = await this.prisma.subscription.findMany({ where: { organizationId } });
+    return records.map((r: any) => ({
+      id: r.id,
+      organizationId: r.organizationId,
+      planVersionId: r.planVersionId,
+      orderId: r.orderId,
+      status: r.status as any,
+      billingCycle: r.billingCycle as any,
+      currentPeriodStart: r.currentPeriodStart,
+      currentPeriodEnd: r.currentPeriodEnd,
+      gracePeriodUntil: r.gracePeriodUntil || null,
+      suspendedAt: r.suspendedAt || null,
+      cancelledAt: r.cancelledAt || null,
+      createdAt: r.createdAt,
+    }));
+  }
+
+  async findByOrderId(orderId: string): Promise<Subscription | null> {
+    const r = await this.prisma.subscription.findFirst({ where: { orderId } });
+    if (!r) return null;
+    return {
+      id: r.id,
+      organizationId: r.organizationId,
+      planVersionId: r.planVersionId,
+      orderId: r.orderId,
+      status: r.status as any,
+      billingCycle: r.billingCycle as any,
+      currentPeriodStart: r.currentPeriodStart,
+      currentPeriodEnd: r.currentPeriodEnd,
+      gracePeriodUntil: r.gracePeriodUntil || null,
+      suspendedAt: r.suspendedAt || null,
+      cancelledAt: r.cancelledAt || null,
+      createdAt: r.createdAt,
+    };
+  }
+}
+
+export class DatabaseInvoiceRepository implements IInvoiceRepository {
+  constructor(private readonly prisma: any) {}
+
+  async save(inv: Invoice): Promise<void> {
+    await this.prisma.invoice.upsert({
+      where: { id: inv.id },
+      create: {
+        id: inv.id,
+        invoiceNumber: inv.invoiceNumber,
+        organizationId: inv.organizationId,
+        orderId: inv.orderId,
+        subscriptionId: inv.subscriptionId || null,
+        status: inv.status,
+        currency: inv.currency,
+        subtotalCents: inv.subtotalCents,
+        taxCents: inv.taxCents,
+        totalCents: inv.totalCents,
+        items: inv.items,
+        issuedAt: inv.issuedAt,
+        dueDate: inv.dueDate,
+        paidAt: inv.paidAt || null,
+      },
+      update: {
+        status: inv.status,
+        subtotalCents: inv.subtotalCents,
+        taxCents: inv.taxCents,
+        totalCents: inv.totalCents,
+        items: inv.items,
+        paidAt: inv.paidAt || null,
+      },
+    });
+  }
+
+  async findById(id: string): Promise<Invoice | null> {
+    const r = await this.prisma.invoice.findUnique({ where: { id } });
+    if (!r) return null;
+    return {
+      id: r.id,
+      invoiceNumber: r.invoiceNumber,
+      organizationId: r.organizationId,
+      orderId: r.orderId,
+      subscriptionId: r.subscriptionId || undefined,
+      status: r.status as any,
+      currency: r.currency,
+      subtotalCents: r.subtotalCents,
+      taxCents: r.taxCents,
+      totalCents: r.totalCents,
+      items: r.items,
+      issuedAt: r.issuedAt,
+      dueDate: r.dueDate,
+      paidAt: r.paidAt || undefined,
+    };
+  }
+
+  async findByInvoiceNumber(invoiceNumber: string): Promise<Invoice | null> {
+    const r = await this.prisma.invoice.findUnique({ where: { invoiceNumber } });
+    if (!r) return null;
+    return {
+      id: r.id,
+      invoiceNumber: r.invoiceNumber,
+      organizationId: r.organizationId,
+      orderId: r.orderId,
+      subscriptionId: r.subscriptionId || undefined,
+      status: r.status as any,
+      currency: r.currency,
+      subtotalCents: r.subtotalCents,
+      taxCents: r.taxCents,
+      totalCents: r.totalCents,
+      items: r.items,
+      issuedAt: r.issuedAt,
+      dueDate: r.dueDate,
+      paidAt: r.paidAt || undefined,
+    };
+  }
+
+  async listByOrganization(organizationId: string): Promise<Invoice[]> {
+    const records = await this.prisma.invoice.findMany({ where: { organizationId } });
+    return records.map((r: any) => ({
+      id: r.id,
+      invoiceNumber: r.invoiceNumber,
+      organizationId: r.organizationId,
+      orderId: r.orderId,
+      subscriptionId: r.subscriptionId || undefined,
+      status: r.status as any,
+      currency: r.currency,
+      subtotalCents: r.subtotalCents,
+      taxCents: r.taxCents,
+      totalCents: r.totalCents,
+      items: r.items,
+      issuedAt: r.issuedAt,
+      dueDate: r.dueDate,
+      paidAt: r.paidAt || undefined,
+    }));
+  }
+}
+
+export class DatabaseAuditEventRepository implements IAuditEventRepository {
+  constructor(private readonly prisma: any) {}
+
+  async save(event: AuditRecord): Promise<void> {
+    await this.prisma.auditEvent.create({
+      data: {
+        id: event.id,
+        organizationId: event.organizationId || null,
+        actorUserId: event.actorUserId || null,
+        action: event.action,
+        resource: event.resource,
+        metadata: event.metadata || undefined,
+        createdAt: event.createdAt,
+      },
+    });
+  }
+
+  async listByOrganization(organizationId: string, limit: number = 50): Promise<AuditRecord[]> {
+    const records = await this.prisma.auditEvent.findMany({
+      where: { organizationId },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+    return records.map((r: any) => ({
+      id: r.id,
+      organizationId: r.organizationId || undefined,
+      actorUserId: r.actorUserId || undefined,
+      action: r.action,
+      resource: r.resource,
+      metadata: r.metadata,
+      createdAt: r.createdAt,
+    }));
+  }
+}
+
 export class PrismaDatabaseUnitOfWork implements IUnitOfWork {
   public users: IUserRepository;
   public organizations: IOrganizationRepository;
@@ -661,6 +1039,11 @@ export class PrismaDatabaseUnitOfWork implements IUnitOfWork {
   public entitlements: ICustomerEntitlementRepository;
   public projects: IProjectRepository;
   public services: IServiceRepository;
+  public cartDrafts: ICartDraftRepository;
+  public payments: IPaymentRepository;
+  public subscriptions: ISubscriptionRepository;
+  public invoices: IInvoiceRepository;
+  public auditEvents: IAuditEventRepository;
 
   constructor(private readonly prisma: any) {
     this.users = new DatabaseUserRepository(this.prisma);
@@ -671,6 +1054,11 @@ export class PrismaDatabaseUnitOfWork implements IUnitOfWork {
     this.entitlements = new DatabaseCustomerEntitlementRepository(this.prisma);
     this.projects = new DatabaseProjectRepository(this.prisma);
     this.services = new DatabaseServiceRepository(this.prisma);
+    this.cartDrafts = new DatabaseCartDraftRepository(this.prisma);
+    this.payments = new DatabasePaymentRepository(this.prisma);
+    this.subscriptions = new DatabaseSubscriptionRepository(this.prisma);
+    this.invoices = new DatabaseInvoiceRepository(this.prisma);
+    this.auditEvents = new DatabaseAuditEventRepository(this.prisma);
   }
 
   async transaction<T>(work: (uow: IUnitOfWork) => Promise<T>): Promise<T> {
@@ -680,3 +1068,4 @@ export class PrismaDatabaseUnitOfWork implements IUnitOfWork {
     });
   }
 }
+

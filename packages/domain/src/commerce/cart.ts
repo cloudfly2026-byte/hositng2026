@@ -3,6 +3,7 @@ import {
   ProductCatalogService,
   BillingCycle,
 } from './catalog';
+import { IUnitOfWork } from '../repositories/interfaces';
 
 export enum CartStatus {
   ACTIVE = 'ACTIVE',
@@ -61,7 +62,8 @@ export class CartService {
 
   constructor(
     private readonly catalog: ProductCatalogService,
-    options?: { ttlMs?: number; taxRate?: number }
+    options?: { ttlMs?: number; taxRate?: number },
+    private readonly uow?: IUnitOfWork
   ) {
     this.ttlMs = options?.ttlMs ?? 7 * 24 * 60 * 60 * 1000; // 7 days default
     this.taxRate = options?.taxRate ?? 0.19; // 19% IVA Colombia
@@ -115,17 +117,31 @@ export class CartService {
     };
 
     this.carts.set(cartId, cart);
+    if (this.uow?.cartDrafts) {
+      await this.uow.cartDrafts.save(cart);
+    }
     return cart;
   }
 
   async getCart(cartId: string): Promise<CartDraft> {
-    const cart = this.carts.get(cartId);
+    let cart = this.carts.get(cartId);
+    if (!cart && this.uow?.cartDrafts) {
+      const persisted = await this.uow.cartDrafts.findById(cartId);
+      if (persisted) {
+        cart = persisted;
+        this.carts.set(cartId, cart);
+      }
+    }
+
     if (!cart) {
       throw new Error(`Cart '${cartId}' not found.`);
     }
 
     if (cart.expiresAt.getTime() < Date.now()) {
       cart.status = CartStatus.EXPIRED;
+      if (this.uow?.cartDrafts) {
+        await this.uow.cartDrafts.save(cart);
+      }
       throw new Error('Cart has expired.');
     }
 
@@ -170,6 +186,10 @@ export class CartService {
     cart.totalCents = subtotalCents + cart.taxCents;
     cart.updatedAt = new Date();
 
+    if (this.uow?.cartDrafts) {
+      await this.uow.cartDrafts.save(cart);
+    }
+
     return cart;
   }
 
@@ -180,6 +200,10 @@ export class CartService {
     cart.organizationId = organizationId;
     cart.status = CartStatus.CLAIMED;
     cart.updatedAt = new Date();
+
+    if (this.uow?.cartDrafts) {
+      await this.uow.cartDrafts.save(cart);
+    }
 
     return cart;
   }

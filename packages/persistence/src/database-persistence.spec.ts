@@ -76,6 +76,32 @@ describe('PrismaDatabaseUnitOfWork (Relational PostgreSQL Adapter)', () => {
         findFirst: vi.fn(),
         findMany: vi.fn(),
       },
+      cartDraft: {
+        upsert: vi.fn(),
+        findUnique: vi.fn(),
+        findFirst: vi.fn(),
+        delete: vi.fn(),
+      },
+      payment: {
+        upsert: vi.fn(),
+        findUnique: vi.fn(),
+        findMany: vi.fn(),
+      },
+      subscription: {
+        upsert: vi.fn(),
+        findUnique: vi.fn(),
+        findFirst: vi.fn(),
+        findMany: vi.fn(),
+      },
+      invoice: {
+        upsert: vi.fn(),
+        findUnique: vi.fn(),
+        findMany: vi.fn(),
+      },
+      auditEvent: {
+        create: vi.fn(),
+        findMany: vi.fn(),
+      },
       $transaction: vi.fn((fn: any) => fn(mockPrisma)),
     };
 
@@ -302,4 +328,136 @@ describe('PrismaDatabaseUnitOfWork (Relational PostgreSQL Adapter)', () => {
       expect(loginResult.tokens.accessToken).toBeDefined();
     });
   });
+
+  describe('Commerce & Audit Entities Persistence (Priority 1)', () => {
+    it('persists and retrieves CartDraft in relational database', async () => {
+      const draft = {
+        id: 'cart-db-1',
+        anonymousTokenHash: 'hash-abc',
+        currency: 'COP',
+        items: [{ id: 'item-1', planCode: 'SHARED_PRO', quantity: 1 }],
+        subtotalCents: 4500000,
+        taxCents: 855000,
+        totalCents: 5355000,
+        expiresAt: new Date(Date.now() + 86400000),
+        status: 'ACTIVE' as any,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await uow.cartDrafts.save(draft);
+      expect(mockPrisma.cartDraft.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'cart-db-1' },
+          create: expect.objectContaining({
+            anonymousTokenHash: 'hash-abc',
+            totalCents: 5355000,
+          }),
+        })
+      );
+    });
+
+    it('persists and retrieves Payment records', async () => {
+      const payment = {
+        id: 'pay-db-1',
+        orderId: 'ord-123',
+        provider: 'WOMPI',
+        providerTransactionId: 'wompi-tx-999',
+        status: 'APPROVED',
+        amountCents: 5355000,
+        currency: 'COP',
+        signatureVerified: true,
+        createdAt: new Date(),
+      };
+
+      await uow.payments.save(payment);
+      expect(mockPrisma.payment.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'pay-db-1' },
+          create: expect.objectContaining({
+            orderId: 'ord-123',
+            provider: 'WOMPI',
+            status: 'APPROVED',
+          }),
+        })
+      );
+    });
+
+    it('persists and retrieves Subscription and Invoice records', async () => {
+      const sub = {
+        id: 'sub-db-1',
+        organizationId: 'org-test',
+        planVersionId: 'pv-test',
+        orderId: 'ord-test',
+        status: 'ACTIVE' as any,
+        billingCycle: 'ANNUAL' as any,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 86400000 * 365),
+        gracePeriodUntil: null,
+        suspendedAt: null,
+        cancelledAt: null,
+        createdAt: new Date(),
+      };
+
+      await uow.subscriptions.save(sub);
+      expect(mockPrisma.subscription.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'sub-db-1' },
+          create: expect.objectContaining({
+            organizationId: 'org-test',
+            status: 'ACTIVE',
+          }),
+        })
+      );
+
+      const inv = {
+        id: 'inv-db-1',
+        invoiceNumber: 'INV-2026-0001',
+        organizationId: 'org-test',
+        orderId: 'ord-test',
+        status: 'PAID' as any,
+        currency: 'COP',
+        subtotalCents: 4500000,
+        taxCents: 855000,
+        totalCents: 5355000,
+        items: [],
+        issuedAt: new Date(),
+        dueDate: new Date(),
+      };
+
+      await uow.invoices.save(inv);
+      expect(mockPrisma.invoice.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'inv-db-1' },
+          create: expect.objectContaining({
+            invoiceNumber: 'INV-2026-0001',
+            status: 'PAID',
+          }),
+        })
+      );
+    });
+
+    it('records and queries immutable AuditEvents', async () => {
+      const audit = {
+        id: 'aud-1',
+        organizationId: 'org-test',
+        actorUserId: 'usr-1',
+        action: 'ORDER_PAID',
+        resource: 'order/ord-123',
+        metadata: { amount: 5355000 },
+        createdAt: new Date(),
+      };
+
+      await uow.auditEvents.save(audit);
+      expect(mockPrisma.auditEvent.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            action: 'ORDER_PAID',
+            resource: 'order/ord-123',
+          }),
+        })
+      );
+    });
+  });
 });
+

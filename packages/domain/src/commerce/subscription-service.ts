@@ -1,5 +1,6 @@
 import { BillingCycle } from './catalog';
 import { Order, OrderStatus } from './onboarding-order';
+import { IUnitOfWork } from '../repositories/interfaces';
 
 export type SubscriptionStatus =
   | 'ACTIVE'
@@ -71,6 +72,8 @@ export class SubscriptionService {
   private invoices: Map<string, Invoice> = new Map();
   private invoiceCounter = 1;
 
+  constructor(private readonly uow?: IUnitOfWork) {}
+
   createSubscriptionFromPaidOrder(order: Order): Subscription {
     if (order.status !== OrderStatus.PAID) {
       throw new Error(`Cannot create subscription from unpaid order '${order.id}' in status '${order.status}'.`);
@@ -106,6 +109,9 @@ export class SubscriptionService {
     };
 
     this.subscriptions.set(subscription.id, subscription);
+    if (this.uow?.subscriptions) {
+      this.uow.subscriptions.save(subscription);
+    }
     return subscription;
   }
 
@@ -151,6 +157,9 @@ export class SubscriptionService {
     };
 
     this.invoices.set(invoice.id, invoice);
+    if (this.uow?.invoices) {
+      this.uow.invoices.save(invoice);
+    }
     return invoice;
   }
 
@@ -181,6 +190,10 @@ export class SubscriptionService {
       } else {
         sub.status = 'GRACE_PERIOD';
       }
+
+      if (this.uow?.subscriptions) {
+        this.uow.subscriptions.save(sub);
+      }
     }
 
     return sub;
@@ -206,6 +219,10 @@ export class SubscriptionService {
     sub.gracePeriodUntil = null;
     sub.suspendedAt = null;
 
+    if (this.uow?.subscriptions) {
+      this.uow.subscriptions.save(sub);
+    }
+
     return sub;
   }
 
@@ -217,6 +234,11 @@ export class SubscriptionService {
 
     sub.status = 'CANCELLED';
     sub.cancelledAt = new Date();
+
+    if (this.uow?.subscriptions) {
+      this.uow.subscriptions.save(sub);
+    }
+
     return sub;
   }
 

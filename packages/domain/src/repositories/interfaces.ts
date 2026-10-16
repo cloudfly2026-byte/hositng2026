@@ -3,6 +3,63 @@ import { Product, Plan, PlanVersion } from '../commerce/catalog';
 import { CustomerEntitlement } from '../commerce/provisioning-orchestrator';
 import { Project, Service } from '../projects/project-service';
 import { Membership } from '../identity/rbac';
+import { CartDraft } from '../commerce/cart';
+import { Subscription, Invoice } from '../commerce/subscription-service';
+
+export interface PaymentRecord {
+  id: string;
+  orderId: string;
+  provider: string;
+  providerTransactionId?: string;
+  status: string;
+  amountCents: number;
+  currency: string;
+  signatureVerified: boolean;
+  rawPayload?: Record<string, any>;
+  createdAt: Date;
+}
+
+export interface AuditRecord {
+  id: string;
+  organizationId?: string;
+  actorUserId?: string;
+  action: string;
+  resource: string;
+  metadata?: Record<string, any>;
+  createdAt: Date;
+}
+
+export interface ICartDraftRepository {
+  save(draft: CartDraft): Promise<void>;
+  findById(id: string): Promise<CartDraft | null>;
+  findByAnonymousTokenHash(hash: string): Promise<CartDraft | null>;
+  delete(id: string): Promise<void>;
+}
+
+export interface IPaymentRepository {
+  save(payment: PaymentRecord): Promise<void>;
+  findById(id: string): Promise<PaymentRecord | null>;
+  findByOrderId(orderId: string): Promise<PaymentRecord[]>;
+}
+
+export interface ISubscriptionRepository {
+  save(subscription: Subscription): Promise<void>;
+  findById(id: string): Promise<Subscription | null>;
+  listByOrganization(organizationId: string): Promise<Subscription[]>;
+  findByOrderId(orderId: string): Promise<Subscription | null>;
+}
+
+export interface IInvoiceRepository {
+  save(invoice: Invoice): Promise<void>;
+  findById(id: string): Promise<Invoice | null>;
+  findByInvoiceNumber(invoiceNumber: string): Promise<Invoice | null>;
+  listByOrganization(organizationId: string): Promise<Invoice[]>;
+}
+
+export interface IAuditEventRepository {
+  save(event: AuditRecord): Promise<void>;
+  listByOrganization(organizationId: string, limit?: number): Promise<AuditRecord[]>;
+}
 
 export interface IUserRepository {
   save(user: CustomerUser): Promise<void>;
@@ -73,5 +130,11 @@ export interface IUnitOfWork {
   projects: IProjectRepository;
   services: IServiceRepository;
   plans: IPlanVersionRepository;
+  cartDrafts?: ICartDraftRepository;
+  payments?: IPaymentRepository;
+  subscriptions?: ISubscriptionRepository;
+  invoices?: IInvoiceRepository;
+  auditEvents?: IAuditEventRepository;
   transaction<T>(work: (uow: IUnitOfWork) => Promise<T>): Promise<T>;
 }
+

@@ -9,6 +9,16 @@ import {
   CustomerEntitlement,
   Project,
   Service,
+  CartDraft,
+  PaymentRecord,
+  Subscription,
+  Invoice,
+  AuditRecord,
+  ICartDraftRepository,
+  IPaymentRepository,
+  ISubscriptionRepository,
+  IInvoiceRepository,
+  IAuditEventRepository,
   IUserRepository,
   IOrganizationRepository,
   IMembershipRepository,
@@ -47,6 +57,13 @@ export interface SharedStorageState {
   projectCompound: Map<string, string>; // `${orgId}:${slug}` -> id
   services: Map<string, Service>;
   serviceCompound: Map<string, string>; // `${projectId}:${slug}` -> id
+  cartDrafts: Map<string, CartDraft>;
+  cartTokenHash: Map<string, string>; // hash -> id
+  payments: Map<string, PaymentRecord>;
+  subscriptions: Map<string, Subscription>;
+  invoices: Map<string, Invoice>;
+  invoiceNumbers: Map<string, string>; // invoiceNumber -> id
+  auditEvents: Map<string, AuditRecord>;
 }
 
 export function createInitialStorage(): SharedStorageState {
@@ -70,6 +87,13 @@ export function createInitialStorage(): SharedStorageState {
     projectCompound: new Map(),
     services: new Map(),
     serviceCompound: new Map(),
+    cartDrafts: new Map(),
+    cartTokenHash: new Map(),
+    payments: new Map(),
+    subscriptions: new Map(),
+    invoices: new Map(),
+    invoiceNumbers: new Map(),
+    auditEvents: new Map(),
   };
 }
 
@@ -94,6 +118,13 @@ export function cloneStorage(storage: SharedStorageState): SharedStorageState {
     projectCompound: new Map(storage.projectCompound),
     services: new Map(storage.services),
     serviceCompound: new Map(storage.serviceCompound),
+    cartDrafts: new Map(storage.cartDrafts),
+    cartTokenHash: new Map(storage.cartTokenHash),
+    payments: new Map(storage.payments),
+    subscriptions: new Map(storage.subscriptions),
+    invoices: new Map(storage.invoices),
+    invoiceNumbers: new Map(storage.invoiceNumbers),
+    auditEvents: new Map(storage.auditEvents),
   };
 }
 
@@ -380,6 +411,119 @@ export class PrismaServiceRepository implements IServiceRepository {
   }
 }
 
+export class PrismaCartDraftRepository implements ICartDraftRepository {
+  constructor(private storage: SharedStorageState) {}
+
+  async save(draft: CartDraft): Promise<void> {
+    this.storage.cartDrafts.set(draft.id, { ...draft });
+    this.storage.cartTokenHash.set(draft.anonymousTokenHash, draft.id);
+  }
+
+  async findById(id: string): Promise<CartDraft | null> {
+    const d = this.storage.cartDrafts.get(id);
+    return d ? { ...d } : null;
+  }
+
+  async findByAnonymousTokenHash(hash: string): Promise<CartDraft | null> {
+    const id = this.storage.cartTokenHash.get(hash);
+    if (!id) return null;
+    return this.findById(id);
+  }
+
+  async delete(id: string): Promise<void> {
+    const d = this.storage.cartDrafts.get(id);
+    if (d) {
+      this.storage.cartTokenHash.delete(d.anonymousTokenHash);
+      this.storage.cartDrafts.delete(id);
+    }
+  }
+}
+
+export class PrismaPaymentRepository implements IPaymentRepository {
+  constructor(private storage: SharedStorageState) {}
+
+  async save(payment: PaymentRecord): Promise<void> {
+    this.storage.payments.set(payment.id, { ...payment });
+  }
+
+  async findById(id: string): Promise<PaymentRecord | null> {
+    const p = this.storage.payments.get(id);
+    return p ? { ...p } : null;
+  }
+
+  async findByOrderId(orderId: string): Promise<PaymentRecord[]> {
+    return Array.from(this.storage.payments.values())
+      .filter((p) => p.orderId === orderId)
+      .map((p) => ({ ...p }));
+  }
+}
+
+export class PrismaSubscriptionRepository implements ISubscriptionRepository {
+  constructor(private storage: SharedStorageState) {}
+
+  async save(sub: Subscription): Promise<void> {
+    this.storage.subscriptions.set(sub.id, { ...sub });
+  }
+
+  async findById(id: string): Promise<Subscription | null> {
+    const s = this.storage.subscriptions.get(id);
+    return s ? { ...s } : null;
+  }
+
+  async listByOrganization(organizationId: string): Promise<Subscription[]> {
+    return Array.from(this.storage.subscriptions.values())
+      .filter((s) => s.organizationId === organizationId)
+      .map((s) => ({ ...s }));
+  }
+
+  async findByOrderId(orderId: string): Promise<Subscription | null> {
+    const s = Array.from(this.storage.subscriptions.values()).find((sub) => sub.orderId === orderId);
+    return s ? { ...s } : null;
+  }
+}
+
+export class PrismaInvoiceRepository implements IInvoiceRepository {
+  constructor(private storage: SharedStorageState) {}
+
+  async save(inv: Invoice): Promise<void> {
+    this.storage.invoices.set(inv.id, { ...inv });
+    this.storage.invoiceNumbers.set(inv.invoiceNumber, inv.id);
+  }
+
+  async findById(id: string): Promise<Invoice | null> {
+    const i = this.storage.invoices.get(id);
+    return i ? { ...i } : null;
+  }
+
+  async findByInvoiceNumber(invoiceNumber: string): Promise<Invoice | null> {
+    const id = this.storage.invoiceNumbers.get(invoiceNumber);
+    if (!id) return null;
+    return this.findById(id);
+  }
+
+  async listByOrganization(organizationId: string): Promise<Invoice[]> {
+    return Array.from(this.storage.invoices.values())
+      .filter((i) => i.organizationId === organizationId)
+      .map((i) => ({ ...i }));
+  }
+}
+
+export class PrismaAuditEventRepository implements IAuditEventRepository {
+  constructor(private storage: SharedStorageState) {}
+
+  async save(event: AuditRecord): Promise<void> {
+    this.storage.auditEvents.set(event.id, { ...event });
+  }
+
+  async listByOrganization(organizationId: string, limit: number = 50): Promise<AuditRecord[]> {
+    return Array.from(this.storage.auditEvents.values())
+      .filter((e) => e.organizationId === organizationId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit)
+      .map((e) => ({ ...e }));
+  }
+}
+
 export class PrismaUnitOfWork implements IUnitOfWork {
   public users: IUserRepository;
   public organizations: IOrganizationRepository;
@@ -389,6 +533,11 @@ export class PrismaUnitOfWork implements IUnitOfWork {
   public entitlements: ICustomerEntitlementRepository;
   public projects: IProjectRepository;
   public services: IServiceRepository;
+  public cartDrafts: ICartDraftRepository;
+  public payments: IPaymentRepository;
+  public subscriptions: ISubscriptionRepository;
+  public invoices: IInvoiceRepository;
+  public auditEvents: IAuditEventRepository;
 
   constructor(private storage: SharedStorageState = createInitialStorage()) {
     this.users = new PrismaUserRepository(this.storage);
@@ -399,6 +548,11 @@ export class PrismaUnitOfWork implements IUnitOfWork {
     this.entitlements = new PrismaCustomerEntitlementRepository(this.storage);
     this.projects = new PrismaProjectRepository(this.storage);
     this.services = new PrismaServiceRepository(this.storage);
+    this.cartDrafts = new PrismaCartDraftRepository(this.storage);
+    this.payments = new PrismaPaymentRepository(this.storage);
+    this.subscriptions = new PrismaSubscriptionRepository(this.storage);
+    this.invoices = new PrismaInvoiceRepository(this.storage);
+    this.auditEvents = new PrismaAuditEventRepository(this.storage);
   }
 
   cloneForNewProcess(): PrismaUnitOfWork {
