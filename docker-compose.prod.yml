@@ -96,6 +96,11 @@ services:
       HESTIA_SECRET_KEY: ${HESTIA_SECRET_KEY}
       HESTIA_READ_ONLY: ${HESTIA_READ_ONLY:-true}
       HESTIA_ALLOW_SELF_SIGNED: ${HESTIA_ALLOW_SELF_SIGNED:-true}
+      WOMPI_PUBLIC_KEY: ${WOMPI_PUBLIC_KEY}
+      WOMPI_PRIVATE_KEY: ${WOMPI_PRIVATE_KEY}
+      WOMPI_EVENTS_SECRET: ${WOMPI_EVENTS_SECRET}
+      WOMPI_INTEGRITY_SECRET: ${WOMPI_INTEGRITY_SECRET}
+      WOMPI_ENVIRONMENT: ${WOMPI_ENVIRONMENT:-production}
     depends_on:
       postgres:
         condition: service_healthy
@@ -118,6 +123,7 @@ services:
       NODE_ENV: production
       PORT: 3000
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.velupi.com}
+      NEXT_PUBLIC_WOMPI_PUBLIC_KEY: ${WOMPI_PUBLIC_KEY}
     depends_on:
       - api
 
