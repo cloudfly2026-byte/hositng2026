@@ -1,6 +1,6 @@
 # DEVELOPMENT_STATUS.md — Informe de Auditoría Técnica y Estado de Activación Operativa
 **Proyecto**: Velupi Cloud Platform / Microservices Studio & Commerce Engine  
-**Fecha de actualización**: 15 de Octubre de 2026 (Sprint de Seguridad y Primer Cliente Real)  
+**Fecha de actualización**: 16 de Octubre de 2026 (Sprint Oficial de Re-Branding Velupi y Diseño Warm Solar Universal)  
 **Auditor**: Principal Software Architect, Senior DevOps & Security Lead  
 **Estado del repositorio**: Rama `main` | Árbol limpio | Sincronizado con GitHub (`cloudfly2026-byte/hositng2026.git`)
 
@@ -9,7 +9,7 @@
 ## A. Resumen ejecutivo
 
 ### 1. Estado general
-Velupi Cloud Platform ha concluido el **Sprint de Seguridad, Auditoría de Integridad, Decisión Arquitectónica de Cloud Apps y Activación Comercial del Primer Cliente Real (InnovaTech Solutions #002)**. La plataforma garantiza una experiencia de usuario completamente **white-label (marca blanca)** donde clientes y organizaciones gestionan hosting, dominios, DNS, certificados y aplicaciones sin interactuar con los paneles subyacentes (HestiaCP, Traefik, Portainer o BIND9).
+Velupi Cloud Platform ha concluido el **Sprint Oficial de Re-Branding y Unificación Visual Universal bajo el Sistema Warm Solar Light**. La marca definitiva **Velupi** ha sido desplegada tanto en el sitio comercial WordPress (`velupi.com`) como en el portal de autoservicio (`app.velupi.com`) y la API transaccional (`api.velupi.com`), reemplazando toda referencia a nombres provisionales anteriores y eliminando los temas oscuros remanentes en favor de una estética luminosa de alto contraste, limpia y moderna inspirada en Site Tools y paneles cloud de última generación.
 
 Se cumplen estrictamente las directrices mandatorias de `AGENTS.md`:
 - **Prohibido desplegar entornos residentes en local/WSL**: Toda la infraestructura corre en VPS `169.58.220.244` (Docker Engine 29.9.0) y VPS `89.117.147.134` (HestiaCP & BIND9).
@@ -19,15 +19,16 @@ Se cumplen estrictamente las directrices mandatorias de `AGENTS.md`:
 
 ### 2. Métricas de verificación operativa (Auditoría Real)
 - **Vitest**: **46 suites de prueba, 323 pruebas aprobadas (100% GREEN, 0 fallidas, 0 omitidas)**.
-- **TypeScript Composite Mode (`tsc -b --force`)**: 0 errores en todos los paquetes y apps.
+- **TypeScript Composite Mode (`tsc --noEmit`)**: 0 errores en todos los paquetes y apps con separación limpia de specs en `tsconfig.json`.
 - **Next.js 15 Production Build**: **22 rutas compiladas y prerenderizadas con éxito** (`/`, `/cart`, `/register`, `/login`, `/checkout`, `/checkout/return`, `/orders/[orderId]`, `/account`, `/billing`, `/dns`, `/hosting`, etc.).
 - **URLs de Producción Verificadas con HTTPS y Let's Encrypt**:
-  - `https://velupi.com`: `HTTP 200 OK` (Nginx + Let's Encrypt YR2 en `89.117.147.134`, redirect 301).
-  - `https://app.velupi.com`: `HTTP 200 OK` (Next.js 15 vía Traefik v3.7 con Let's Encrypt YR1 en `169.58.220.244`).
-  - `https://api.velupi.com/health`: `HTTP 200 OK` (NestJS API vía Traefik v3.7 con Let's Encrypt YR2 en `169.58.220.244`).
-  - `https://portainer.velupi.com`: `HTTP 200 OK` (Portainer CE 2.45.2 vía Traefik v3.7 con Let's Encrypt YR1 en `169.58.220.244`).
+  - `https://velupi.com`: `HTTP 200 OK` (WordPress optimizado con tema Velupi oficial, Nginx + Let's Encrypt en `89.117.147.134`).
+  - `https://app.velupi.com`: `HTTP 200 OK` (Next.js 15 vía Traefik v3.7 con Let's Encrypt en `169.58.220.244`).
+  - `https://api.velupi.com/health`: `HTTP 200 OK` (NestJS API vía Traefik v3.7 con Let's Encrypt en `169.58.220.244`).
+  - `https://portainer.velupi.com`: `HTTP 200 OK` (Portainer CE 2.45.2 vía Traefik v3.7 con Let's Encrypt en `169.58.220.244`).
 - **Resolución DNS Autoritativa**: Zona `velupi.com` en BIND9 resolviendo globalmente vía `8.8.8.8` y `1.1.1.1` (`@` y `www` a `89.117.147.134`; `app`, `api`, `portainer`, `status`, `docs`, `*.apps` a `169.58.220.244`).
 - **Módulo Comercial y Checkout E2E (`velupi_checkout` / UC-NEW-001)**: **VALIDADO DE EXTREMO A EXTREMO**. Flujo autónomo desde `https://app.velupi.com/cart` con soporte de enlaces directos para WordPress (`/cart?plan=<slug>&cycle=<cycle>`). Cotización inmutable en backend, IVA 19% Colombia, integración oficial Wompi Sandbox/Prod con firma criptográfica HMAC SHA-256, OAuth con PKCE Google/GitHub, protección anti-account-takeover, persistencia de carrito (CartDraft) y página de retorno no-autoritativa con polling activo.
+- **Unificación Visual de Portal (Warm Solar Light System)**: 100% de las 14 pantallas administrativas y comerciales unificadas con tarjetas blancas `#FFFFFF`, bordes sutiles cálidos `#F2E8DC`, fondos crema `#FFFDF9`, textos `#2D1B17` y acentos naranja solar `#FF6B00`.
 
 ---
 
@@ -271,3 +272,52 @@ Se construyó e integró el sitio web comercial completo de **Sunchi** como un t
   - Panel administrativo en WordPress (`Ajustes -> Sunchi Bridge`) para configuración de endpoints y parámetros.
 - **Entregables Empaquetados**: `wordpress/sunchi-theme.zip` (503 KB) y `wordpress/sunchi-velupi-bridge.zip` (2.3 KB).
 - **Pruebas Automatizadas TDD**: Suite `wordpress/sunchi-theme.spec.ts` con 12 pruebas aprobadas al 100%. Total general del monorepo: **46 suites, 323 pruebas (100% GREEN)**.
+
+---
+
+## M. SPRINT VELUPI: Re-Branding Oficial y Sistema Visual Warm Solar Light Universal
+
+Se formalizó la identidad definitiva de marca **Velupi** y se migró todo el portal de clientes (`app.velupi.com`) y el sitio comercial (`velupi.com`) hacia el nuevo sistema de diseño unificado **Warm Solar Light**:
+
+### 1. Re-Branding Oficial e Identidad de Marca
+- **Nombre comercial oficial**: **Velupi Cloud Platform** (o **Velupi**).
+- **Logotipo aprobado**: Nube y sol con la "V" integrada, acompañado del texto `velupi` en degradado luminoso amarillo y naranja, colocado en encabezados, favicons, correos y paneles.
+- **Paleta de Color Oficial**:
+  - Primario Solar: `#FF6B00` (Hover: `#E85A00`).
+  - Naranja Luminoso: `#FF9100`.
+  - Amarillo Solar: `#FFB800`.
+  - Fondo Base del Portal: `#FFFDF9` y `#FFF8ED`.
+  - Tarjetas / Paneles: Blanco Puro `#FFFFFF` con borde cálido sutil `1px solid #F2E8DC` y sombra suave `0 2px 8px rgba(0,0,0,0.03)`.
+  - Tipografía Principal: `#2D1B17` (Alto contraste, legibilidad superior).
+  - Tipografía Secundaria / Muted: `#667085`.
+  - Estados Positivos (Healthy/Active/Paid): Fondo `#D1FAE5` con texto `#065F46`.
+
+### 2. Cobertura de Pantallas Migradas y Verificadas (14/14 - 100%)
+1. **Dashboard (`/`)**: Tarjetas métricas blancas con elevación suave, bordes cálidos y chips de estado.
+2. **Cloud Apps (`/services/apps`)**: Pestañas selectoras con borde naranja solar, tarjetas de Git y variables de entorno sobre fondos limpios de alto contraste, y consola terminal deep charcoal `#1A1311` con texto `#10B981`.
+3. **DNS Manager (`/dns`)**: Tabla unificada de registros DNS con cabeceras cálidas (`#FAF6F0`), barras de búsqueda/filtro y modal para agregar registros adaptados al nuevo estilo.
+4. **Facturación y Suscripciones (`/billing`)**: Tarjetas de planes activos con alertas de estado de gracia/suspensión, historial de facturas tributarias y comprobantes en diálogo blanco limpio.
+5. **Hosting Web (`/hosting`)**: Entornos PHP, SSL Let's Encrypt y accesos directos unificados con botones naranja solar y bordes `#F2E8DC`.
+6. **WordPress Site Tools (`/services/wordpress`)**: Panel de gestión para WordPress con botones de acción directa, estado del core y PHP 8.3.
+7. **Bases de Datos (`/databases`)**: Servidores MariaDB/MySQL con chips de versión, cuotas y acciones protegidas.
+8. **Gestor de Archivos (`/files`)**: Explorador de directorios con iconos diferenciados en amarillo solar y gris, cabecera de ruta segura y tablas contrastadas.
+9. **Email Manager (`/emails`)**: Tabla de cuentas de correo bajo el dominio corporativo, cuotas y accesos directos al Webmail.
+10. **SSL / TLS Manager (`/ssl`)**: Certificados Let's Encrypt y opciones de renovación desatendida.
+11. **Backups & Snapshots (`/backups`)**: Puntos de restauración y copias de seguridad automáticas con retención de 30 días.
+12. **Cuenta y Seguridad (`/account`)**: Roles RBAC, estado de 2FA y registro inmutable de auditoría.
+13. **Application Gateway (`/gateway`)**: Reglas de balanceo de carga, middleware y terminación TLS perimetral.
+14. **Microservices Studio (`/studio`)**: Grafo declarativo de componentes y topologías de microservicios.
+15. **Flujo Comercial Completo (`/cart`, `/checkout`, `/checkout/return`, `/orders/[id]`)**: Barras de progreso solar, resúmenes limpios e integración transparente con el orquestador BullMQ y Wompi.
+16. **Componentes Globales**: `Topbar`, `Sidebar`, `Breadcrumbs`, `ModuleStateContainer` 100% armonizados sin texto blanco sobre fondo crema ni hardcodes `#111827`.
+
+### 3. Pipeline de Despliegue en VPS y Verificación Real
+- **Pipeline GitHub Actions**: Ejecutado y verificado en verde (`success` en commit `60ddf5a`).
+  - `test-and-validate`: 46 suites, 323 tests passing.
+  - `build-and-push`: Compilación de imágenes GHCR para API y Web Next.js 15.
+  - `deploy-to-vps`: Descarga y reinicio en caliente de contenedores Docker en VPS `169.58.220.244`.
+- **Evidencias en Navegador en Vivo**:
+  - `services_apps_theme_1792164781600.png`: Cloud Apps con selector solar y tarjetas de alto contraste.
+  - `dns_theme_1792164789982.png`: DNS Manager con tablas contrastadas y buscador limpio.
+  - `billing_theme_1792164799006.png`: Facturación y suscripciones con diseño cálido y tarjetas blancas.
+  - `verify_screens_vps_1792164768747.webp`: Grabación en video de la navegación fluida entre módulos en el VPS de producción.
+
