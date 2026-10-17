@@ -118,7 +118,32 @@ describe('OrdersController (GET /orders/:orderId)', () => {
     expect(found.status).toBe(OrderStatus.PAID);
   });
 
+  it('retrieves and reconstitutes active order via wompiAdapter fallback when transaction is APPROVED', async () => {
+    const mockWompi = {
+      queryTransactionStatus: async (trxId: string) => ({
+        transactionId: trxId,
+        reference: 'ord-1109555-1792243444-91875',
+        status: 'APPROVED',
+        amountCents: 4165000,
+        currency: 'COP',
+      }),
+    };
+
+    const controllerWithWompi = new OrdersController(
+      orderService,
+      undefined,
+      undefined,
+      mockWompi as any
+    );
+
+    const found = await controllerWithWompi.getOrder('1109555-1792243444-91875');
+    expect(found.id).toBe('ord-1109555-1792243444-91875');
+    expect(found.status).toBe(OrderStatus.ACTIVE);
+    expect(found.totalCents).toBe(4165000);
+  });
+
   it('throws NotFoundException for unknown order ID', async () => {
     await expect(controller.getOrder('non-existent-order')).rejects.toThrow(NotFoundException);
   });
 });
+
