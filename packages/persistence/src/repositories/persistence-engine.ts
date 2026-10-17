@@ -305,6 +305,11 @@ export class PrismaOrderRepository implements IOrderRepository {
     return ord ? { ...ord, items: ord.items.map((i) => ({ ...i })) } : null;
   }
 
+  async findByOrderNumber(orderNumber: string): Promise<Order | null> {
+    const ord = Array.from(this.storage.orders.values()).find((o) => o.orderNumber === orderNumber);
+    return ord ? { ...ord, items: ord.items.map((i) => ({ ...i })) } : null;
+  }
+
   async findByIdempotencyKey(key: string): Promise<Order | null> {
     const id = this.storage.orderIdempotency.get(key);
     if (!id) return null;

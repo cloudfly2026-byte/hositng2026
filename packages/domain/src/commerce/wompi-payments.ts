@@ -201,13 +201,22 @@ export class PaymentProcessorService {
     }
 
     const event = this.paymentProvider.parseWebhookEvent(payload);
-    let order = this.orders.get(event.orderId);
+    let order =
+      this.orders.get(event.orderId) ||
+      Array.from(this.orders.values()).find((o) => o.orderNumber === event.orderId);
 
     if (!order && this.uow?.orders) {
-      const persisted = await this.uow.orders.findById(event.orderId);
+      const persisted =
+        (await this.uow.orders.findById(event.orderId)) ||
+        (this.uow.orders.findByOrderNumber
+          ? await this.uow.orders.findByOrderNumber(event.orderId)
+          : null);
       if (persisted) {
         order = persisted;
         this.orders.set(order.id, order);
+        if (order.orderNumber) {
+          this.orders.set(order.orderNumber, order);
+        }
       }
     }
 

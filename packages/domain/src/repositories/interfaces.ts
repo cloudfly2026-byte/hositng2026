@@ -96,6 +96,7 @@ export interface IPlanVersionRepository {
 export interface IOrderRepository {
   save(order: Order): Promise<void>;
   findById(id: string): Promise<Order | null>;
+  findByOrderNumber?(orderNumber: string): Promise<Order | null>;
   findByIdempotencyKey(key: string): Promise<Order | null>;
   listByOrganization(organizationId: string): Promise<Order[]>;
 }

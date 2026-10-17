@@ -393,6 +393,34 @@ export class DatabaseOrderRepository implements IOrderRepository {
     };
   }
 
+  async findByOrderNumber(orderNumber: string): Promise<Order | null> {
+    const record = await this.prisma.order.findFirst({
+      where: { orderNumber },
+      include: { items: true },
+    });
+    if (!record) return null;
+    return {
+      id: record.id,
+      organizationId: record.organizationId,
+      orderNumber: record.orderNumber,
+      status: record.status as any,
+      currency: record.currency,
+      subtotalCents: record.subtotalCents,
+      taxCents: record.taxCents,
+      totalCents: record.totalCents,
+      idempotencyKey: record.idempotencyKey,
+      items: record.items.map((i: any) => ({
+        id: i.id,
+        orderId: i.orderId,
+        planVersionId: i.planVersionId,
+        billingCycle: i.billingCycle,
+        unitPriceCents: i.unitPriceCents,
+        quantity: i.quantity,
+      })),
+      createdAt: record.createdAt,
+    };
+  }
+
   async findByIdempotencyKey(key: string): Promise<Order | null> {
     const record = await this.prisma.order.findFirst({
       where: { idempotencyKey: key },

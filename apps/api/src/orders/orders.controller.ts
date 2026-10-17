@@ -25,14 +25,26 @@ export class OrdersController {
       try {
         const found =
           (await this.uow.orders.findById(orderId)) ||
-          ((this.uow.orders as any).findByOrderNumber
-            ? await (this.uow.orders as any).findByOrderNumber(orderId)
+          (this.uow.orders.findByOrderNumber
+            ? await this.uow.orders.findByOrderNumber(orderId)
             : null);
         if (found) {
           order = found;
         }
       } catch {
         // Fallback silently if DB lookup fails
+      }
+    }
+
+    if (!order && this.uow?.payments && this.uow?.orders) {
+      try {
+        // orderId might be Wompi transaction ID from return URL
+        const payRecord = await (this.uow.payments as any).findByProviderTransactionId?.(orderId);
+        if (payRecord?.orderId) {
+          order = await this.uow.orders.findById(payRecord.orderId);
+        }
+      } catch {
+        // Fallback silently
       }
     }
 

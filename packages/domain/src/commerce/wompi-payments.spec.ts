@@ -231,6 +231,38 @@ describe('Epic COM-04 & COM-05 - Wompi Payments & Webhook Processing', () => {
       expect(secondProcess.status).toBe(OrderStatus.PAID);
     });
 
+    it('matches order by orderNumber (reference) when reference is not internal order.id', async () => {
+      const orderWithNumber: Order = {
+        ...sampleOrder,
+        id: 'uuid-1234-5678',
+        orderNumber: 'VEL-998877',
+        status: OrderStatus.PENDING_PAYMENT,
+      };
+      const ordersMap = new Map<string, Order>([[orderWithNumber.id, orderWithNumber]]);
+      const processor = new PaymentProcessorService(adapter, ordersMap);
+
+      const payload = {
+        event: 'transaction.updated',
+        data: {
+          transaction: {
+            id: 'trx-by-number-1',
+            reference: 'VEL-998877',
+            status: 'APPROVED',
+            amount_in_cents: orderWithNumber.totalCents,
+            currency: 'COP',
+          },
+        },
+        timestamp: 1776080000,
+      };
+
+      const signature = adapter.generateTestSignature(payload, eventsSecret);
+      const processed = await processor.processWebhook(payload, { 'x-event-checksum': signature });
+
+      expect(processed.status).toBe(OrderStatus.PAID);
+      expect(processed.id).toBe('uuid-1234-5678');
+      expect(processed.orderNumber).toBe('VEL-998877');
+    });
+
     it('prevents out-of-order pending events from reverting an already PAID order', async () => {
       const paidOrder: Order = {
         ...sampleOrder,
