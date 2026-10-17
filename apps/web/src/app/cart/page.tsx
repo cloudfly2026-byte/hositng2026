@@ -98,6 +98,20 @@ function CartContent() {
 
   const initialPlan = searchParams.get('plan') || 'wp-starter';
   const initialCycle = searchParams.get('cycle')?.toUpperCase() === 'ANNUAL' ? 'ANNUAL' : 'MONTHLY';
+  const tokenParam = searchParams.get('token');
+  const refreshTokenParam = searchParams.get('refreshToken');
+
+  React.useEffect(() => {
+    if (tokenParam) {
+      defaultApiClient.setAuthToken(tokenParam);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('velupi_auth_token', tokenParam);
+        if (refreshTokenParam) {
+          localStorage.setItem('velupi_refresh_token', refreshTokenParam);
+        }
+      }
+    }
+  }, [tokenParam, refreshTokenParam]);
 
   const [selectedPlanCode, setSelectedPlanCode] = React.useState<string>(initialPlan);
   const [billingCycle, setBillingCycle] = React.useState<'MONTHLY' | 'ANNUAL'>(initialCycle);
