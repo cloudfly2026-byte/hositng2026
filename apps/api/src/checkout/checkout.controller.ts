@@ -37,11 +37,35 @@ export class CheckoutController {
   async createOrderAndSession(
     @Body() dto: CreateOrderDto
   ): Promise<CreateOrderAndSessionResponse> {
+    // Resolve dynamic planVersionId if fallback or code is provided
+    const resolvedItems = dto.items.map((item) => {
+      let vId = item.planVersionId;
+      if (!this.orderService['catalog']?.getPlanVersion(vId)) {
+        // Fallback mapping or find by plan code
+        const allPlans = this.orderService['catalog']?.listPlans() || [];
+        const found = allPlans.find(
+          (p: any) =>
+            p.activeVersion?.id === vId ||
+            p.code === vId ||
+            (vId.includes('wp-starter') && p.code === 'wp-starter') ||
+            (vId.includes('node') && p.code === 'cloud-apps-pro') ||
+            (vId.includes('vps') && p.code === 'vps-dedicated')
+        );
+        if (found?.activeVersion?.id) {
+          vId = found.activeVersion.id;
+        }
+      }
+      return {
+        ...item,
+        planVersionId: vId,
+      };
+    });
+
     const order = this.orderService.createOrder({
       organizationId: dto.organizationId,
       currency: dto.currency,
       billingCycle: dto.billingCycle,
-      items: dto.items,
+      items: resolvedItems,
       idempotencyKey: dto.idempotencyKey,
     });
 
