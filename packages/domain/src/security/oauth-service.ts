@@ -150,6 +150,10 @@ export class OAuthService {
     };
   }
 
+  getStateRecord(state: string): OAuthStateRecord | undefined {
+    return this.activeStates.get(state);
+  }
+
   async handleOAuthCallback(input: OAuthCallbackInput): Promise<OAuthCallbackResult> {
     const stateRecord = this.activeStates.get(input.state);
     if (!stateRecord || stateRecord.expiresAt.getTime() < Date.now()) {

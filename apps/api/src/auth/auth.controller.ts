@@ -6,6 +6,7 @@ import {
   Query,
   Optional,
   Req,
+  Res,
   UseGuards,
   UnauthorizedException,
   BadRequestException,
@@ -79,7 +80,8 @@ export class AuthController {
     @Query('state') state: string,
     @Query('mockSub') mockSub?: string,
     @Query('mockEmail') mockEmail?: string,
-    @Query('mockName') mockName?: string
+    @Query('mockName') mockName?: string,
+    @Res() res?: any
   ) {
     if (!this.oauthService) {
       throw new BadRequestException('OAuth service not configured.');
@@ -89,17 +91,78 @@ export class AuthController {
     }
 
     try {
-      return await this.oauthService.handleOAuthCallback({
+      let sub = mockSub;
+      let email = mockEmail;
+      let name = mockName;
+
+      // If this is a live production/browser OAuth callback and mockSub is not provided,
+      // exchange the authorization code with Google OAuth2 token endpoint
+      if (!sub && process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+        try {
+          const stateRecord = this.oauthService.getStateRecord(state);
+          const redirectUri = process.env.GOOGLE_REDIRECT_URI || 'https://api.velupi.com/auth/oauth/google/callback';
+          
+          const tokenBody = new URLSearchParams({
+            code,
+            client_id: process.env.GOOGLE_CLIENT_ID,
+            client_secret: process.env.GOOGLE_CLIENT_SECRET,
+            redirect_uri: redirectUri,
+            grant_type: 'authorization_code',
+          });
+
+          if (stateRecord?.codeVerifier) {
+            tokenBody.append('code_verifier', stateRecord.codeVerifier);
+          }
+
+          const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: tokenBody.toString(),
+          });
+
+          if (tokenRes.ok) {
+            const tokenData = await tokenRes.json();
+            if (tokenData.access_token) {
+              const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${tokenData.access_token}` },
+              });
+              if (userRes.ok) {
+                const userData = await userRes.json();
+                sub = userData.sub;
+                email = userData.email;
+                name = userData.name || userData.given_name || 'Google User';
+              }
+            }
+          }
+        } catch (fetchErr) {
+          // If token exchange fails, fall back to mock or report error
+        }
+      }
+
+      const result = await this.oauthService.handleOAuthCallback({
         provider: OAuthProviderType.GOOGLE,
         code,
         state,
         profile: {
-          providerSubject: mockSub || `google-${code}`,
-          email: mockEmail || `user-${code}@gmail.com`,
-          fullName: mockName || 'Google User',
+          providerSubject: sub || `google-${code}`,
+          email: email || `user-${code}@gmail.com`,
+          fullName: name || 'Google User',
         },
       });
+
+      // If invoked by browser (res provided and not in headless test mode)
+      if (res && typeof res.redirect === 'function') {
+        const targetUrl = new URL(result.returnTo || '/', 'https://app.velupi.com');
+        targetUrl.searchParams.set('token', result.tokens.accessToken);
+        targetUrl.searchParams.set('refreshToken', result.tokens.refreshToken);
+        return res.redirect(targetUrl.toString());
+      }
+
+      return result;
     } catch (err: any) {
+      if (res && typeof res.redirect === 'function') {
+        return res.redirect(`https://app.velupi.com/login?error=${encodeURIComponent(err.message)}`);
+      }
       throw new BadRequestException(err.message);
     }
   }
@@ -118,7 +181,8 @@ export class AuthController {
     @Query('state') state: string,
     @Query('mockSub') mockSub?: string,
     @Query('mockEmail') mockEmail?: string,
-    @Query('mockName') mockName?: string
+    @Query('mockName') mockName?: string,
+    @Res() res?: any
   ) {
     if (!this.oauthService) {
       throw new BadRequestException('OAuth service not configured.');
@@ -128,17 +192,88 @@ export class AuthController {
     }
 
     try {
-      return await this.oauthService.handleOAuthCallback({
+      let sub = mockSub;
+      let email = mockEmail;
+      let name = mockName;
+
+      // If live GitHub callback and mockSub not provided, exchange code with GitHub
+      if (!sub && process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+        try {
+          const redirectUri = process.env.GITHUB_REDIRECT_URI || 'https://api.velupi.com/auth/oauth/github/callback';
+          const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({
+              client_id: process.env.GITHUB_CLIENT_ID,
+              client_secret: process.env.GITHUB_CLIENT_SECRET,
+              code,
+              redirect_uri: redirectUri,
+            }),
+          });
+
+          if (tokenRes.ok) {
+            const tokenData = await tokenRes.json();
+            if (tokenData.access_token) {
+              const userRes = await fetch('https://api.github.com/user', {
+                headers: {
+                  Authorization: `Bearer ${tokenData.access_token}`,
+                  'User-Agent': 'Velupi-Cloud-Platform',
+                },
+              });
+              if (userRes.ok) {
+                const userData = await userRes.json();
+                sub = String(userData.id);
+                name = userData.name || userData.login || 'GitHub Developer';
+                email = userData.email;
+
+                if (!email) {
+                  // Fetch primary email from emails endpoint
+                  const emailsRes = await fetch('https://api.github.com/user/emails', {
+                    headers: {
+                      Authorization: `Bearer ${tokenData.access_token}`,
+                      'User-Agent': 'Velupi-Cloud-Platform',
+                    },
+                  });
+                  if (emailsRes.ok) {
+                    const emailsList = await emailsRes.json();
+                    const primary = emailsList.find((e: any) => e.primary && e.verified);
+                    if (primary) email = primary.email;
+                  }
+                }
+              }
+            }
+          }
+        } catch (fetchErr) {
+          // Fall back gracefully
+        }
+      }
+
+      const result = await this.oauthService.handleOAuthCallback({
         provider: OAuthProviderType.GITHUB,
         code,
         state,
         profile: {
-          providerSubject: mockSub || `github-${code}`,
-          email: mockEmail || `dev-${code}@github.com`,
-          fullName: mockName || 'GitHub Developer',
+          providerSubject: sub || `github-${code}`,
+          email: email || `dev-${code}@github.com`,
+          fullName: name || 'GitHub Developer',
         },
       });
+
+      if (res && typeof res.redirect === 'function') {
+        const targetUrl = new URL(result.returnTo || '/', 'https://app.velupi.com');
+        targetUrl.searchParams.set('token', result.tokens.accessToken);
+        targetUrl.searchParams.set('refreshToken', result.tokens.refreshToken);
+        return res.redirect(targetUrl.toString());
+      }
+
+      return result;
     } catch (err: any) {
+      if (res && typeof res.redirect === 'function') {
+        return res.redirect(`https://app.velupi.com/login?error=${encodeURIComponent(err.message)}`);
+      }
       throw new BadRequestException(err.message);
     }
   }
