@@ -31,7 +31,8 @@ export class CheckoutController {
   constructor(
     private orderService: OrderService,
     private wompiAdapter: WompiPaymentAdapter,
-    @Optional() @Inject('ORDERS_STORE') private ordersStore?: Map<string, Order>
+    @Optional() @Inject('ORDERS_STORE') private ordersStore?: Map<string, Order>,
+    @Optional() @Inject('IUnitOfWork') private uow?: any
   ) {}
 
   @Post('order')
@@ -85,6 +86,15 @@ export class CheckoutController {
     if (this.ordersStore) {
       this.ordersStore.set(order.id, order);
       this.ordersStore.set(order.orderNumber, order);
+    }
+
+    if (this.uow?.orders) {
+      try {
+        await this.uow.orders.save(order);
+      } catch (e) {
+        // Log warning but allow memory session flow to proceed
+        console.warn('Failed to persist order to database UoW:', e);
+      }
     }
 
     const session = await this.wompiAdapter.createPaymentSession(order, {

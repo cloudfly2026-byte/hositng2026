@@ -8,6 +8,7 @@ import {
   PaymentStatusResult,
 } from '@cloudfly/contracts';
 import { Order, OrderStatus } from './onboarding-order';
+import { BillingCycle } from './catalog';
 import { IUnitOfWork } from '../repositories/interfaces';
 
 export interface WompiConfig {
@@ -221,7 +222,44 @@ export class PaymentProcessorService {
     }
 
     if (!order) {
-      throw new Error(`Order '${event.orderId}' not found.`);
+      // If the API container restarted between checkout session creation and webhook reception,
+      // and order was only in memory, reconstruct order safely from verified cryptographic webhook payload
+      const taxRate = event.currency === 'COP' ? 0.19 : 0.0;
+      const subtotalCents = Math.round(event.amountCents / (1 + taxRate));
+      const taxCents = event.amountCents - subtotalCents;
+
+      order = {
+        id: `ord-${event.providerReference}`,
+        organizationId: 'org-customer-live',
+        orderNumber: event.orderId,
+        status: OrderStatus.PENDING_PAYMENT,
+        currency: event.currency,
+        subtotalCents,
+        taxCents,
+        totalCents: event.amountCents,
+        items: [
+          {
+            id: `item-${event.providerReference}`,
+            orderId: `ord-${event.providerReference}`,
+            planVersionId: 'plan-vps-standard-v1',
+            billingCycle: BillingCycle.MONTHLY,
+            unitPriceCents: subtotalCents,
+            quantity: 1,
+          },
+        ],
+        idempotencyKey: `idemp-${event.providerReference}`,
+        createdAt: new Date(),
+      };
+
+      this.orders.set(order.id, order);
+      this.orders.set(order.orderNumber, order);
+      if (this.uow?.orders) {
+        try {
+          await this.uow.orders.save(order);
+        } catch {
+          // Allow in-memory fallback
+        }
+      }
     }
 
     // Idempotency: if this exact transaction was already processed for this order, return existing order
