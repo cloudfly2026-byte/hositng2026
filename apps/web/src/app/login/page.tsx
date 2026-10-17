@@ -41,6 +41,26 @@ function LoginContent() {
   const [oauthLoading, setOauthLoading] = React.useState<'google' | 'github' | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
+  // Auto-handle OAuth callback tokens and error from query params
+  React.useEffect(() => {
+    const token = searchParams.get('token');
+    const refreshToken = searchParams.get('refreshToken');
+    const errParam = searchParams.get('error');
+
+    if (errParam) {
+      setError(decodeURIComponent(errParam));
+    } else if (token) {
+      defaultApiClient.setAuthToken(token);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('velupi_auth_token', token);
+        if (refreshToken) {
+          localStorage.setItem('velupi_refresh_token', refreshToken);
+        }
+      }
+      router.push(returnTo);
+    }
+  }, [searchParams, router, returnTo]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
