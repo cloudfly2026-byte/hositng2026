@@ -40,19 +40,31 @@ export class CheckoutController {
     // Resolve dynamic planVersionId if fallback or code is provided
     const resolvedItems = dto.items.map((item) => {
       let vId = item.planVersionId;
-      if (!this.orderService['catalog']?.getPlanVersion(vId)) {
-        // Fallback mapping or find by plan code
-        const allPlans = this.orderService['catalog']?.listPlans() || [];
-        const found = allPlans.find(
-          (p: any) =>
-            p.activeVersion?.id === vId ||
-            p.code === vId ||
-            (vId.includes('wp-starter') && p.code === 'wp-starter') ||
-            (vId.includes('node') && p.code === 'cloud-apps-pro') ||
-            (vId.includes('vps') && p.code === 'vps-dedicated')
-        );
-        if (found?.activeVersion?.id) {
-          vId = found.activeVersion.id;
+      const catalog = (this.orderService as any)?.catalog;
+      if (catalog) {
+        let exists = false;
+        try {
+          if (typeof catalog.getVersionById === 'function') {
+            catalog.getVersionById(vId);
+            exists = true;
+          }
+        } catch {
+          exists = false;
+        }
+
+        if (!exists && typeof catalog.listPlans === 'function') {
+          const allPlans = catalog.listPlans() || [];
+          const found = allPlans.find(
+            (p: any) =>
+              p.activeVersion?.id === vId ||
+              p.code === vId ||
+              (vId.includes('wp-starter') && p.code === 'wp-starter') ||
+              (vId.includes('node') && p.code === 'cloud-apps-pro') ||
+              (vId.includes('vps') && p.code === 'vps-dedicated')
+          );
+          if (found?.activeVersion?.id) {
+            vId = found.activeVersion.id;
+          }
         }
       }
       return {
