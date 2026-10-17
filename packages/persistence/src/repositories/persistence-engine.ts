@@ -461,6 +461,13 @@ export class PrismaPaymentRepository implements IPaymentRepository {
       .filter((p) => p.orderId === orderId)
       .map((p) => ({ ...p }));
   }
+
+  async findByProviderTransactionId(providerTransactionId: string): Promise<PaymentRecord | null> {
+    const p = Array.from(this.storage.payments.values()).find(
+      (rec) => rec.providerTransactionId === providerTransactionId
+    );
+    return p ? { ...p } : null;
+  }
 }
 
 export class PrismaSubscriptionRepository implements ISubscriptionRepository {

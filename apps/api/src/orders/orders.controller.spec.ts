@@ -107,6 +107,17 @@ describe('OrdersController (GET /orders/:orderId)', () => {
     expect(foundByNumber.id).toBe('ord-db-123');
   });
 
+  it('retrieves an existing order when queried with Wompi transaction ID matching ord- prefix', async () => {
+    const secondaryMap = new Map<string, any>();
+    const extraOrder = { id: 'ord-1109555-1792243444-91875', orderNumber: 'VEL-226357', status: OrderStatus.PAID };
+    secondaryMap.set('ord-1109555-1792243444-91875', extraOrder);
+
+    const controllerWithFallback = new OrdersController(orderService, secondaryMap as any);
+    const found = await controllerWithFallback.getOrder('1109555-1792243444-91875');
+    expect(found.id).toBe('ord-1109555-1792243444-91875');
+    expect(found.status).toBe(OrderStatus.PAID);
+  });
+
   it('throws NotFoundException for unknown order ID', async () => {
     await expect(controller.getOrder('non-existent-order')).rejects.toThrow(NotFoundException);
   });

@@ -43,6 +43,26 @@ export class OrdersController {
       }
     }
 
+    if (!order && (orderId.includes('-') || orderId.length > 10)) {
+      // orderId might be a Wompi transaction ID (e.g. 1109555-1792243444-91875)
+      // Check if it was saved with 'ord-' prefix
+      const prefixed = `ord-${orderId}`;
+      order =
+        (this.ordersStore && this.ordersStore.get(prefixed)) ||
+        globalOrdersStore.get(prefixed);
+
+      if (!order && this.uow?.orders) {
+        try {
+          const found = await this.uow.orders.findById(prefixed);
+          if (found) {
+            order = found;
+          }
+        } catch {
+          // Fallback silently
+        }
+      }
+    }
+
     if (!order && this.uow?.payments && this.uow?.orders) {
       try {
         // orderId might be Wompi transaction ID from return URL

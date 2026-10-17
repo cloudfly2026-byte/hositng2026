@@ -40,6 +40,7 @@ export interface IPaymentRepository {
   save(payment: PaymentRecord): Promise<void>;
   findById(id: string): Promise<PaymentRecord | null>;
   findByOrderId(orderId: string): Promise<PaymentRecord[]>;
+  findByProviderTransactionId?(providerTransactionId: string): Promise<PaymentRecord | null>;
 }
 
 export interface ISubscriptionRepository {

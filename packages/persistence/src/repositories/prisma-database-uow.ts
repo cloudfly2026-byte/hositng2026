@@ -834,6 +834,25 @@ export class DatabasePaymentRepository implements IPaymentRepository {
       createdAt: r.createdAt,
     }));
   }
+
+  async findByProviderTransactionId(providerTransactionId: string): Promise<PaymentRecord | null> {
+    const r = await this.prisma.payment.findFirst({
+      where: { providerTransactionId },
+    });
+    if (!r) return null;
+    return {
+      id: r.id,
+      orderId: r.orderId,
+      provider: r.provider,
+      providerTransactionId: r.providerTransactionId || undefined,
+      status: r.status,
+      amountCents: r.amountCents,
+      currency: r.currency,
+      signatureVerified: r.signatureVerified,
+      rawPayload: r.rawPayload,
+      createdAt: r.createdAt,
+    };
+  }
 }
 
 export class DatabaseSubscriptionRepository implements ISubscriptionRepository {
