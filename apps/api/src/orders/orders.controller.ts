@@ -1,15 +1,16 @@
 import { Controller, Get, Param, NotFoundException, Inject, Optional } from '@nestjs/common';
-import { OrderService, Order } from '@cloudfly/domain';
+import { OrderService, Order, IUnitOfWork } from '@cloudfly/domain';
 
 @Controller('orders')
 export class OrdersController {
   constructor(
     private readonly orderService: OrderService,
-    @Optional() @Inject('ORDERS_STORE') private readonly ordersStore?: Map<string, Order>
+    @Optional() @Inject('ORDERS_STORE') private readonly ordersStore?: Map<string, Order>,
+    @Optional() @Inject('IUnitOfWork') private readonly uow?: IUnitOfWork
   ) {}
 
   @Get(':orderId')
-  getOrder(@Param('orderId') orderId: string): Order {
+  async getOrder(@Param('orderId') orderId: string): Promise<Order> {
     let order =
       this.orderService.getOrderById(orderId) ||
       this.orderService.getOrderByNumber(orderId);
@@ -18,6 +19,21 @@ export class OrdersController {
       order =
         this.ordersStore.get(orderId) ||
         Array.from(this.ordersStore.values()).find((o) => o.orderNumber === orderId);
+    }
+
+    if (!order && this.uow?.orders) {
+      try {
+        const found =
+          (await this.uow.orders.findById(orderId)) ||
+          ((this.uow.orders as any).findByOrderNumber
+            ? await (this.uow.orders as any).findByOrderNumber(orderId)
+            : null);
+        if (found) {
+          order = found;
+        }
+      } catch {
+        // Fallback silently if DB lookup fails
+      }
     }
 
     if (!order) {

@@ -228,7 +228,7 @@ describe('UC-NEW-001: End-to-End Real Commercial Checkout Flow Validation', () =
 
       // Task 9: Non-authoritative redirect check:
       // Even if user visits /checkout/return, order remains PENDING_PAYMENT until webhook verifies payment
-      const orderBeforeWebhook = ordersController.getOrder(orderRes.order.id);
+      const orderBeforeWebhook = await ordersController.getOrder(orderRes.order.id);
       expect(orderBeforeWebhook.status).toBe(OrderStatus.PENDING_PAYMENT);
     });
 
@@ -266,7 +266,7 @@ describe('UC-NEW-001: End-to-End Real Commercial Checkout Flow Validation', () =
       expect(result.orderId).toBe(order.id);
 
       // Order is now verified as PAID
-      const paidOrder = ordersController.getOrder(order.id);
+      const paidOrder = await ordersController.getOrder(order.id);
       expect(paidOrder.status).toBe(OrderStatus.PAID);
     });
 
@@ -299,7 +299,7 @@ describe('UC-NEW-001: End-to-End Real Commercial Checkout Flow Validation', () =
       }).rejects.toThrow(HttpException);
 
       // Order remains PENDING_PAYMENT
-      const unchangedOrder = ordersController.getOrder(order.id);
+      const unchangedOrder = await ordersController.getOrder(order.id);
       expect(unchangedOrder.status).toBe(OrderStatus.PENDING_PAYMENT);
     });
   });

@@ -63,33 +63,51 @@ describe('OrdersController (GET /orders/:orderId)', () => {
     testOrderNumber = order.orderNumber;
   });
 
-  it('retrieves an existing order by ID', () => {
-    const order = controller.getOrder(testOrderId);
+  it('retrieves an existing order by ID', async () => {
+    const order = await controller.getOrder(testOrderId);
     expect(order.id).toBe(testOrderId);
     expect(order.status).toBe(OrderStatus.PENDING_PAYMENT);
     expect(order.totalCents).toBe(6545000); // 5500000 + 19% VAT
   });
 
-  it('retrieves an existing order by orderNumber', () => {
-    const order = controller.getOrder(testOrderNumber);
+  it('retrieves an existing order by orderNumber', async () => {
+    const order = await controller.getOrder(testOrderNumber);
     expect(order.id).toBe(testOrderId);
   });
 
-  it('retrieves an existing order from secondary ordersStore if present', () => {
+  it('retrieves an existing order from secondary ordersStore if present', async () => {
     const secondaryMap = new Map<string, any>();
     const extraOrder = { id: 'ord-extra-999', orderNumber: 'VEL-999999', status: OrderStatus.PAID };
     secondaryMap.set('ord-extra-999', extraOrder);
 
     const controllerWithFallback = new OrdersController(orderService, secondaryMap as any);
-    const found = controllerWithFallback.getOrder('ord-extra-999');
+    const found = await controllerWithFallback.getOrder('ord-extra-999');
     expect(found.id).toBe('ord-extra-999');
     expect(found.status).toBe(OrderStatus.PAID);
 
-    const foundByNumber = controllerWithFallback.getOrder('VEL-999999');
+    const foundByNumber = await controllerWithFallback.getOrder('VEL-999999');
     expect(foundByNumber.id).toBe('ord-extra-999');
   });
 
-  it('throws NotFoundException for unknown order ID', () => {
-    expect(() => controller.getOrder('non-existent-order')).toThrow(NotFoundException);
+  it('retrieves an existing order from uow database if present', async () => {
+    const mockUow = {
+      orders: {
+        findById: async (id: string) =>
+          id === 'ord-db-123' ? { id: 'ord-db-123', orderNumber: 'VEL-123456', status: OrderStatus.PAID } : null,
+        findByOrderNumber: async (num: string) =>
+          num === 'VEL-123456' ? { id: 'ord-db-123', orderNumber: 'VEL-123456', status: OrderStatus.PAID } : null,
+      },
+    };
+
+    const controllerWithUow = new OrdersController(orderService, undefined, mockUow as any);
+    const found = await controllerWithUow.getOrder('ord-db-123');
+    expect(found.id).toBe('ord-db-123');
+
+    const foundByNumber = await controllerWithUow.getOrder('VEL-123456');
+    expect(foundByNumber.id).toBe('ord-db-123');
+  });
+
+  it('throws NotFoundException for unknown order ID', async () => {
+    await expect(controller.getOrder('non-existent-order')).rejects.toThrow(NotFoundException);
   });
 });
