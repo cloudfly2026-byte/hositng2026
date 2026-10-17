@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Body, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, NotFoundException, Inject, Optional } from '@nestjs/common';
 import {
   OrderService,
   WompiPaymentAdapter,
@@ -30,7 +30,8 @@ export interface CreateOrderAndSessionResponse {
 export class CheckoutController {
   constructor(
     private orderService: OrderService,
-    private wompiAdapter: WompiPaymentAdapter
+    private wompiAdapter: WompiPaymentAdapter,
+    @Optional() @Inject('ORDERS_STORE') private ordersStore?: Map<string, Order>
   ) {}
 
   @Post('order')
@@ -81,6 +82,11 @@ export class CheckoutController {
       idempotencyKey: dto.idempotencyKey,
     });
 
+    if (this.ordersStore) {
+      this.ordersStore.set(order.id, order);
+      this.ordersStore.set(order.orderNumber, order);
+    }
+
     const session = await this.wompiAdapter.createPaymentSession(order, {
       customerEmail: dto.customerEmail,
       redirectUrl: dto.redirectUrl,
@@ -94,9 +100,16 @@ export class CheckoutController {
 
   @Get('order/:orderId')
   getOrder(@Param('orderId') orderId: string): Order {
-    const order =
+    let order =
       this.orderService.getOrderById(orderId) ||
       this.orderService.getOrderByNumber(orderId);
+
+    if (!order && this.ordersStore) {
+      order =
+        this.ordersStore.get(orderId) ||
+        Array.from(this.ordersStore.values()).find((o) => o.orderNumber === orderId);
+    }
+
     if (!order) {
       throw new NotFoundException(`Order '${orderId}' not found`);
     }

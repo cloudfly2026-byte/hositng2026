@@ -75,6 +75,20 @@ describe('OrdersController (GET /orders/:orderId)', () => {
     expect(order.id).toBe(testOrderId);
   });
 
+  it('retrieves an existing order from secondary ordersStore if present', () => {
+    const secondaryMap = new Map<string, any>();
+    const extraOrder = { id: 'ord-extra-999', orderNumber: 'VEL-999999', status: OrderStatus.PAID };
+    secondaryMap.set('ord-extra-999', extraOrder);
+
+    const controllerWithFallback = new OrdersController(orderService, secondaryMap as any);
+    const found = controllerWithFallback.getOrder('ord-extra-999');
+    expect(found.id).toBe('ord-extra-999');
+    expect(found.status).toBe(OrderStatus.PAID);
+
+    const foundByNumber = controllerWithFallback.getOrder('VEL-999999');
+    expect(foundByNumber.id).toBe('ord-extra-999');
+  });
+
   it('throws NotFoundException for unknown order ID', () => {
     expect(() => controller.getOrder('non-existent-order')).toThrow(NotFoundException);
   });
