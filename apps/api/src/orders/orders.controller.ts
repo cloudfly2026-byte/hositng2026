@@ -96,7 +96,7 @@ export class OrdersController {
             id: `ord-${orderId}`,
             organizationId: 'org-customer-live',
             orderNumber: trxStatus.reference?.replace(/^ord-/, '') || `VEL-${orderId.substring(0, 6)}`,
-            status: OrderStatus.ACTIVE,
+            status: OrderStatus.COMPLETED,
             currency: trxStatus.currency || 'COP',
             subtotalCents: Math.round(trxStatus.amountCents / 1.19),
             taxCents: trxStatus.amountCents - Math.round(trxStatus.amountCents / 1.19),

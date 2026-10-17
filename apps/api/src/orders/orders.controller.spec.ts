@@ -138,7 +138,7 @@ describe('OrdersController (GET /orders/:orderId)', () => {
 
     const found = await controllerWithWompi.getOrder('1109555-1792243444-91875');
     expect(found.id).toBe('ord-1109555-1792243444-91875');
-    expect(found.status).toBe(OrderStatus.ACTIVE);
+    expect(found.status).toBe(OrderStatus.COMPLETED);
     expect(found.totalCents).toBe(4165000);
   });
 
