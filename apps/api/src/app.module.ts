@@ -179,9 +179,13 @@ import { PrismaUnitOfWork, PrismaDatabaseUnitOfWork } from '@cloudfly/persistenc
     },
     {
       provide: PaymentProcessorService,
-      useFactory: (adapter: WompiPaymentAdapter, ordersStore: Map<string, Order>, uow: any) =>
-        new PaymentProcessorService(adapter, ordersStore, uow),
-      inject: [WompiPaymentAdapter, 'ORDERS_STORE', 'IUnitOfWork'],
+      useFactory: (
+        adapter: WompiPaymentAdapter,
+        ordersStore: Map<string, Order>,
+        uow: any,
+        catalog: ProductCatalogService
+      ) => new PaymentProcessorService(adapter, ordersStore, uow, catalog),
+      inject: [WompiPaymentAdapter, 'ORDERS_STORE', 'IUnitOfWork', ProductCatalogService],
     },
     {
       provide: ProvisioningOrchestrator,

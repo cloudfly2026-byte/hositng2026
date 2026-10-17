@@ -192,7 +192,8 @@ export class PaymentProcessorService {
   constructor(
     private paymentProvider: PaymentProvider,
     private orders: Map<string, Order>,
-    private uow?: IUnitOfWork
+    private uow?: IUnitOfWork,
+    private catalog?: any
   ) {}
 
   async processWebhook(payload: unknown, headers: Record<string, string>): Promise<Order> {
@@ -228,6 +229,19 @@ export class PaymentProcessorService {
       const subtotalCents = Math.round(event.amountCents / (1 + taxRate));
       const taxCents = event.amountCents - subtotalCents;
 
+      // Find an authoritative plan version from catalog or fallback
+      let resolvedPlanVersionId = 'wp-starter';
+      if (this.catalog) {
+        try {
+          const plans = typeof this.catalog.listPlans === 'function' ? this.catalog.listPlans() : [];
+          if (plans.length > 0 && plans[0]?.activeVersion?.id) {
+            resolvedPlanVersionId = plans[0].activeVersion.id;
+          }
+        } catch {
+          // ignore
+        }
+      }
+
       order = {
         id: `ord-${event.providerReference}`,
         organizationId: 'org-customer-live',
@@ -241,7 +255,7 @@ export class PaymentProcessorService {
           {
             id: `item-${event.providerReference}`,
             orderId: `ord-${event.providerReference}`,
-            planVersionId: 'plan-vps-standard-v1',
+            planVersionId: resolvedPlanVersionId,
             billingCycle: BillingCycle.MONTHLY,
             unitPriceCents: subtotalCents,
             quantity: 1,
