@@ -146,9 +146,9 @@ jobs:
             sed -i 's/^NEXT_PUBLIC_WOMPI_PUBLIC_KEY=.*/NEXT_PUBLIC_WOMPI_PUBLIC_KEY=pub_test_fGQ5uisyUhqe79cakGHXNKbdsr4K4EVI/' /opt/velupi/.env.production
 
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
-            docker compose -f docker-compose.prod.yml ps
+            docker compose --env-file /opt/velupi/.env.production -f docker-compose.prod.yml pull
+            docker compose --env-file /opt/velupi/.env.production -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
+            docker compose --env-file /opt/velupi/.env.production -f docker-compose.prod.yml ps
 
             # Verify Traefik and Portainer are running
             docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
