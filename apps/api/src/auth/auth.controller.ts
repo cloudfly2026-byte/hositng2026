@@ -121,13 +121,13 @@ export class AuthController {
           });
 
           if (tokenRes.ok) {
-            const tokenData = await tokenRes.json();
-            if (tokenData.access_token) {
+            const tokenData = (await tokenRes.json()) as any;
+            if (tokenData?.access_token) {
               const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                 headers: { Authorization: `Bearer ${tokenData.access_token}` },
               });
               if (userRes.ok) {
-                const userData = await userRes.json();
+                const userData = (await userRes.json()) as any;
                 sub = userData.sub;
                 email = userData.email;
                 name = userData.name || userData.given_name || 'Google User';
@@ -215,8 +215,8 @@ export class AuthController {
           });
 
           if (tokenRes.ok) {
-            const tokenData = await tokenRes.json();
-            if (tokenData.access_token) {
+            const tokenData = (await tokenRes.json()) as any;
+            if (tokenData?.access_token) {
               const userRes = await fetch('https://api.github.com/user', {
                 headers: {
                   Authorization: `Bearer ${tokenData.access_token}`,
@@ -224,7 +224,7 @@ export class AuthController {
                 },
               });
               if (userRes.ok) {
-                const userData = await userRes.json();
+                const userData = (await userRes.json()) as any;
                 sub = String(userData.id);
                 name = userData.name || userData.login || 'GitHub Developer';
                 email = userData.email;
@@ -238,7 +238,7 @@ export class AuthController {
                     },
                   });
                   if (emailsRes.ok) {
-                    const emailsList = await emailsRes.json();
+                    const emailsList = (await emailsRes.json()) as any[];
                     const primary = emailsList.find((e: any) => e.primary && e.verified);
                     if (primary) email = primary.email;
                   }
