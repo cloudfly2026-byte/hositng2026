@@ -58,6 +58,12 @@
 - **Google OAuth Real**: ✅ **VALIDADO EN PRODUCCIÓN**. Client ID (`530669748909-*.apps.googleusercontent.com`) y Client Secret inyectados. Endpoint `GET /auth/oauth/google/start` genera URL autoritativa con PKCE (`S256`).
 - **GitHub OAuth Real**: ✅ **VALIDADO EN PRODUCCIÓN**. Client ID (`Ov23ct6LCzOT4AqJw9w7`) y Client Secret inyectados. Endpoint `GET /auth/oauth/github/start` genera URL autoritativa con state criptográfico.
 
+### C. Validación E2E de Compra y Wompi Sandbox (Navegador Real)
+- **Registro / Autenticación Real**: ✅ **VALIDADO EN VIVO**. Cuenta `Edwin Guevara` (`egbmaster2007@gmail.com`) vinculada y autenticada en el portal.
+- **Carrito y Cotización Inmutable**: ✅ **VALIDADO EN VIVO**. Plan WordPress Starter cotizado en backend por $35.000 COP + 19% IVA = **$41.650 COP**.
+- **Paso 2 Facturación Fiscal**: ✅ **VALIDADO EN VIVO**. Diligenciamiento de datos de facturación (Edwin Guevara, CC 1020304050, Bogotá, D.C.).
+- **Checkout Oficial Wompi Sandbox**: ✅ **VALIDADO EN VIVO**. Redirección exitosa a pasarela segura Wompi Sandbox (`https://checkout.wompi.co/method`) por **$41.650 COP**. Captura fotográfica de evidencia registrada.
+
 ---
 
 ## 3. Estado de la Infraestructura en VPS (`169.58.220.244`)
