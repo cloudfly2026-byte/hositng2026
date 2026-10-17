@@ -131,11 +131,20 @@ export class AuthController {
                 sub = userData.sub;
                 email = userData.email;
                 name = userData.name || userData.given_name || 'Google User';
+                console.log(`[Google OAuth] Successfully retrieved profile for email: ${email}`);
+              } else {
+                const errText = await userRes.text();
+                console.error('[Google OAuth] UserInfo endpoint failed:', errText);
               }
             }
+          } else {
+            const errText = await tokenRes.text();
+            console.error('[Google OAuth] Token endpoint failed:', errText);
+            throw new Error(`Google token exchange failed: ${errText}`);
           }
-        } catch (fetchErr) {
-          // If token exchange fails, fall back to mock or report error
+        } catch (fetchErr: any) {
+          console.error('[Google OAuth] Error during token exchange:', fetchErr?.message);
+          throw fetchErr;
         }
       }
 
