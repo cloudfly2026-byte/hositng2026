@@ -137,6 +137,14 @@ jobs:
             export API_IMAGE="ghcr.io/${OWNER}/velupi-api:latest"
             export WEB_IMAGE="ghcr.io/${OWNER}/velupi-web:latest"
 
+            # Update Wompi configuration to Sandbox
+            sed -i 's/^WOMPI_PUBLIC_KEY=.*/WOMPI_PUBLIC_KEY=pub_test_fGQ5uisyUhqe79cakGHXNKbdsr4K4EVI/' /opt/velupi/.env.production
+            sed -i 's/^WOMPI_PRIVATE_KEY=.*/WOMPI_PRIVATE_KEY=prv_test_rD91S85BFipOg61sIGNKBnXPb3Xoymhk/' /opt/velupi/.env.production
+            sed -i 's/^WOMPI_EVENTS_SECRET=.*/WOMPI_EVENTS_SECRET=test_events_Xj7hjtFmaOzeJPKIEktZfjZSszq13xWP/' /opt/velupi/.env.production
+            sed -i 's/^WOMPI_INTEGRITY_SECRET=.*/WOMPI_INTEGRITY_SECRET=test_integrity_QItgn8cX8tDczreItILfILtkrhKDqmls/' /opt/velupi/.env.production
+            sed -i 's/^WOMPI_ENVIRONMENT=.*/WOMPI_ENVIRONMENT=sandbox/' /opt/velupi/.env.production
+            sed -i 's/^NEXT_PUBLIC_WOMPI_PUBLIC_KEY=.*/NEXT_PUBLIC_WOMPI_PUBLIC_KEY=pub_test_fGQ5uisyUhqe79cakGHXNKbdsr4K4EVI/' /opt/velupi/.env.production
+
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
