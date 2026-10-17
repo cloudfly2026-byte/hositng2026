@@ -41,7 +41,10 @@ export class OrdersController {
         // orderId might be Wompi transaction ID from return URL
         const payRecord = await (this.uow.payments as any).findByProviderTransactionId?.(orderId);
         if (payRecord?.orderId) {
-          order = await this.uow.orders.findById(payRecord.orderId);
+          const found = await this.uow.orders.findById(payRecord.orderId);
+          if (found) {
+            order = found;
+          }
         }
       } catch {
         // Fallback silently
