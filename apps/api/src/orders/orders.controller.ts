@@ -1,5 +1,6 @@
 import { Controller, Get, Param, NotFoundException, Inject, Optional } from '@nestjs/common';
 import { OrderService, Order, IUnitOfWork } from '@cloudfly/domain';
+import { globalOrdersStore } from '../app.module';
 
 @Controller('orders')
 export class OrdersController {
@@ -19,6 +20,12 @@ export class OrdersController {
       order =
         this.ordersStore.get(orderId) ||
         Array.from(this.ordersStore.values()).find((o) => o.orderNumber === orderId);
+    }
+
+    if (!order) {
+      order =
+        globalOrdersStore.get(orderId) ||
+        Array.from(globalOrdersStore.values()).find((o) => o.orderNumber === orderId);
     }
 
     if (!order && this.uow?.orders) {

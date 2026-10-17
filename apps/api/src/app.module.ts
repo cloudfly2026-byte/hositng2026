@@ -40,6 +40,8 @@ import {
 } from '@cloudfly/deployment-adapters';
 import { PrismaUnitOfWork, PrismaDatabaseUnitOfWork } from '@cloudfly/persistence';
 
+export const globalOrdersStore = new Map<string, Order>();
+
 @Module({
   imports: [],
   controllers: [
@@ -175,7 +177,7 @@ import { PrismaUnitOfWork, PrismaDatabaseUnitOfWork } from '@cloudfly/persistenc
     },
     {
       provide: 'ORDERS_STORE',
-      useValue: new Map<string, Order>(),
+      useValue: globalOrdersStore,
     },
     {
       provide: PaymentProcessorService,

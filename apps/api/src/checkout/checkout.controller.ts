@@ -6,6 +6,7 @@ import {
   BillingCycle,
 } from '@cloudfly/domain';
 import { PaymentSessionResult } from '@cloudfly/contracts';
+import { globalOrdersStore } from '../app.module';
 
 export interface CreateOrderDto {
   organizationId: string;
@@ -83,6 +84,8 @@ export class CheckoutController {
       idempotencyKey: dto.idempotencyKey,
     });
 
+    globalOrdersStore.set(order.id, order);
+    globalOrdersStore.set(order.orderNumber, order);
     if (this.ordersStore) {
       this.ordersStore.set(order.id, order);
       this.ordersStore.set(order.orderNumber, order);
@@ -118,6 +121,12 @@ export class CheckoutController {
       order =
         this.ordersStore.get(orderId) ||
         Array.from(this.ordersStore.values()).find((o) => o.orderNumber === orderId);
+    }
+
+    if (!order) {
+      order =
+        globalOrdersStore.get(orderId) ||
+        Array.from(globalOrdersStore.values()).find((o) => o.orderNumber === orderId);
     }
 
     if (!order) {
