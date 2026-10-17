@@ -101,6 +101,12 @@ services:
       WOMPI_EVENTS_SECRET: ${WOMPI_EVENTS_SECRET}
       WOMPI_INTEGRITY_SECRET: ${WOMPI_INTEGRITY_SECRET}
       WOMPI_ENVIRONMENT: ${WOMPI_ENVIRONMENT:-production}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      GITHUB_REDIRECT_URI: ${GITHUB_REDIRECT_URI:-https://api.velupi.com/auth/oauth/github/callback}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://api.velupi.com/auth/oauth/google/callback}
     depends_on:
       postgres:
         condition: service_healthy

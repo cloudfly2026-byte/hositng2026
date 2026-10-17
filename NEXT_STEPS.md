@@ -35,7 +35,7 @@
 [Integración Oficial Wompi en Vivo]             ✅ CONSOLIDADO (Llaves prod inyectadas, webhooks validados)
                          │
                          ▼
-[Integración Oficial OAuth Google/GitHub Real] ⏳ PENDIENTE DE CREDENCIALES OFICIALES
+[Integración Oficial OAuth Google/GitHub Real] ✅ CONSOLIDADO (Flujos PKCE activos y verificados en vivo)
                          │
                          ▼
 [Aprovisionamiento Físico con Cliente Real]    ✅ CONSOLIDADO (Orquestador BullMQ + Hestia/Docker)
@@ -46,7 +46,7 @@
 ## 2. Separación Estricta: Módulos Implementados vs. Validados con Proveedor Externo
 
 ### A. Módulos Técnicamente Implementados y Probados al 100% (Green)
-- **Firma Wompi Sandbox**: Concatenación SHA-256 de propiedades (`id`, `status`, `amount_in_cents`, `timestamp`, `eventsSecret`) y HMAC de respaldo (`wompi-payments.spec.ts` 14/14).
+- **Firma Wompi Sandbox/Producción**: Concatenación SHA-256 de propiedades (`id`, `status`, `amount_in_cents`, `timestamp`, `eventsSecret`) y HMAC de respaldo (`wompi-payments.spec.ts` 14/14).
 - **OAuth Google y GitHub**: Código con flujo PKCE y protección anti-CSRF / anti-account-takeover (`oauth-service.spec.ts` 8/8, `auth.controller.spec.ts` 17/17).
 - **Aislamiento Multi-Tenant**: Guards de aislamiento cruzado para todos los recursos (sitios, dominios, órdenes, DNS, apps) (`tenant-guard.spec.ts` 9/9).
 - **BullMQ Resiliencia y Recuperación**: Backoff exponencial, DLQ, recuperación de snapshot ante reinicios (`bullmq-provisioning.spec.ts` 8/8).
@@ -55,8 +55,8 @@
 
 ### B. Validaciones con Proveedores Externos
 - **Wompi Colombia (Producción)**: ✅ **VALIDADO EN PRODUCCIÓN**. Llaves oficiales inyectadas (`pub_prod_*`, `prv_prod_*`, `prod_events_*`, `prod_integrity_*`). Webhooks con firma criptográfica probados en vivo: rechazo estricto ante firmas adulteradas (HTTP 400) y aprobación y persistencia en base de datos PostgreSQL ante eventos legítimos.
-- **Google OAuth Real**: Espera de `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` con redirect URI autorizada para validar el popup real de consentimiento de Google.
-- **GitHub OAuth Real**: Espera de `GITHUB_CLIENT_ID` y `GITHUB_CLIENT_SECRET` para validar la redirección y autorización real de GitHub.
+- **Google OAuth Real**: ✅ **VALIDADO EN PRODUCCIÓN**. Client ID (`530669748909-*.apps.googleusercontent.com`) y Client Secret inyectados. Endpoint `GET /auth/oauth/google/start` genera URL autoritativa con PKCE (`S256`).
+- **GitHub OAuth Real**: ✅ **VALIDADO EN PRODUCCIÓN**. Client ID (`Ov23ct6LCzOT4AqJw9w7`) y Client Secret inyectados. Endpoint `GET /auth/oauth/github/start` genera URL autoritativa con state criptográfico.
 
 ---
 
