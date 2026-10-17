@@ -159,14 +159,19 @@ import { PrismaUnitOfWork, PrismaDatabaseUnitOfWork } from '@cloudfly/persistenc
     },
     {
       provide: WompiPaymentAdapter,
-      useFactory: () =>
-        new WompiPaymentAdapter({
-          publicKey: process.env.WOMPI_PUBLIC_KEY || 'pub_test_dummy',
+      useFactory: () => {
+        const pubKey = process.env.WOMPI_PUBLIC_KEY || 'pub_test_dummy';
+        const env = process.env.WOMPI_ENVIRONMENT?.toLowerCase();
+        const isSandbox = env === 'sandbox' || env === 'test' || pubKey.startsWith('pub_test_');
+
+        return new WompiPaymentAdapter({
+          publicKey: pubKey,
           privateKey: process.env.WOMPI_PRIVATE_KEY || 'prv_test_dummy',
           integritySecret: process.env.WOMPI_INTEGRITY_SECRET || 'sec_integrity_dummy',
           eventsSecret: process.env.WOMPI_EVENTS_SECRET || 'sec_events_dummy',
-          isSandbox: process.env.NODE_ENV !== 'production',
-        }),
+          isSandbox,
+        });
+      },
     },
     {
       provide: 'ORDERS_STORE',
