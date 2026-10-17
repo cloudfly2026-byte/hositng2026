@@ -17,7 +17,7 @@
 [Portainer CE 2.45.2 Inicializado con Admin]   ✅ CONSOLIDADO (https://portainer.velupi.com)
                          │
                          ▼
-[Rotación/Revocación Clave HestiaCP Histórica] ✅ CONSOLIDADO (Solo manager k4HHLIiCDxj9pIf1QwQK activa)
+[Rotación/Revocación Clave HestiaCP Histórica] ✅ CONSOLIDADO (Solo clave de servicio manager activa)
                          │
                          ▼
 [BIND9 DNS Autoritativo & SSL Let's Encrypt]  ✅ CONSOLIDADO (Resolución global velupi.com)
@@ -71,7 +71,7 @@
    - 16 tablas relacionales creadas y activas (`audit_events`, `cart_drafts`, `customer_entitlements`, `invoices`, `memberships`, `order_items`, `orders`, `organizations`, `payments`, `plan_versions`, `plans`, `products`, `projects`, `services`, `subscriptions`, `users`).
 4. **HestiaCP en VPS 1 (`89.117.147.134:8083`)**:
    - Clave histórica expuesta confirmada como revocada/inexistente en el sistema.
-   - Clave de servicio `manager` (`k4HHLIiCDxj9pIf1QwQK`) activa y restringida al Control Plane.
+   - Clave de servicio `manager` activa y restringida al Control Plane.
 
 ---
 

@@ -331,7 +331,7 @@ Se formalizó la identidad definitiva de marca **Velupi** y se migró todo el po
 - **Verificación de la clave en VPS 1 (`89.117.147.134:8083`)**:
   - Se auditó el llavero de HestiaCP con `/usr/local/hestia/bin/v-list-access-keys`.
   - La clave expuesta histórica no se encuentra activa en el usuario `admin` ni en el sistema.
-  - Se constató una clave activa para el usuario `manager`: `k4HHLIiCDxj9pIf1QwQK` (creada el 2026-10-15 como "Velupi Control Plane"), restringida a consultas del Control Plane.
+  - Se constató una clave de acceso activa para el usuario de servicio `manager` (restringida a consultas del Control Plane), configurada exclusivamente en las variables seguras del host.
 - **Verificación en VPS 2 (`169.58.220.244`)**:
   - Inspección del contenedor `velupi-api`: `HESTIA_ACCESS_KEY` y `HESTIA_SECRET_KEY` no tienen valores hardcodeados en la imagen Docker ni en el docker-compose.
   - No hay exposición de credenciales en el bundle frontend ni en respuestas API.
