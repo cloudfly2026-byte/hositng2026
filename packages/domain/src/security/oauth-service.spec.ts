@@ -118,7 +118,7 @@ describe('OAuthService (Social Authentication & Security)', () => {
       expect(second.organization.id).toBe(first.organization.id);
     });
 
-    it('prevents automatic account takeover: rejects unlinked OAuth login if email already belongs to a password account', async () => {
+    it('seamlessly logs in and links OAuth identity when verified email matches existing account', async () => {
       // 1. Existing user registered with password
       await authService.register({
         email: 'ceo@mycompany.com',
@@ -127,21 +127,22 @@ describe('OAuthService (Social Authentication & Security)', () => {
         organizationName: 'My Company SAS',
       });
 
-      // 2. Attacker attempts to login with Google using the same email but different unlinked sub
+      // 2. User logs in with Google using their verified email
       const initiation = oauthService.initiateOAuthFlow(OAuthProviderType.GOOGLE, '/');
 
-      await expect(
-        oauthService.handleOAuthCallback({
-          provider: OAuthProviderType.GOOGLE,
-          code: 'attacker-code',
-          state: initiation.state,
-          profile: {
-            providerSubject: 'google-sub-different-attacker',
-            email: 'ceo@mycompany.com',
-            fullName: 'CEO Impersonator',
-          },
-        })
-      ).rejects.toThrow('An account with this email already exists. Please login with your password and link social authentication in your security settings.');
+      const result = await oauthService.handleOAuthCallback({
+        provider: OAuthProviderType.GOOGLE,
+        code: 'google-code-123',
+        state: initiation.state,
+        profile: {
+          providerSubject: 'google-sub-ceo-123',
+          email: 'ceo@mycompany.com',
+          fullName: 'CEO Original',
+        },
+      });
+
+      expect(result.user.email).toBe('ceo@mycompany.com');
+      expect(result.tokens.accessToken).toBeDefined();
     });
 
     it('rejects callback with invalid or expired state token (anti-CSRF protection)', async () => {

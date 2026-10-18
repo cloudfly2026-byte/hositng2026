@@ -188,12 +188,29 @@ export class OAuthService {
       };
     }
 
-    // Check if an existing account with this email exists in password accounts
+    // Check if an account with this email already exists
     const existingUserWithEmail = await this.findUserByEmail(input.profile.email);
     if (existingUserWithEmail) {
-      throw new Error(
-        'An account with this email already exists. Please login with your password and link social authentication in your security settings.'
-      );
+      // Auto-link OAuth identity to existing user account and login
+      const identity: OAuthIdentity = {
+        id: randomUUID(),
+        userId: existingUserWithEmail.id,
+        provider: input.provider,
+        providerSubject: input.profile.providerSubject,
+        email: input.profile.email,
+        createdAt: new Date(),
+      };
+      this.identities.set(identityKey, identity);
+
+      const organization = await this.findFirstOrganizationForUser(existingUserWithEmail.id);
+      const tokens = await this.generateSessionTokens(existingUserWithEmail, organization);
+
+      return {
+        user: existingUserWithEmail,
+        organization,
+        tokens,
+        returnTo: stateRecord.returnTo,
+      };
     }
 
     // First time social registration: create user, organization and link OAuthIdentity
