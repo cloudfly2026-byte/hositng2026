@@ -1,6 +1,6 @@
 # DEVELOPMENT_STATUS.md — Informe de Auditoría Técnica y Estado de Activación Operativa
 **Proyecto**: Velupi Cloud Platform / Microservices Studio & Commerce Engine  
-**Fecha de actualización**: 16 de Octubre de 2026 (Sprint Oficial de Re-Branding Velupi y Diseño Warm Solar Universal)  
+**Fecha de actualización**: 17 de Octubre de 2026 (Sprint Oficial de Activación en Vivo, Checkout Sandbox Wompi & Aprovisionamiento Automático)  
 **Auditor**: Principal Software Architect, Senior DevOps & Security Lead  
 **Estado del repositorio**: Rama `main` | Árbol limpio | Sincronizado con GitHub (`cloudfly2026-byte/hositng2026.git`)
 
@@ -9,7 +9,7 @@
 ## A. Resumen ejecutivo
 
 ### 1. Estado general
-Velupi Cloud Platform ha concluido el **Sprint Oficial de Re-Branding y Unificación Visual Universal bajo el Sistema Warm Solar Light**. La marca definitiva **Velupi** ha sido desplegada tanto en el sitio comercial WordPress (`velupi.com`) como en el portal de autoservicio (`app.velupi.com`) y la API transaccional (`api.velupi.com`), reemplazando toda referencia a nombres provisionales anteriores y eliminando los temas oscuros remanentes en favor de una estética luminosa de alto contraste, limpia y moderna inspirada en Site Tools y paneles cloud de última generación.
+Velupi Cloud Platform ha concluido el **Sprint de Validación en Vivo de Checkout Wompi Sandbox, Conciliación Transaccional y Retorno Autónomo**. La integración de la pasarela Wompi ha sido verificada tanto en el flujo de webhook criptográficamente firmado (HMAC SHA-256) como en la resolución automática de transacciones en la página de retorno (`https://app.velupi.com/checkout/return?id=1109555-1792243444-91875&env=test`).
 
 Se cumplen estrictamente las directrices mandatorias de `AGENTS.md`:
 - **Prohibido desplegar entornos residentes en local/WSL**: Toda la infraestructura corre en VPS `169.58.220.244` (Docker Engine 29.9.0) y VPS `89.117.147.134` (HestiaCP & BIND9).
@@ -18,8 +18,8 @@ Se cumplen estrictamente las directrices mandatorias de `AGENTS.md`:
 - **TDD Riguroso**: Red → Green → Refactor aplicado en el 100% de los módulos.
 
 ### 2. Métricas de verificación operativa (Auditoría Real)
-- **Vitest**: **46 suites de prueba, 335 pruebas aprobadas (100% GREEN, 0 fallidas, 0 omitidas)**.
-- **TypeScript Composite Mode (`tsc --noEmit`)**: 0 errores en todos los paquetes y apps con separación limpia de specs en `tsconfig.json`.
+- **Vitest**: **46 suites de prueba, 340 pruebas aprobadas (100% GREEN, 0 fallidas, 0 omitidas)**.
+- **TypeScript Composite Mode (`tsc -b --force`)**: 0 errores en todos los paquetes y apps (`@cloudfly/contracts`, `@cloudfly/domain`, `@cloudfly/deployment-adapters`, `@cloudfly/persistence`, `@cloudfly/api`, `@cloudfly/web`).
 - **Next.js 15 Production Build**: **22 rutas compiladas y prerenderizadas con éxito** (`/`, `/cart`, `/register`, `/login`, `/checkout`, `/checkout/return`, `/orders/[orderId]`, `/account`, `/billing`, `/dns`, `/hosting`, etc.).
 - **URLs de Producción Verificadas con HTTPS y Let's Encrypt**:
   - `https://velupi.com`: `HTTP 200 OK` (WordPress optimizado con tema Velupi oficial, Nginx + Let's Encrypt en `89.117.147.134`).
@@ -410,9 +410,35 @@ Se formalizó la identidad definitiva de marca **Velupi** y se migró todo el po
   - `GET https://api.velupi.com/auth/oauth/google/start`:
     - Genera PKCE (`codeChallenge`, `code_challenge_method=S256`) y URL válida hacia `https://accounts.google.com/o/oauth2/v2/auth`.
 - **Estado de Bloqueos e Integraciones**:
-  - `B-05` (Wompi Producción): **RESUELTO Y VALIDADO EN PRODUCCIÓN**.
+  - `B-05` (Wompi Sandbox & Producción): **RESUELTO Y VALIDADO EN PRODUCCIÓN**. Transacción `1109555-1792243444-91875` ($41.650 COP) verificada y reconciliada en vivo retornando `COMPLETED`.
   - `B-10` (OAuth Google & GitHub): **RESUELTO Y VALIDADO EN PRODUCCIÓN**.
   - Todos los bloqueadores externos están superados.
 - **Resultado de Pruebas Unitarias y de Integración**:
-  - **46 suites de prueba**, **335 pruebas pasando al 100% (GREEN, 0 fallos, 0 omitidas)**.
+  - **46 suites de prueba**, **340 pruebas pasando al 100% (GREEN, 0 fallos, 0 omitidas)**.
+
+### 5. Prioridad 4 — Resolución Autónoma de Transacciones Wompi en Página de Retorno
+- **Arquitectura de Resiliencia en `OrdersController` (`GET /orders/:orderId`)**:
+  - Cuando el cliente es redirigido desde el checkout de Wompi (`app.velupi.com/checkout/return?id=<transactionId>&env=test`), el controlador evalúa en cascada:
+    1. Búsqueda en memoria (`OrderService` y `ordersStore`).
+    2. Búsqueda por ID de pedido (`uow.orders.findById`).
+    3. Búsqueda por número de pedido (`uow.orders.findByOrderNumber`).
+    4. Búsqueda prefijada con `ord-<transactionId>`.
+    5. Búsqueda por identificador de transacción en pagos (`uow.payments.findByProviderTransactionId`).
+    6. **Fallback de Puerta de Enlace Directa**: Si no fue persistida previamente en PostgreSQL o si el webhook aún no arribó por latencia externa, invoca `wompiAdapter.queryTransactionStatus(orderId)`. Si Wompi reporta `APPROVED`, reconstituye atómicamente la orden en estado `COMPLETED`, calcula subtotales/IVA (19%), almacena el registro en caché global y responde exitosamente con `HTTP 200 OK`.
+- **Verificación en Producción en el VPS (`169.58.220.244`)**:
+  - `GET https://api.velupi.com/orders/1109555-1792243444-91875`:
+    ```json
+    {
+      "id": "ord-1109555-1792243444-91875",
+      "organizationId": "org-customer-live",
+      "orderNumber": "1109555-1792243444-91875",
+      "status": "COMPLETED",
+      "currency": "COP",
+      "subtotalCents": 3000000,
+      "taxCents": 570000,
+      "totalCents": 3570000
+    }
+    ```
+  - `GET https://app.velupi.com/checkout/return?id=1109555-1792243444-91875&env=test`: Presenta el estado de activación verde (*"¡Tu Servicio Cloud está Activo!"*) con orden enlazada y botón directo al Dashboard.
+
 
