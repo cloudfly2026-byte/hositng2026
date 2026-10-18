@@ -206,7 +206,16 @@ export function Topbar({
 
           {/* User Account Avatar & Menu */}
           <Box
+            id="user-account-menu-button"
+            aria-label="Cuenta de usuario"
+            role="button"
+            tabIndex={0}
             onClick={handleOpenUserMenu}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                handleOpenUserMenu(e as any);
+              }
+            }}
             sx={{
               display: 'flex',
               alignItems: 'center',

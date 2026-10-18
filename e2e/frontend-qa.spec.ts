@@ -126,6 +126,38 @@ test.describe('VELUPI E2E — Role-Based Access & Dynamic Navigation', () => {
     // Must be redirected to login when capabilities resolves unauthenticated state
     await expect(page).toHaveURL(/.*\/login\?returnTo=%2Fbilling/, { timeout: 10000 });
   });
+
+  test('clicking Cerrar Sesión in user dropdown clears session and redirects to /login', async ({ page, context }) => {
+    const ownerToken = generateTestAuthToken(TEST_USERS.OWNER);
+
+    await context.addCookies([
+      {
+        name: 'velupi_session',
+        value: ownerToken,
+        domain: 'app.velupi.com',
+        path: '/',
+      },
+    ]);
+
+    await safeGoto(page, '/hosting');
+    await page.evaluate((tok) => {
+      localStorage.setItem('velupi_access_token', tok);
+      localStorage.setItem('velupi_active_org_id', 'org-tenant-alpha');
+    }, ownerToken);
+
+    // Click on user menu in topbar
+    const userMenuButton = page.locator('#user-account-menu-button');
+    await expect(userMenuButton).toBeVisible();
+    await userMenuButton.click();
+
+    // Verify dropdown is open and click 'Cerrar Sesión'
+    const logoutItem = page.getByRole('menuitem', { name: /Cerrar Sesión/i });
+    await expect(logoutItem).toBeVisible({ timeout: 5000 });
+    await logoutItem.click();
+
+    // Should redirect to /login
+    await expect(page).toHaveURL(/.*\/login/, { timeout: 15000 });
+  });
 });
 
 test.describe('VELUPI E2E — Responsive Navigation & Layouts', () => {
