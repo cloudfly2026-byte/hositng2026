@@ -59,10 +59,10 @@ describe('Velupi Checkout & Onboarding UI Flow (UC-NEW-001)', () => {
 
   it('renders LoginPage with credentials form and OAuth options', () => {
     render(<LoginPage />);
-    expect(screen.getAllByText('Iniciar Sesión').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Acceder a Velupi')).toBeDefined();
     expect(screen.getByText('Continuar con Google')).toBeDefined();
     expect(screen.getByText('Continuar con GitHub')).toBeDefined();
-    expect(screen.getByText('Entrar a Velupi')).toBeDefined();
+    expect(screen.getByText('Continuar con Correo')).toBeDefined();
   });
 
   it('renders CheckoutPage with fiscal form and Wompi payment button', () => {

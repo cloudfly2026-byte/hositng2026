@@ -132,6 +132,25 @@ export class ApiClient {
     }
   }
 
+  async requestAccessCode(email: string, fullName?: string): Promise<{
+    status: string;
+    isNewUser: boolean;
+    cooldownSeconds: number;
+    email: string;
+  }> {
+    return this.request('/auth/request-code', {
+      method: 'POST',
+      body: JSON.stringify({ email, fullName }),
+    });
+  }
+
+  async verifyAccessCode(email: string, code: string): Promise<any> {
+    return this.request('/auth/verify-code', {
+      method: 'POST',
+      body: JSON.stringify({ email, code }),
+    });
+  }
+
   async listOrders(organizationId?: string): Promise<any[]> {
     const query = organizationId ? `?organizationId=${encodeURIComponent(organizationId)}` : '';
     return this.request<any[]>(`/orders${query}`);

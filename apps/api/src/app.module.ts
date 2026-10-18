@@ -36,6 +36,7 @@ import {
   SubscriptionService,
   AccessPolicyService,
   FileManagerService,
+  MailerService,
 } from '@cloudfly/domain';
 import {
   HestiaDnsAdapter,
@@ -126,13 +127,25 @@ export const globalOrdersStore = new Map<string, Order>();
         new JwtSecurityService(process.env.JWT_SECRET || 'velupi_jwt_secure_key_2026_super_secret'),
     },
     {
+      provide: MailerService,
+      useFactory: () => {
+        return new MailerService({
+          fromEmail: process.env.MAIL_FROM || 'noreply@velupi.com',
+          fromName: 'Velupi Cloud Platform',
+          smtpHost: process.env.SMTP_HOST || '127.0.0.1',
+          smtpPort: Number(process.env.SMTP_PORT || 25),
+        });
+      },
+    },
+    {
       provide: AuthenticationService,
       useFactory: (
         hasher: Argon2PasswordHasher,
         jwt: JwtSecurityService,
-        uow: PrismaUnitOfWork
-      ) => new AuthenticationService(hasher, jwt, uow),
-      inject: [Argon2PasswordHasher, JwtSecurityService, 'IUnitOfWork'],
+        uow: PrismaUnitOfWork,
+        mailer: MailerService
+      ) => new AuthenticationService(hasher, jwt, uow, undefined, mailer),
+      inject: [Argon2PasswordHasher, JwtSecurityService, 'IUnitOfWork', MailerService],
     },
     {
       provide: OAuthService,

@@ -110,13 +110,15 @@ export class AuthenticationService {
   private consumedRefreshTokens: Map<string, { familyId: string; userId: string; expiresAt: Date }> = new Map(); // rotated tokens
   private verificationTokens: Map<string, string> = new Map(); // userId -> token
   private resetTokens: Map<string, { userId: string; expiresAt: Date }> = new Map(); // token -> { userId, expiresAt }
+  private otpCodes: Map<string, { code: string; expiresAt: Date; lastRequestedAt: Date; isNewUser: boolean; fullName?: string }> = new Map(); // normalizedEmail -> { code, expiresAt, lastRequestedAt, isNewUser, fullName }
   private revocationStore: ITokenRevocationStore;
 
   constructor(
     private readonly passwordHasher: IPasswordHasher,
     private readonly jwtService: JwtSecurityService,
     private readonly uow?: IUnitOfWork,
-    revocationStore?: ITokenRevocationStore
+    revocationStore?: ITokenRevocationStore,
+    private readonly mailer?: any
   ) {
     this.revocationStore = revocationStore || new SharedMemoryTokenRevocationStore();
   }
@@ -424,6 +426,173 @@ export class AuthenticationService {
     return {
       user: this.sanitizeUser(user),
       organization: operatorOrg,
+      tokens,
+    };
+  }
+
+  async requestAccessCode(input: { email: string; fullName?: string }): Promise<{
+    status: 'CODE_SENT';
+    isNewUser: boolean;
+    cooldownSeconds: number;
+    email: string;
+  }> {
+    const normalizedEmail = input.email.toLowerCase().trim();
+    if (!normalizedEmail || !normalizedEmail.includes('@')) {
+      throw new Error('Email format is invalid.');
+    }
+
+    const existingOtp = this.otpCodes.get(normalizedEmail);
+    const now = Date.now();
+    if (existingOtp) {
+      const elapsedSeconds = Math.floor((now - existingOtp.lastRequestedAt.getTime()) / 1000);
+      if (elapsedSeconds < 60) {
+        throw new Error(`Debes esperar ${60 - elapsedSeconds} segundos para solicitar un nuevo código.`);
+      }
+    }
+
+    // Check if user exists
+    let user = Array.from(this.users.values()).find((u) => u.email.toLowerCase() === normalizedEmail);
+    if (!user && this.uow) {
+      const persisted = await this.uow.users.findByEmail(normalizedEmail);
+      if (persisted) {
+        user = {
+          ...persisted,
+          passwordHash: persisted.passwordHash || '',
+          isOperator: false,
+        };
+      }
+    }
+
+    const isNewUser = !user;
+    // Generate 6 digit numeric code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(now + 10 * 60 * 1000); // 10 minutes
+
+    this.otpCodes.set(normalizedEmail, {
+      code,
+      expiresAt,
+      lastRequestedAt: new Date(now),
+      isNewUser,
+      fullName: input.fullName,
+    });
+
+    // Send email via mailer if provided
+    if (this.mailer) {
+      try {
+        if (isNewUser) {
+          await this.mailer.sendWelcomeEmail({
+            toEmail: normalizedEmail,
+            fullName: input.fullName || normalizedEmail.split('@')[0],
+            accessCode: code,
+          });
+        } else {
+          await this.mailer.sendLoginOtpEmail({
+            toEmail: normalizedEmail,
+            accessCode: code,
+          });
+        }
+      } catch (mailErr) {
+        console.error('[AUTH OTP] Error sending email via mailer:', mailErr);
+      }
+    } else {
+      console.log(`[AUTH OTP CODE] ${normalizedEmail} -> ${code} (isNewUser: ${isNewUser})`);
+    }
+
+    return {
+      status: 'CODE_SENT',
+      isNewUser,
+      cooldownSeconds: 60,
+      email: normalizedEmail,
+    };
+  }
+
+  async verifyAccessCode(input: { email: string; code: string }): Promise<AuthResult> {
+    const normalizedEmail = input.email.toLowerCase().trim();
+    const entry = this.otpCodes.get(normalizedEmail);
+
+    if (!entry) {
+      throw new Error('No se encontró un código solicitado para este correo. Solicita uno nuevo.');
+    }
+
+    if (new Date() > entry.expiresAt) {
+      this.otpCodes.delete(normalizedEmail);
+      throw new Error('El código de acceso ha expirado. Solicita uno nuevo.');
+    }
+
+    if (entry.code !== input.code.trim()) {
+      throw new Error('El código ingresado es incorrecto.');
+    }
+
+    // Code is valid: clear OTP
+    this.otpCodes.delete(normalizedEmail);
+
+    // If new user, register account automatically
+    if (entry.isNewUser) {
+      const randomPassword = `Auto_${Date.now()}_${Math.random().toString(36).substring(2, 10)}!`;
+      const fullName = entry.fullName || normalizedEmail.split('@')[0];
+      const orgName = `${fullName}'s Cloud`;
+
+      const reg = await this.register({
+        email: normalizedEmail,
+        password: randomPassword,
+        fullName,
+        organizationName: orgName,
+      });
+
+      // Mark email as verified
+      const stored = this.users.get(reg.user.id);
+      if (stored) {
+        stored.emailVerified = true;
+      }
+      reg.user.emailVerified = true;
+      return reg;
+    }
+
+    // Existing user: resolve organization and issue fresh tokens
+    let user = Array.from(this.users.values()).find((u) => u.email.toLowerCase() === normalizedEmail);
+    if (!user && this.uow) {
+      const persisted = await this.uow.users.findByEmail(normalizedEmail);
+      if (persisted) {
+        user = {
+          ...persisted,
+          passwordHash: persisted.passwordHash || '',
+          isOperator: false,
+        };
+        this.users.set(user.id, user);
+      }
+    }
+
+    if (!user) {
+      throw new InvalidCredentialsError();
+    }
+
+    user.emailVerified = true;
+
+    // Find primary organization
+    let org = Array.from(this.organizations.values()).find((o) => o.ownerUserId === user!.id);
+    if (!org && this.uow) {
+      const orgs = await this.uow.organizations.listByUser(user.id);
+      if (orgs.length > 0) {
+        org = orgs[0];
+      }
+    }
+
+    if (!org) {
+      org = {
+        id: `org-${Date.now()}`,
+        name: `${user.fullName || 'User'} Cloud`,
+        slug: 'user-cloud',
+        ownerUserId: user.id,
+        createdAt: new Date(),
+      };
+      this.organizations.set(org.id, org);
+    }
+
+    const tokens = this.issueTokens(user, org.id, ['OWNER']);
+
+    return {
+      user: this.sanitizeUser(user),
+      organization: org,
       tokens,
     };
   }

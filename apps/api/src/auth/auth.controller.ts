@@ -59,6 +59,16 @@ export class ResetPasswordDto {
   newPassword!: string;
 }
 
+export class RequestOtpDto {
+  email!: string;
+  fullName?: string;
+}
+
+export class VerifyOtpDto {
+  email!: string;
+  code!: string;
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -357,6 +367,48 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() body: ForgotPasswordDto) {
     return await this.authService.forgotPassword(body.email);
+  }
+
+  @Post('request-code')
+  @HttpCode(HttpStatus.OK)
+  async requestCode(@Body() body: RequestOtpDto) {
+    try {
+      return await this.authService.requestAccessCode({
+        email: body.email,
+        fullName: body.fullName,
+      });
+    } catch (error: any) {
+      throw new BadRequestException(error.message || 'Error al solicitar código.');
+    }
+  }
+
+  @Post('verify-code')
+  @HttpCode(HttpStatus.OK)
+  async verifyCode(@Body() body: VerifyOtpDto, @Res({ passthrough: true }) res?: any) {
+    try {
+      const result = await this.authService.verifyAccessCode({
+        email: body.email,
+        code: body.code,
+      });
+
+      // Set cookies for web client
+      if (res && typeof res.cookie === 'function') {
+        const isProd = process.env.NODE_ENV === 'production';
+        const cookieOpts = {
+          httpOnly: false,
+          secure: isProd,
+          sameSite: 'lax' as const,
+          path: '/',
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        };
+        res.cookie('velupi_session', result.tokens.accessToken, cookieOpts);
+        res.cookie('velupi_access_token', result.tokens.accessToken, cookieOpts);
+      }
+
+      return result;
+    } catch (error: any) {
+      throw new BadRequestException(error.message || 'Código incorrecto o expirado.');
+    }
   }
 
   @Post('reset-password')

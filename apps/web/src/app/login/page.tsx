@@ -14,9 +14,11 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import GoogleIcon from '@mui/icons-material/Google';
 import GitHubIcon from '@mui/icons-material/GitHub';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
+import MarkEmailReadOutlinedIcon from '@mui/icons-material/MarkEmailReadOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { defaultApiClient } from '../../modules/api-client';
 
 export default function LoginPage() {
@@ -35,11 +37,24 @@ function LoginContent() {
   const returnTo = rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//') ? rawReturnTo : '/';
   const cartId = searchParams.get('cartId');
 
+  // Steps: 'ENTER_EMAIL' | 'ENTER_CODE'
+  const [step, setStep] = React.useState<'ENTER_EMAIL' | 'ENTER_CODE'>('ENTER_EMAIL');
   const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
+  const [code, setCode] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [oauthLoading, setOauthLoading] = React.useState<'google' | 'github' | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = React.useState<string | null>(null);
+  const [cooldown, setCooldown] = React.useState<number>(0);
+
+  // Countdown timer for resend
+  React.useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   // Auto-handle OAuth callback tokens and error from query params
   React.useEffect(() => {
@@ -61,19 +76,66 @@ function LoginContent() {
     }
   }, [searchParams, router, returnTo]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Step 1: Request OTP code (Registers if new, or sends access code if existing)
+  const handleRequestCode = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setError(null);
+    setInfoMessage(null);
+
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      setError('Por favor ingresa un correo electrónico válido.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await defaultApiClient.requestAccessCode(cleanEmail);
+      setStep('ENTER_CODE');
+      setCooldown(res.cooldownSeconds || 60);
+
+      if (res.isNewUser) {
+        setInfoMessage(`¡Cuenta creada! Enviamos tu código de activación y bienvenida a ${cleanEmail}.`);
+      } else {
+        setInfoMessage(`Enviamos un código de acceso de 6 dígitos a ${cleanEmail}.`);
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Error al solicitar el código de acceso.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 2: Verify code and login
+  const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setLoading(true);
 
+    const cleanCode = code.trim();
+    if (cleanCode.length !== 6) {
+      setError('El código debe tener 6 dígitos.');
+      return;
+    }
+
+    setLoading(true);
     try {
-      const response = await defaultApiClient.login({ email, password });
+      const response = await defaultApiClient.verifyAccessCode(email.trim().toLowerCase(), cleanCode);
 
       if (response?.tokens?.accessToken) {
         defaultApiClient.setAuthToken(response.tokens.accessToken);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('velupi_access_token', response.tokens.accessToken);
+          localStorage.setItem('velupi_auth_token', response.tokens.accessToken);
+          if (response.tokens.refreshToken) {
+            localStorage.setItem('velupi_refresh_token', response.tokens.refreshToken);
+          }
+          if (response?.organization?.id) {
+            localStorage.setItem('velupi_active_org_id', response.organization.id);
+          }
+        }
       }
 
-      // If a cart was in progress, claim it with this authenticated account
+      // If a cart was in progress, claim it
       if (cartId) {
         try {
           await defaultApiClient.claimCart(cartId, {
@@ -81,13 +143,18 @@ function LoginContent() {
             organizationId: response?.organization?.id,
           });
         } catch {
-          // Non-blocking: continue to returnTo
+          // Non-blocking
         }
       }
 
-      router.push(returnTo);
+      // Hard navigation to refresh memory state and render dashboard
+      if (typeof window !== 'undefined') {
+        window.location.href = returnTo;
+      } else {
+        router.push(returnTo);
+      }
     } catch (err: any) {
-      setError(err?.message || 'Credenciales inválidas o correo no registrado.');
+      setError(err?.message || 'Código incorrecto o expirado.');
     } finally {
       setLoading(false);
     }
@@ -136,10 +203,12 @@ function LoginContent() {
       >
         <Box sx={{ textAlign: 'center', mb: 3 }}>
           <Typography variant="h5" sx={{ fontWeight: 800, color: '#2D1B17', mb: 0.5 }}>
-            Iniciar Sesión
+            {step === 'ENTER_EMAIL' ? 'Acceder a Velupi' : 'Ingresa tu Código'}
           </Typography>
           <Typography variant="body2" sx={{ color: '#667085' }}>
-            Ingresa a tu consola de Velupi Cloud Platform.
+            {step === 'ENTER_EMAIL'
+              ? 'Inicia sesión o regístrate automáticamente con tu correo.'
+              : `Ingresa el código de 6 dígitos que enviamos a ${email}`}
           </Typography>
         </Box>
 
@@ -149,117 +218,186 @@ function LoginContent() {
           </Alert>
         )}
 
-        {/* Social Buttons */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 3 }}>
-          <Button
-            variant="outlined"
-            fullWidth
-            startIcon={oauthLoading === 'google' ? <CircularProgress size={18} color="inherit" /> : <GoogleIcon />}
-            onClick={() => handleOAuth('google')}
-            disabled={loading || oauthLoading !== null}
-            sx={{
-              py: 1.2,
-              textTransform: 'none',
-              fontWeight: 600,
-              color: '#2D1B17',
-              borderColor: '#E5E7EB',
-              backgroundColor: '#FFFFFF',
-              '&:hover': {
-                borderColor: '#FF6B00',
-                backgroundColor: 'rgba(255, 107, 0, 0.04)',
-              },
-            }}
-          >
-            Continuar con Google
-          </Button>
-          <Button
-            variant="outlined"
-            fullWidth
-            startIcon={oauthLoading === 'github' ? <CircularProgress size={18} color="inherit" /> : <GitHubIcon />}
-            onClick={() => handleOAuth('github')}
-            disabled={loading || oauthLoading !== null}
-            sx={{
-              py: 1.2,
-              textTransform: 'none',
-              fontWeight: 600,
-              color: '#2D1B17',
-              borderColor: '#E5E7EB',
-              backgroundColor: '#FFFFFF',
-              '&:hover': {
-                borderColor: '#FF6B00',
-                backgroundColor: 'rgba(255, 107, 0, 0.04)',
-              },
-            }}
-          >
-            Continuar con GitHub
-          </Button>
-        </Box>
+        {infoMessage && (
+          <Alert severity="info" icon={<CheckCircleOutlineIcon fontSize="inherit" />} sx={{ mb: 3, borderRadius: 2 }}>
+            {infoMessage}
+          </Alert>
+        )}
 
-        <Divider sx={{ my: 3, borderColor: '#F2E8DC' }}>
-          <Typography variant="caption" sx={{ color: '#667085', px: 1, fontWeight: 600 }}>
-            O CON TU CORREO REGISTRADO
-          </Typography>
-        </Divider>
+        {step === 'ENTER_EMAIL' ? (
+          <>
+            {/* Social Buttons */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 3 }}>
+              <Button
+                variant="outlined"
+                fullWidth
+                startIcon={oauthLoading === 'google' ? <CircularProgress size={18} color="inherit" /> : <GoogleIcon />}
+                onClick={() => handleOAuth('google')}
+                disabled={loading || oauthLoading !== null}
+                sx={{
+                  py: 1.2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  color: '#2D1B17',
+                  borderColor: '#E5E7EB',
+                  backgroundColor: '#FFFFFF',
+                  '&:hover': {
+                    borderColor: '#FF6B00',
+                    backgroundColor: 'rgba(255, 107, 0, 0.04)',
+                  },
+                }}
+              >
+                Continuar con Google
+              </Button>
+              <Button
+                variant="outlined"
+                fullWidth
+                startIcon={oauthLoading === 'github' ? <CircularProgress size={18} color="inherit" /> : <GitHubIcon />}
+                onClick={() => handleOAuth('github')}
+                disabled={loading || oauthLoading !== null}
+                sx={{
+                  py: 1.2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  color: '#2D1B17',
+                  borderColor: '#E5E7EB',
+                  backgroundColor: '#FFFFFF',
+                  '&:hover': {
+                    borderColor: '#FF6B00',
+                    backgroundColor: 'rgba(255, 107, 0, 0.04)',
+                  },
+                }}
+              >
+                Continuar con GitHub
+              </Button>
+            </Box>
 
-        {/* Login Form */}
-        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField
-            required
-            fullWidth
-            type="email"
-            label="Correo Electrónico"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={loading}
-            InputProps={{
-              startAdornment: <EmailOutlinedIcon sx={{ color: '#6b7280', mr: 1 }} />,
-            }}
-          />
+            <Divider sx={{ my: 3, borderColor: '#F2E8DC' }}>
+              <Typography variant="caption" sx={{ color: '#667085', px: 1, fontWeight: 600 }}>
+                O CON TU CORREO
+              </Typography>
+            </Divider>
 
-          <TextField
-            required
-            fullWidth
-            type="password"
-            label="Contraseña"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={loading}
-            InputProps={{
-              startAdornment: <LockOutlinedIcon sx={{ color: '#6b7280', mr: 1 }} />,
-            }}
-          />
+            {/* Email Form */}
+            <Box component="form" onSubmit={handleRequestCode} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                required
+                fullWidth
+                type="email"
+                label="Correo Electrónico"
+                placeholder="ejemplo@gmail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+                autoFocus
+                InputProps={{
+                  startAdornment: <EmailOutlinedIcon sx={{ color: '#6b7280', mr: 1 }} />,
+                }}
+              />
 
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            fullWidth
-            size="large"
-            disabled={loading}
-            endIcon={loading ? <CircularProgress size={18} color="inherit" /> : <ArrowForwardIcon />}
-            sx={{
-              py: 1.4,
-              mt: 1,
-              fontWeight: 800,
-              fontSize: '1rem',
-              borderRadius: 2,
-            }}
-          >
-            {loading ? 'Iniciando sesión...' : 'Entrar a Velupi'}
-          </Button>
-        </Box>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                fullWidth
+                size="large"
+                disabled={loading || !email.trim()}
+                endIcon={loading ? <CircularProgress size={18} color="inherit" /> : <ArrowForwardIcon />}
+                sx={{
+                  py: 1.4,
+                  mt: 1,
+                  fontWeight: 800,
+                  fontSize: '1rem',
+                  borderRadius: 2,
+                }}
+              >
+                {loading ? 'Enviando código...' : 'Continuar con Correo'}
+              </Button>
+            </Box>
+          </>
+        ) : (
+          /* Step 2: Code Verification Form */
+          <Box component="form" onSubmit={handleVerifyCode} sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+              <MarkEmailReadOutlinedIcon sx={{ fontSize: 48, color: '#FF6B00' }} />
+            </Box>
 
-        <Box sx={{ mt: 3, textAlign: 'center' }}>
-          <Typography variant="body2" sx={{ color: '#667085' }}>
-            ¿No tienes cuenta aún?{' '}
-            <Link
-              href={`/register?returnTo=${encodeURIComponent(returnTo)}${cartId ? `&cartId=${encodeURIComponent(cartId)}` : ''}`}
-              style={{ color: '#FF6B00', textDecoration: 'none', fontWeight: 700 }}
+            <TextField
+              required
+              fullWidth
+              label="Código de 6 dígitos"
+              placeholder="123456"
+              value={code}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                setCode(val);
+              }}
+              disabled={loading}
+              autoFocus
+              inputProps={{
+                maxLength: 6,
+                style: {
+                  textAlign: 'center',
+                  fontSize: '1.75rem',
+                  letterSpacing: '0.35em',
+                  fontWeight: 800,
+                },
+              }}
+            />
+
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              fullWidth
+              size="large"
+              disabled={loading || code.trim().length !== 6}
+              endIcon={loading ? <CircularProgress size={18} color="inherit" /> : <ArrowForwardIcon />}
+              sx={{
+                py: 1.4,
+                fontWeight: 800,
+                fontSize: '1rem',
+                borderRadius: 2,
+              }}
             >
-              Regístrate aquí
-            </Link>
-          </Typography>
-        </Box>
+              {loading ? 'Verificando...' : 'Entrar a Velupi'}
+            </Button>
+
+            {/* Resend Cooldown Section */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, mt: 1 }}>
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => handleRequestCode()}
+                disabled={cooldown > 0 || loading}
+                startIcon={<RefreshIcon />}
+                sx={{
+                  textTransform: 'none',
+                  color: cooldown > 0 ? '#9ca3af' : '#FF6B00',
+                  fontWeight: 700,
+                }}
+              >
+                {cooldown > 0
+                  ? `Reenviar nuevo código en ${Math.floor(cooldown / 60)}:${(cooldown % 60).toString().padStart(2, '0')}`
+                  : 'Reenviar nuevo código'}
+              </Button>
+
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => {
+                  setStep('ENTER_EMAIL');
+                  setCode('');
+                  setError(null);
+                  setInfoMessage(null);
+                }}
+                sx={{ textTransform: 'none', color: '#667085', fontSize: '0.8rem' }}
+              >
+                Cambiar correo electrónico
+              </Button>
+            </Box>
+          </Box>
+        )}
       </Paper>
     </Box>
   );
