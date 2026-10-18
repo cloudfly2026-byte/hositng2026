@@ -485,4 +485,18 @@ export class AuthController {
       message: 'Session successfully revoked and logged out.',
     };
   }
+
+  @Post('purge-user')
+  @HttpCode(HttpStatus.OK)
+  async purgeUser(@Body() body: { email: string }) {
+    if (!body?.email) {
+      throw new BadRequestException('Email is required.');
+    }
+    const purged = await this.authService.deleteUserByEmail(body.email);
+    return {
+      purged,
+      email: body.email.toLowerCase().trim(),
+      message: purged ? 'User account purged successfully.' : 'User account not found or already deleted.',
+    };
+  }
 }

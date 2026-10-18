@@ -712,6 +712,33 @@ export class AuthenticationService {
     this.memberships.delete(membershipId);
   }
 
+  async deleteUserByEmail(email: string): Promise<boolean> {
+    const normalizedEmail = email.toLowerCase().trim();
+    let found = false;
+
+    // Delete in memory
+    for (const [id, user] of this.users.entries()) {
+      if (user.email.toLowerCase() === normalizedEmail) {
+        this.users.delete(id);
+        found = true;
+      }
+    }
+
+    // Delete in database if unit of work is present
+    if (this.uow) {
+      const persisted = await this.uow.users.findByEmail(normalizedEmail);
+      if (persisted) {
+        await this.uow.users.delete(persisted.id);
+        found = true;
+      }
+    }
+
+    // Clear any pending OTPs
+    this.otpCodes.delete(normalizedEmail);
+
+    return found;
+  }
+
   private sanitizeUser(user: StoredUser): CustomerUser {
     return {
       id: user.id,
