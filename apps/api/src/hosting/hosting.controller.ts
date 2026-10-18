@@ -313,7 +313,7 @@ export class HostingController {
   @Post('ssl/custom')
   @UseGuards(HttpRolesGuard)
   @Roles('OWNER', 'ADMIN')
-  async installCustomSsl(@Body() body: InstallCustomSslDto, @Req() req: any) {
+  async installCustomSsl(@Body() body: InstallCustomSslDto) {
     if (!body.domain || !body.sslCertificate || !body.sslKey) {
       throw new BadRequestException('Dominio, certificado SSL y clave privada son obligatorios.');
     }
