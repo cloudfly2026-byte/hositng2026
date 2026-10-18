@@ -67,10 +67,15 @@ function LoginContent() {
     } else if (token) {
       defaultApiClient.setAuthToken(token);
       if (typeof window !== 'undefined') {
+        localStorage.setItem('velupi_access_token', token);
         localStorage.setItem('velupi_auth_token', token);
         if (refreshToken) {
           localStorage.setItem('velupi_refresh_token', refreshToken);
         }
+        document.cookie = `velupi_session=${token}; path=/; max-age=604800; SameSite=Lax`;
+        document.cookie = `velupi_access_token=${token}; path=/; max-age=604800; SameSite=Lax`;
+        window.location.href = returnTo;
+        return;
       }
       router.push(returnTo);
     }

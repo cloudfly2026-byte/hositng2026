@@ -171,6 +171,19 @@ export class AuthController {
 
       // If invoked by browser (res provided and not in headless test mode)
       if (res && typeof res.redirect === 'function') {
+        const isProd = process.env.NODE_ENV === 'production';
+        const cookieOpts = {
+          httpOnly: false,
+          secure: isProd,
+          sameSite: 'lax' as const,
+          path: '/',
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        };
+        if (typeof res.cookie === 'function') {
+          res.cookie('velupi_session', result.tokens.accessToken, cookieOpts);
+          res.cookie('velupi_access_token', result.tokens.accessToken, cookieOpts);
+        }
+
         const targetUrl = new URL(result.returnTo || '/', 'https://app.velupi.com');
         targetUrl.searchParams.set('token', result.tokens.accessToken);
         targetUrl.searchParams.set('refreshToken', result.tokens.refreshToken);
