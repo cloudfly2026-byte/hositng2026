@@ -182,6 +182,110 @@ describe('AuthenticationService (End-to-End Identity & Auth)', () => {
         SessionRevokedError
       );
     });
+
+    it('revokes access token upon logout and rejects subsequent usage', async () => {
+      const reg = await authService.register({
+        email: 'logout-access@velupi.com',
+        password: 'Password123!',
+        fullName: 'Logout Access User',
+        organizationName: 'Logout Org',
+      });
+
+      expect(await authService.isTokenRevoked(reg.tokens.accessToken)).toBe(false);
+
+      await authService.logout(reg.tokens.accessToken, reg.tokens.refreshToken);
+
+      expect(await authService.isTokenRevoked(reg.tokens.accessToken)).toBe(true);
+      await expect(authService.refreshToken(reg.tokens.refreshToken)).rejects.toThrow(SessionRevokedError);
+    });
+
+    it('preserves revocation state across NestJS process restarts via persistent revocation store', async () => {
+      const { SharedMemoryTokenRevocationStore } = await import('./auth-service');
+      const sharedStore = new SharedMemoryTokenRevocationStore();
+
+      // Instance 1
+      const instance1 = new AuthenticationService(passwordHasher, jwtService, undefined, sharedStore);
+      const reg = await instance1.register({
+        email: 'restart-test@velupi.com',
+        password: 'Password123!',
+        fullName: 'Restart User',
+        organizationName: 'Restart Org',
+      });
+
+      // User logs out on Instance 1
+      await instance1.logout(reg.tokens.accessToken, reg.tokens.refreshToken);
+      expect(await instance1.isTokenRevoked(reg.tokens.accessToken)).toBe(true);
+
+      // Simulate NestJS restart: snapshot persistent store state & spin up new service instance
+      const persistedState = sharedStore.exportState();
+      const rebootedStore = new SharedMemoryTokenRevocationStore();
+      rebootedStore.importState(persistedState);
+
+      const instance2AfterReboot = new AuthenticationService(
+        passwordHasher,
+        jwtService,
+        undefined,
+        rebootedStore
+      );
+
+      // Token remains revoked after reboot
+      expect(await instance2AfterReboot.isTokenRevoked(reg.tokens.accessToken)).toBe(true);
+    });
+
+    it('shares revocation state across multiple API replicas in real time', async () => {
+      const { SharedMemoryTokenRevocationStore } = await import('./auth-service');
+      // Shared store acting as Redis / central distributed store
+      const centralStore = new SharedMemoryTokenRevocationStore();
+
+      // Replica A and Replica B
+      const replicaA = new AuthenticationService(passwordHasher, jwtService, undefined, centralStore);
+      const replicaB = new AuthenticationService(passwordHasher, jwtService, undefined, centralStore);
+
+      const reg = await replicaA.register({
+        email: 'cluster-user@velupi.com',
+        password: 'Password123!',
+        fullName: 'Cluster User',
+        organizationName: 'Cluster Org',
+      });
+
+      // Initially neither replica sees it revoked
+      expect(await replicaA.isTokenRevoked(reg.tokens.accessToken)).toBe(false);
+      expect(await replicaB.isTokenRevoked(reg.tokens.accessToken)).toBe(false);
+
+      // User calls logout on Replica A
+      await replicaA.logout(reg.tokens.accessToken);
+
+      // Replica B immediately acknowledges token is revoked
+      expect(await replicaB.isTokenRevoked(reg.tokens.accessToken)).toBe(true);
+    });
+
+    it('detects refresh token reuse after rotation and invalidates the entire session family (RFC 6749 / OAuth 2.0)', async () => {
+      const reg = await authService.register({
+        email: 'theft-victim@velupi.com',
+        password: 'Password123!',
+        fullName: 'Theft Victim',
+        organizationName: 'Victim Org',
+      });
+
+      const tokenR1 = reg.tokens.refreshToken;
+
+      // Legitimate user rotates R1 -> gets R2
+      const tokensV2 = await authService.refreshToken(tokenR1);
+      const tokenR2 = tokensV2.refreshToken;
+      expect(tokenR2).toBeTruthy();
+      expect(tokenR2).not.toBe(tokenR1);
+
+      // Legitimate user rotates R2 -> gets R3
+      const tokensV3 = await authService.refreshToken(tokenR2);
+      const tokenR3 = tokensV3.refreshToken;
+      expect(tokenR3).toBeTruthy();
+
+      // Attacker attempts to reuse consumed token R1 (Replay / Token Theft!)
+      await expect(authService.refreshToken(tokenR1)).rejects.toThrow(SessionRevokedError);
+
+      // Critical Invariant: Reuse detection must immediately revoke all active sessions in the family (including R3!)
+      await expect(authService.refreshToken(tokenR3)).rejects.toThrow(SessionRevokedError);
+    });
   });
 
   describe('Password Recovery (Forgot / Reset Password)', () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HostingController } from './hosting.controller';
-import { HostingManagementService } from '@cloudfly/domain';
+import { HostingManagementService, FileManagerService } from '@cloudfly/domain';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 describe('HostingController (Hosting API & Tenant Guards)', () => {
@@ -162,4 +162,60 @@ describe('HostingController (Hosting API & Tenant Guards)', () => {
       expect(quotas.diskLimitMb).toBe(10240);
     });
   });
+
+  describe('File Manager, Custom SSL & SSO Integrations', () => {
+    it('creates directories and uploads files respecting tenant isolation', async () => {
+      const fileService = new FileManagerService();
+      const ctrl = new HostingController(hostingService, fileService);
+
+      const folder = await ctrl.createDirectory(
+        { path: 'public_html/assets' },
+        userContext as any
+      );
+      expect(folder.name).toBe('assets');
+
+      const uploaded = await ctrl.uploadFile(
+        {
+          path: 'public_html/index.html',
+          contentBase64: Buffer.from('<h1>Hello Velupi</h1>').toString('base64'),
+          mimeType: 'text/html',
+        },
+        userContext as any
+      );
+      expect(uploaded.name).toBe('index.html');
+      expect(uploaded.sizeBytes).toBeGreaterThan(0);
+
+      const files = await ctrl.listFiles({ ...userContext, query: { path: 'public_html' } } as any);
+      expect(files.some((f: any) => f.name === 'index.html')).toBe(true);
+    });
+
+    it('installs custom SSL without returning or exposing private key', async () => {
+      const res = await controller.installCustomSsl(
+        {
+          domain: 'velupi.com',
+          sslCertificate: '-----BEGIN CERTIFICATE-----\nMIIC...\n-----END CERTIFICATE-----',
+          sslKey: '-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----',
+        },
+        userContext as any
+      );
+
+      expect(res.status).toBe('SUCCESS');
+      expect(res.resourceIdentifier).toBe('velupi.com');
+      expect((res as any).sslKey).toBeUndefined();
+    });
+
+    it('generates secure authenticated SSO token for phpMyAdmin', async () => {
+      const sso = await controller.getPhpMyAdminSso(userContext as any);
+      expect(sso.ssoUrl).toContain('https://pma.velupi.com/?user=');
+      expect(sso.ssoUrl).toContain('&session=');
+      expect(sso.expiresIn).toBe(300);
+    });
+
+    it('generates secure authenticated SSO autologin for Webmail', async () => {
+      const sso = await controller.getWebmailSso(userContext as any);
+      expect(sso.ssoUrl).toContain('https://mail.velupi.com/?_autologin=');
+      expect(sso.expiresIn).toBe(300);
+    });
+  });
 });
+

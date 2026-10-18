@@ -19,6 +19,19 @@ import { ModuleStateContainer } from '../../components/ModuleStateContainer';
 
 export default function EmailManagerPage() {
   const [state] = React.useState<'success'>('success');
+  const [ssoLoading, setSsoLoading] = React.useState(false);
+
+  const handleOpenWebmail = async () => {
+    setSsoLoading(true);
+    try {
+      const { ssoUrl } = await import('../../modules/api-client').then((m) => m.defaultApiClient.getWebmailSso());
+      window.open(ssoUrl, '_blank', 'noopener,noreferrer');
+    } catch {
+      window.open('https://mail.velupi.com', '_blank', 'noopener,noreferrer');
+    } finally {
+      setSsoLoading(false);
+    }
+  };
 
   const accounts = [
     { email: 'contacto@velupi.com', quotaMb: 2048, usedMb: 110, forwarders: 1, status: 'ACTIVO' },
@@ -37,8 +50,14 @@ export default function EmailManagerPage() {
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1.5 }}>
-          <Button variant="outlined" endIcon={<OpenInNewRoundedIcon />} sx={{ borderColor: '#F2E8DC', color: '#2D1B17', backgroundColor: '#FFFFFF', textTransform: 'none', borderRadius: 2, '&:hover': { borderColor: '#FF6B00', backgroundColor: '#FFFDF9' } }}>
-            Webmail
+          <Button
+            variant="outlined"
+            endIcon={<OpenInNewRoundedIcon />}
+            onClick={handleOpenWebmail}
+            disabled={ssoLoading}
+            sx={{ borderColor: '#F2E8DC', color: '#2D1B17', backgroundColor: '#FFFFFF', textTransform: 'none', borderRadius: 2, '&:hover': { borderColor: '#FF6B00', backgroundColor: '#FFFDF9' } }}
+          >
+            {ssoLoading ? 'Conectando...' : 'Webmail'}
           </Button>
           <Button variant="contained" startIcon={<AddRoundedIcon />} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, backgroundColor: '#FF6B00', '&:hover': { backgroundColor: '#E85A00' } }}>
             Nueva Cuenta de Correo

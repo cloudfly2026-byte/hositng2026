@@ -38,20 +38,44 @@ function ReturnContent() {
   const [pollCount, setPollCount] = React.useState(0);
 
   const fetchOrderStatus = React.useCallback(async () => {
-    const idToLookup = orderId || transactionId;
-    if (!idToLookup) {
-      setLoading(false);
+    // 1. If we have orderId, query directly
+    if (orderId) {
+      try {
+        const orderData = await defaultApiClient.getOrder(orderId);
+        setOrder(orderData);
+        if (orderData.status === 'PENDING_PAYMENT' && transactionId) {
+          // Attempt secure authenticated reconciliation
+          try {
+            const recon = await defaultApiClient.reconcileOrder(orderId, transactionId);
+            if (recon?.order) {
+              setOrder(recon.order);
+            }
+          } catch {
+            // Webhook might still be in-flight
+          }
+        }
+      } catch {
+        // Retry during next poll
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
-    try {
-      const orderData = await defaultApiClient.getOrder(idToLookup);
-      setOrder(orderData);
-    } catch {
-      // If direct order lookup isn't ready or order was by transaction ID, keep polling
-    } finally {
-      setLoading(false);
+    // 2. If we only have transactionId, query order by transactionId
+    if (transactionId) {
+      try {
+        const orderData = await defaultApiClient.getOrder(transactionId);
+        setOrder(orderData);
+      } catch {
+        // If order lookup by transaction ID is pending link, wait for webhook
+      } finally {
+        setLoading(false);
+      }
+      return;
     }
+
+    setLoading(false);
   }, [orderId, transactionId]);
 
   React.useEffect(() => {

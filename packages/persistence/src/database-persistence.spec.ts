@@ -24,6 +24,7 @@ describe('PrismaDatabaseUnitOfWork (Relational PostgreSQL Adapter)', () => {
     mockPrisma = {
       user: {
         upsert: vi.fn(),
+        update: vi.fn(),
         findUnique: vi.fn(),
         findFirst: vi.fn(),
         delete: vi.fn(),
@@ -137,6 +138,38 @@ describe('PrismaDatabaseUnitOfWork (Relational PostgreSQL Adapter)', () => {
       const found = await uow.users.findById('usr-db-1');
       expect(found).not.toBeNull();
       expect(found?.email).toBe('admin@velupi.com');
+    });
+
+    it('safely reconciles and updates user if email already exists in database', async () => {
+      mockPrisma.user.findUnique.mockResolvedValueOnce({
+        id: 'usr-existing-id',
+        email: 'collision@velupi.com',
+        fullName: 'Original Name',
+        emailVerified: false,
+        passwordHash: 'original-hash',
+        createdAt: new Date(),
+      });
+
+      const collidingUser: CustomerUser = {
+        id: 'usr-new-random-id',
+        email: 'collision@velupi.com',
+        fullName: 'Updated Name',
+        emailVerified: true,
+        createdAt: new Date(),
+      };
+
+      await uow.users.save(collidingUser);
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'usr-existing-id' },
+          data: expect.objectContaining({
+            fullName: 'Updated Name',
+            emailVerified: true,
+          }),
+        })
+      );
+      expect(collidingUser.id).toBe('usr-existing-id');
     });
 
     it('persists organizations and retrieves by slug via PrismaClient', async () => {

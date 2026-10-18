@@ -92,6 +92,51 @@ export class ApiClient {
     return response.json() as Promise<T>;
   }
 
+  async logout(): Promise<void> {
+    const refreshToken =
+      typeof window !== 'undefined'
+        ? window.localStorage?.getItem('velupi_refresh_token') || undefined
+        : undefined;
+
+    // Immediately remove credentials from memory and local storage
+    this.setAuthToken(undefined);
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage?.removeItem('velupi_access_token');
+        window.localStorage?.removeItem('velupi_auth_token');
+        window.localStorage?.removeItem('velupi_refresh_token');
+        window.localStorage?.removeItem('velupi_active_org_id');
+        window.sessionStorage?.clear();
+      } catch {
+        // Ignore storage access errors
+      }
+
+      // Purge session cookies across root and possible subdomains (.velupi.com, app.velupi.com, etc.)
+      const cookieNames = ['velupi_session', 'velupi_access_token', 'velupi_refresh_token'];
+      const domains = ['', '; domain=velupi.com', '; domain=.velupi.com', '; domain=app.velupi.com'];
+      for (const name of cookieNames) {
+        for (const dom of domains) {
+          document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0${dom}`;
+        }
+      }
+    }
+
+    // Call backend revocation in background/best-effort
+    try {
+      await this.request('/auth/logout', {
+        method: 'POST',
+        body: JSON.stringify({ refreshToken }),
+      });
+    } catch {
+      // Non-blocking fallback
+    }
+  }
+
+  async listOrders(organizationId?: string): Promise<any[]> {
+    const query = organizationId ? `?organizationId=${encodeURIComponent(organizationId)}` : '';
+    return this.request<any[]>(`/orders${query}`);
+  }
+
   async createCheckoutOrder(payload: CreateOrderPayload): Promise<any> {
     return this.request<any>('/checkout/order', {
       method: 'POST',
@@ -120,7 +165,13 @@ export class ApiClient {
     });
   }
 
-  async reconcileOrder(orderId: string): Promise<any> {
+  async reconcileOrder(orderId: string, transactionId?: string): Promise<any> {
+    if (transactionId) {
+      return this.request<any>(`/orders/${encodeURIComponent(orderId)}/reconcile`, {
+        method: 'POST',
+        body: JSON.stringify({ transactionId }),
+      });
+    }
     return this.request<any>('/billing/reconcile', {
       method: 'POST',
       body: JSON.stringify({ orderId }),
@@ -241,6 +292,73 @@ export class ApiClient {
       method: 'POST',
       headers,
     });
+  }
+
+  async installCustomSsl(
+    payload: { domain: string; sslCertificate: string; sslKey: string; sslBundle?: string },
+    organizationId?: string
+  ): Promise<any> {
+    const headers: Record<string, string> = {};
+    if (organizationId) {
+      headers['x-tenant-id'] = organizationId;
+    }
+    return this.request<any>('/hosting/ssl/custom', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async listFiles(path?: string, organizationId?: string): Promise<any[]> {
+    const headers: Record<string, string> = {};
+    if (organizationId) {
+      headers['x-tenant-id'] = organizationId;
+    }
+    const q = path ? `?path=${encodeURIComponent(path)}` : '';
+    return this.request<any[]>(`/hosting/files${q}`, { headers });
+  }
+
+  async createDirectory(path: string, organizationId?: string): Promise<any> {
+    const headers: Record<string, string> = {};
+    if (organizationId) {
+      headers['x-tenant-id'] = organizationId;
+    }
+    return this.request<any>('/hosting/files/directories', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ path }),
+    });
+  }
+
+  async uploadFile(
+    payload: { path: string; contentBase64: string; mimeType?: string },
+    organizationId?: string
+  ): Promise<any> {
+    const headers: Record<string, string> = {};
+    if (organizationId) {
+      headers['x-tenant-id'] = organizationId;
+    }
+    return this.request<any>('/hosting/files/upload', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getPhpMyAdminSso(organizationId?: string): Promise<{ ssoUrl: string; username: string; expiresIn: number }> {
+    const headers: Record<string, string> = {};
+    if (organizationId) {
+      headers['x-tenant-id'] = organizationId;
+    }
+    return this.request<any>('/hosting/sso/phpmyadmin', { headers });
+  }
+
+  async getWebmailSso(organizationId?: string): Promise<{ ssoUrl: string; expiresIn: number }> {
+    const headers: Record<string, string> = {};
+    if (organizationId) {
+      headers['x-tenant-id'] = organizationId;
+    }
+    return this.request<any>('/hosting/sso/webmail', { headers });
   }
 
   async importSite(

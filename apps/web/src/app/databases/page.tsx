@@ -15,6 +15,21 @@ import { ModuleStateContainer } from '../../components/ModuleStateContainer';
 
 export default function DatabasesPage() {
   const [state] = React.useState<'success'>('success');
+  const [ssoLoading, setSsoLoading] = React.useState(false);
+  const [feedback, setFeedback] = React.useState<string | null>(null);
+
+  const handleOpenPhpMyAdmin = async () => {
+    setSsoLoading(true);
+    setFeedback(null);
+    try {
+      const { ssoUrl } = await import('../../modules/api-client').then((m) => m.defaultApiClient.getPhpMyAdminSso());
+      window.open(ssoUrl, '_blank', 'noopener,noreferrer');
+    } catch {
+      window.open('https://pma.velupi.com', '_blank', 'noopener,noreferrer');
+    } finally {
+      setSsoLoading(false);
+    }
+  };
 
   const databases = [
     {
@@ -39,8 +54,14 @@ export default function DatabasesPage() {
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1.5 }}>
-          <Button variant="outlined" startIcon={<TerminalRoundedIcon />} sx={{ borderColor: '#F2E8DC', color: '#2D1B17', backgroundColor: '#FFFFFF', textTransform: 'none', borderRadius: 2, '&:hover': { borderColor: '#FF6B00', backgroundColor: '#FFFDF9' } }}>
-            phpMyAdmin
+          <Button
+            variant="outlined"
+            startIcon={<TerminalRoundedIcon />}
+            onClick={handleOpenPhpMyAdmin}
+            disabled={ssoLoading}
+            sx={{ borderColor: '#F2E8DC', color: '#2D1B17', backgroundColor: '#FFFFFF', textTransform: 'none', borderRadius: 2, '&:hover': { borderColor: '#FF6B00', backgroundColor: '#FFFDF9' } }}
+          >
+            {ssoLoading ? 'Conectando SSO...' : 'phpMyAdmin'}
           </Button>
           <Button variant="contained" startIcon={<AddRoundedIcon />} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, backgroundColor: '#FF6B00', '&:hover': { backgroundColor: '#E85A00' } }}>
             Nueva Base de Datos

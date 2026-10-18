@@ -34,18 +34,38 @@ export class DatabaseUserRepository implements IUserRepository {
   constructor(private readonly prisma: any) {}
 
   async save(user: CustomerUser): Promise<void> {
+    const normalizedEmail = user.email.toLowerCase().trim();
+    // Check if a user with this email already exists under any ID
+    const existingByEmail = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (existingByEmail) {
+      await this.prisma.user.update({
+        where: { id: existingByEmail.id },
+        data: {
+          fullName: user.fullName,
+          emailVerified: user.emailVerified,
+          passwordHash: user.passwordHash || existingByEmail.passwordHash,
+        },
+      });
+      // Synchronize the id if it was different
+      user.id = existingByEmail.id;
+      return;
+    }
+
     await this.prisma.user.upsert({
       where: { id: user.id },
       create: {
         id: user.id,
-        email: user.email.toLowerCase().trim(),
+        email: normalizedEmail,
         fullName: user.fullName,
         emailVerified: user.emailVerified,
         passwordHash: user.passwordHash,
         createdAt: user.createdAt,
       },
       update: {
-        email: user.email.toLowerCase().trim(),
+        email: normalizedEmail,
         fullName: user.fullName,
         emailVerified: user.emailVerified,
         passwordHash: user.passwordHash,

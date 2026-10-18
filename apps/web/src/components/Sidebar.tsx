@@ -14,6 +14,8 @@ import Chip from '@mui/material/Chip';
 import Collapse from '@mui/material/Collapse';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
+import Button from '@mui/material/Button';
+import { Role, EffectiveCapabilities } from '@cloudfly/contracts';
 
 // Material Icons
 import CloudQueueRoundedIcon from '@mui/icons-material/CloudQueueRounded';
@@ -39,7 +41,9 @@ import {
   MODULE_CATEGORIES,
   ModuleCategory,
   ModuleDefinition,
+  filterNavigationByCapabilities,
 } from '../modules/module-registry';
+import { useOptionalCapabilities } from '../modules/capabilities-context';
 
 export const DRAWER_WIDTH = 270;
 
@@ -60,12 +64,26 @@ const ICON_MAP: Record<string, React.ReactElement> = {
 };
 
 interface SidebarProps {
-  mobileOpen: boolean;
-  onMobileClose: () => void;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+  userRole?: Role;
+  capabilities?: EffectiveCapabilities;
 }
 
-export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
+export function Sidebar({
+  mobileOpen = false,
+  onMobileClose = () => {},
+  userRole: propRole,
+  capabilities: propCapabilities,
+}: SidebarProps) {
+  const optionalContext = useOptionalCapabilities();
+  const capabilities = propCapabilities ?? optionalContext?.capabilities ?? undefined;
+  const userRole = propRole ?? capabilities?.role ?? optionalContext?.capabilities?.role;
   const pathname = usePathname() || '/';
+
+  const filteredModules = React.useMemo(() => {
+    return filterNavigationByCapabilities(MODULE_REGISTRY, capabilities, userRole);
+  }, [capabilities, userRole]);
 
   // State to track expanded submenus
   const [openSubmenus, setOpenSubmenus] = React.useState<Record<string, boolean>>(() => {
@@ -141,9 +159,73 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
 
       {/* Navigation List by Categories */}
       <Box sx={{ flexGrow: 1, overflowY: 'auto', px: 1.5, py: 2 }}>
+        {/* Suspended Alert Banner */}
+        {capabilities?.servicesStatus?.suspended && (
+          <Box
+            sx={{
+              mb: 2,
+              p: 1.5,
+              borderRadius: '8px',
+              backgroundColor: '#FFF1F2',
+              border: '1px solid #FECDD3',
+              color: '#9F1239',
+            }}
+          >
+            <Typography variant="caption" sx={{ fontWeight: 700, display: 'block', mb: 0.5 }}>
+              ⚠️ Servicios Suspendidos
+            </Typography>
+            <Typography variant="caption" sx={{ fontSize: '0.74rem', display: 'block', mb: 1, lineHeight: 1.3 }}>
+              Operaciones restringidas por facturación pendiente. Reactiva tus servicios desde Facturación.
+            </Typography>
+            <Button
+              component={Link}
+              href="/billing"
+              size="small"
+              variant="contained"
+              color="error"
+              fullWidth
+              sx={{ fontSize: '0.72rem', py: 0.4 }}
+            >
+              Regularizar Factura
+            </Button>
+          </Box>
+        )}
+
+        {/* No Active Plan CTA Banner */}
+        {capabilities && !capabilities.servicesStatus?.hasActivePlan && (
+          <Box
+            sx={{
+              mb: 2,
+              p: 1.5,
+              borderRadius: '8px',
+              backgroundColor: '#F0FDF4',
+              border: '1px solid #BBF7D0',
+              color: '#166534',
+            }}
+          >
+            <Typography variant="caption" sx={{ fontWeight: 700, display: 'block', mb: 0.5 }}>
+              🚀 Sin Plan Contratado
+            </Typography>
+            <Typography variant="caption" sx={{ fontSize: '0.74rem', display: 'block', mb: 1, lineHeight: 1.3 }}>
+              Elige un plan de hosting o apps cloud para activar herramientas operativas.
+            </Typography>
+            <Button
+              component={Link}
+              href="/checkout"
+              size="small"
+              variant="contained"
+              color="success"
+              fullWidth
+              sx={{ fontSize: '0.72rem', py: 0.4 }}
+            >
+              Contratar Plan
+            </Button>
+          </Box>
+        )}
+
         {categoriesOrder.map((catKey) => {
           const categoryMeta = MODULE_CATEGORIES[catKey];
-          const modulesInCat = MODULE_REGISTRY.filter((m) => m.category === catKey);
+          const modulesInCat = filteredModules.filter((m) => m.category === catKey);
 
           if (modulesInCat.length === 0) return null;
 

@@ -23,14 +23,32 @@ import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import PersonOutlineRoundedIcon from '@mui/icons-material/PersonOutlineRounded';
 import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded';
 
+import { useRouter } from 'next/navigation';
+import { EffectiveCapabilities } from '@cloudfly/contracts';
 import { Breadcrumbs } from './Breadcrumbs';
 import { DRAWER_WIDTH } from './Sidebar';
+import { defaultApiClient } from '../modules/api-client';
+import { useOptionalCapabilities } from '../modules/capabilities-context';
 
 interface TopbarProps {
   onDrawerToggle: () => void;
+  capabilities?: EffectiveCapabilities | null;
+  activeOrgId?: string;
+  onSelectOrg?: (orgId: string) => void;
 }
 
-export function Topbar({ onDrawerToggle }: TopbarProps) {
+export function Topbar({
+  onDrawerToggle,
+  capabilities: propCapabilities,
+  activeOrgId: propActiveOrgId,
+  onSelectOrg: propOnSelectOrg,
+}: TopbarProps) {
+  const router = useRouter();
+  const optionalContext = useOptionalCapabilities();
+  const capabilities = propCapabilities !== undefined ? propCapabilities : (optionalContext?.capabilities ?? null);
+  const activeOrgId = propActiveOrgId ?? optionalContext?.activeOrgId ?? capabilities?.organization?.id ?? 'org-velupi-internal';
+  const onSelectOrg = propOnSelectOrg ?? optionalContext?.setActiveOrgId;
+
   const [orgMenuAnchor, setOrgMenuAnchor] = React.useState<null | HTMLElement>(null);
   const [userMenuAnchor, setUserMenuAnchor] = React.useState<null | HTMLElement>(null);
 
@@ -49,6 +67,27 @@ export function Topbar({ onDrawerToggle }: TopbarProps) {
   const handleCloseUserMenu = () => {
     setUserMenuAnchor(null);
   };
+
+  const handleLogout = async () => {
+    handleCloseUserMenu();
+    try {
+      await defaultApiClient.logout();
+    } catch {
+      // Ignored
+    }
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    } else {
+      router.push('/login');
+    }
+  };
+
+  const currentOrgName =
+    capabilities?.organization?.name ||
+    activeOrgId ||
+    'org-velupi-internal';
+
+  const currentRole = capabilities?.role || 'OWNER';
 
   return (
     <AppBar
@@ -123,7 +162,7 @@ export function Topbar({ onDrawerToggle }: TopbarProps) {
               },
             }}
           >
-            org-velupi-internal
+            {currentOrgName}
           </Button>
 
           <Menu
@@ -145,14 +184,14 @@ export function Topbar({ onDrawerToggle }: TopbarProps) {
           >
             <Box sx={{ px: 2, py: 1 }}>
               <Typography variant="caption" sx={{ color: '#667085', fontWeight: 700 }}>
-                ORGANIZACIONES ACTIVAS
+                ORGANIZACIÓN ACTIVA
               </Typography>
             </Box>
             <MenuItem onClick={handleCloseOrgMenu} selected sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <Typography variant="body2" sx={{ fontWeight: 700, color: '#2D1B17' }}>
-                org-velupi-internal
+                {currentOrgName}
               </Typography>
-              <Chip label="Actual" size="small" color="primary" sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700 }} />
+              <Chip label={currentRole} size="small" color="primary" sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700 }} />
             </MenuItem>
           </Menu>
 
@@ -199,7 +238,7 @@ export function Topbar({ onDrawerToggle }: TopbarProps) {
                 Edwin
               </Typography>
               <Typography variant="caption" sx={{ color: '#FF6B00', fontWeight: 800, fontSize: '0.68rem' }}>
-                OWNER
+                {currentRole}
               </Typography>
             </Box>
           </Box>
@@ -237,7 +276,7 @@ export function Topbar({ onDrawerToggle }: TopbarProps) {
               <BusinessRoundedIcon fontSize="small" sx={{ color: '#667085' }} />
               Organizaciones
             </MenuItem>
-            <MenuItem onClick={handleCloseUserMenu} sx={{ py: 1, gap: 1.5, fontSize: '0.85rem', color: '#DC2626' }}>
+            <MenuItem onClick={handleLogout} sx={{ py: 1, gap: 1.5, fontSize: '0.85rem', color: '#DC2626' }}>
               <LogoutRoundedIcon fontSize="small" />
               Cerrar Sesión
             </MenuItem>

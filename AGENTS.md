@@ -183,6 +183,34 @@ PaymentProvider          DeploymentProvider         InfrastructureProvider
 - `Node`: Servidor VPS registrado en el pool o dedicado (`id`, `name`, `ipAddress`, `role`, `status`, `totalCpuMilli`, `totalMemoryMb`, `reservedCpuMilli`, `reservedMemoryMb`, `assignedTenantId`).
 - `ProvisioningJob`: Trabajo asíncrono de orquestación de provisión (`id`, `orderId`, `entitlementId`, `status`, `steps`, `attempts`, `errorLog`).
 
+### 5.5 Regla Definitiva de Acceso, RBAC Multinivel y Seguridad de Sesiones
+
+Todo acceso a módulos, vistas, recursos y endpoints en Velupi Cloud Platform se rige de forma estricta e inmutable por la siguiente cadena de evaluación:
+$$\text{Autenticación válida} \longrightarrow \text{Organización} \longrightarrow \text{Rol} \longrightarrow \text{Plan activo} \longrightarrow \text{Permisos efectivos} \longrightarrow \text{Acceso al módulo}$$
+
+#### Invariantes Mandatorias de Seguridad y Autorización:
+1. **Separación Absoluta de Dominios de Roles**:
+   - **Roles de Plataforma**: `SUPER_ADMIN`, `OPERATOR`, `SUPPORT`. Acceden a métricas globales, inventario de nodos y supervisión de colas protegidos por `PlatformOperatorGuard`.
+   - **Roles de Tenant / Organización**: `OWNER`, `ADMIN`, `DEVELOPER`, `VIEWER`. Aislados estrictamente a los recursos de su propia organización.
+   - **Regla Cardinal**: Un cliente `OWNER` **NUNCA** adquiere facultades de operador ni puede consultar datos, métricas u órdenes de organizaciones ajenas. Cualquier intento de acceso cross-tenant debe ser rechazado con `403 ForbiddenException`.
+2. **Validación Criptográfica y Temporal de Sesión en Middleware (Next.js)**:
+   - Prohibido aceptar tokens simplemente por existir como string en cookies.
+   - El middleware de Next.js valida la estructura del JWT (3 partes base64url), decodifica el payload y comprueba vigencia temporal (`exp > now`) e identidad (`sub/userId`).
+   - Cookies malformadas o expiradas son purgadas de inmediato y la petición es redirigida a `/login?returnTo=...`.
+3. **Arquitectura Comercial Híbrida**:
+   - Rutas públicas (`/`, `/cart`, `/checkout`, `/login`, `/register`, `/forgot-password`, `/reset-password`): Accesibles a visitantes para explorar el catálogo comercial y calcular cotizaciones sin bloqueo de login forzado.
+   - Rutas privadas (`/dashboard`, `/orders`, `/orders/[orderId]`, `/hosting`, `/apps`, `/databases`, `/billing`, `/team`, `/settings`): Protegidas server-side por middleware y `CapabilitiesProvider`.
+   - Al formalizar la compra o registrar la orden en `/checkout`, la identidad del cliente es estrictamente obligatoria.
+4. **Invalidación de Sesión Efectiva en Backend (Logout Real)**:
+   - El cierre de sesión no se limita a limpiar el cliente (`localStorage` o cookies); debe invocar `POST /auth/logout` para revocar el `refreshToken` y registrar el `accessToken` en la lista negra en memoria/Redis del Control Plane.
+   - `JwtAuthGuard` rechaza de inmediato con `401 Unauthorized` cualquier token revocado o perteneciente a una sesión cerrada.
+5. **Autoridad Dinámica de Membresías en Backend**:
+   - `GET /me/capabilities` y los guards NestJS (`PermissionsGuard`) obtienen la membresía y el rol real en tiempo de ejecución (`getMembership(userId, orgId)`).
+   - Roles desactualizados en tokens de cliente o membresías revocadas en base de datos invalidan inmediatamente los permisos concedidos.
+6. **Entitlements y Suspensión Operativa**:
+   - Los planes determinan las capacidades (`web_hosting`, `cloud_apps`, `databases`, `dns`); los roles determinan las acciones permitidas (`read`, `deploy`, `manage`).
+   - En estado `SUSPENDED`, las operaciones mutables de infraestructura son revocadas, pero se preserva el acceso de lectura y el módulo de facturación (`billing.*`, facturas y pagos) para que el cliente regularice su cuenta de forma autónoma.
+
 ---
 
 ## 6. Módulos comerciales (Commerce & Billing)

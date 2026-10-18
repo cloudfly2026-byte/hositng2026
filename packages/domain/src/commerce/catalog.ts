@@ -213,6 +213,16 @@ export class ProductCatalogService {
     };
   }
 
+  getPlanById(planId: string): (Plan & { product?: Product }) | undefined {
+    const plan = this.plans.get(planId);
+    if (!plan) return undefined;
+    const product = this.products.get(plan.productId);
+    return {
+      ...plan,
+      product,
+    };
+  }
+
   initializeStandardCatalog(): void {
     if (this.plans.size > 0) return;
 

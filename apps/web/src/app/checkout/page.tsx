@@ -64,17 +64,8 @@ function CheckoutContent() {
   const [billingCity, setBillingCity] = React.useState('Bogotá, D.C.');
   const [acceptTerms, setAcceptTerms] = React.useState(false);
 
-  // Check auth and load cart
+  // Load cart data (public for visitor exploration)
   React.useEffect(() => {
-    const token = defaultApiClient.getAuthToken();
-    if (!token) {
-      const returnUrl = cartId
-        ? `/checkout?cartId=${encodeURIComponent(cartId)}&plan=${planQuery}&cycle=${cycleQuery}`
-        : `/checkout?plan=${planQuery}&cycle=${cycleQuery}`;
-      router.push(`/login?returnTo=${encodeURIComponent(returnUrl)}${cartId ? `&cartId=${encodeURIComponent(cartId)}` : ''}`);
-      return;
-    }
-
     async function loadCartData() {
       setLoadingCart(true);
       try {
@@ -108,6 +99,18 @@ function CheckoutContent() {
   const totalCop = cart ? Math.round(cart.totalCents / 100) : subtotalCop + taxCop;
 
   const handlePayWithWompi = async () => {
+    setErrorMessage(null);
+
+    // Rule 5: Checkout can be explored publicly, but requires authenticated identity before order association
+    const token = defaultApiClient.getAuthToken();
+    if (!token) {
+      const currentCartId = cart?.id || cartId;
+      const returnUrl = currentCartId
+        ? `/checkout?cartId=${encodeURIComponent(currentCartId)}&plan=${planQuery}&cycle=${cycleQuery}`
+        : `/checkout?plan=${planQuery}&cycle=${cycleQuery}`;
+      router.push(`/login?returnTo=${encodeURIComponent(returnUrl)}${currentCartId ? `&cartId=${encodeURIComponent(currentCartId)}` : ''}`);
+      return;
+    }
     setErrorMessage(null);
 
     if (!acceptTerms) {

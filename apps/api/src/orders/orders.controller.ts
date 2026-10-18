@@ -1,13 +1,28 @@
-import { Controller, Get, Param, NotFoundException, Inject, Optional } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  Req,
+  NotFoundException,
+  ForbiddenException,
+  Inject,
+  Optional,
+  UseGuards,
+} from '@nestjs/common';
 import {
   OrderService,
   Order,
   IUnitOfWork,
   WompiPaymentAdapter,
-  OrderStatus,
-  BillingCycle,
+  PaymentProcessorService,
+  TenantAccessPolicy,
 } from '@cloudfly/domain';
+import { AuthorizedContext } from '@cloudfly/contracts';
 import { globalOrdersStore } from '../app.module';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('orders')
 export class OrdersController {
@@ -18,8 +33,60 @@ export class OrdersController {
     @Optional() private readonly wompiAdapter?: WompiPaymentAdapter
   ) {}
 
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  async listOrders(
+    @Req() req: { user?: AuthorizedContext },
+    @Query('organizationId') queryOrgId?: string
+  ): Promise<Order[]> {
+    const user = req?.user;
+    if (!user) {
+      throw new ForbiddenException('User session missing.');
+    }
+
+    const isOperator =
+      user.isOperator === true ||
+      user.roles?.includes('SUPER_ADMIN') ||
+      user.roles?.includes('OPERATOR');
+    const targetOrgId = queryOrgId || user.organizationId;
+
+    if (!isOperator && targetOrgId && targetOrgId !== user.organizationId) {
+      throw new ForbiddenException(
+        `Cross-tenant violation: user '${user.userId}' cannot list orders for '${targetOrgId}'.`
+      );
+    }
+
+    const allOrders: Order[] = [];
+    if (this.orderService) {
+      if (isOperator) {
+        const inMem = Array.from(((this.orderService as any).orders?.values() || [])) as Order[];
+        allOrders.push(...inMem);
+      } else {
+        allOrders.push(...this.orderService.getOrdersByOrganization(targetOrgId || user.organizationId));
+      }
+    }
+    if (this.ordersStore) {
+      allOrders.push(...Array.from(this.ordersStore.values()));
+    }
+    allOrders.push(...Array.from(globalOrdersStore.values()));
+
+    const uniqueMap = new Map<string, Order>();
+    for (const o of allOrders) {
+      uniqueMap.set(o.id, o);
+    }
+
+    return Array.from(uniqueMap.values()).filter((o) => {
+      if (isOperator) return true;
+      return o.organizationId === (targetOrgId || user.organizationId);
+    });
+  }
+
   @Get(':orderId')
-  async getOrder(@Param('orderId') orderId: string): Promise<Order> {
+  @UseGuards(JwtAuthGuard)
+  async getOrder(
+    @Param('orderId') orderId: string,
+    @Req() req?: { user?: AuthorizedContext }
+  ): Promise<Order> {
     let order =
       this.orderService.getOrderById(orderId) ||
       this.orderService.getOrderByNumber(orderId);
@@ -51,29 +118,9 @@ export class OrdersController {
       }
     }
 
-    if (!order && (orderId.includes('-') || orderId.length > 10)) {
-      // orderId might be a Wompi transaction ID (e.g. 1109555-1792243444-91875)
-      // Check if it was saved with 'ord-' prefix
-      const prefixed = `ord-${orderId}`;
-      order =
-        (this.ordersStore && this.ordersStore.get(prefixed)) ||
-        globalOrdersStore.get(prefixed);
-
-      if (!order && this.uow?.orders) {
-        try {
-          const found = await this.uow.orders.findById(prefixed);
-          if (found) {
-            order = found;
-          }
-        } catch {
-          // Fallback silently
-        }
-      }
-    }
-
+    // Secondary lookup: if queried via a known transactionId registered to an existing payment in DB
     if (!order && this.uow?.payments && this.uow?.orders) {
       try {
-        // orderId might be Wompi transaction ID from return URL
         const payRecord = await (this.uow.payments as any).findByProviderTransactionId?.(orderId);
         if (payRecord?.orderId) {
           const found = await this.uow.orders.findById(payRecord.orderId);
@@ -86,61 +133,54 @@ export class OrdersController {
       }
     }
 
-    // Direct gateway fallback: if orderId looks like a transaction ID and wompiAdapter is available
-    if (!order && this.wompiAdapter && (orderId.includes('-') || orderId.length > 10)) {
-      try {
-        const trxStatus = await this.wompiAdapter.queryTransactionStatus(orderId);
-        if (trxStatus && trxStatus.status === 'APPROVED') {
-          // Reconstitute active order
-          order = {
-            id: `ord-${orderId}`,
-            organizationId: 'org-customer-live',
-            orderNumber: trxStatus.reference?.replace(/^ord-/, '') || `VEL-${orderId.substring(0, 6)}`,
-            status: OrderStatus.COMPLETED,
-            currency: trxStatus.currency || 'COP',
-            subtotalCents: Math.round(trxStatus.amountCents / 1.19),
-            taxCents: trxStatus.amountCents - Math.round(trxStatus.amountCents / 1.19),
-            totalCents: trxStatus.amountCents,
-            items: [
-              {
-                id: `item-${orderId}`,
-                orderId: `ord-${orderId}`,
-                planVersionId: 'planver-standard-1',
-                billingCycle: BillingCycle.MONTHLY,
-                unitPriceCents: Math.round(trxStatus.amountCents / 1.19),
-                quantity: 1,
-              },
-            ],
-            idempotencyKey: `idemp-${orderId}`,
-            createdAt: new Date(),
-          };
-
-          if (this.ordersStore) {
-            this.ordersStore.set(order.id, order);
-            this.ordersStore.set(orderId, order);
-            this.ordersStore.set(order.orderNumber, order);
-          }
-          globalOrdersStore.set(order.id, order);
-          globalOrdersStore.set(orderId, order);
-          globalOrdersStore.set(order.orderNumber, order);
-
-          if (this.uow?.orders) {
-            try {
-              await this.uow.orders.save(order);
-            } catch {
-              // In-memory fallback
-            }
-          }
-        }
-      } catch {
-        // Continue to not found
-      }
-    }
-
+    // MANDATORY RULE 1, 2, 5 & 6:
+    // If order was not previously persisted and authorized, return 404.
+    // PROHIBITED: Generating synthetic/invented orders from transaction IDs or external gateways.
     if (!order) {
       throw new NotFoundException(`Order '${orderId}' not found`);
     }
+
+    // MANDATORY RULE 7: Multi-tenant authorization verification
+    const currentUser = req?.user;
+    if (currentUser) {
+      const isOperator =
+        currentUser.isOperator === true ||
+        currentUser.roles?.includes('SUPER_ADMIN') ||
+        currentUser.roles?.includes('OPERATOR');
+      if (!isOperator && !TenantAccessPolicy.canAccessTenant(currentUser, order.organizationId)) {
+        throw new ForbiddenException(
+          `Tenant '${currentUser.organizationId}' is not authorized to access order '${order.id}' belonging to organization '${order.organizationId}'.`
+        );
+      }
+    }
+
     return order;
+  }
+
+  @Post(':orderId/reconcile')
+  @UseGuards(JwtAuthGuard)
+  async reconcileOrder(
+    @Param('orderId') orderId: string,
+    @Body() body: { transactionId: string },
+    @Req() req?: { user?: AuthorizedContext }
+  ) {
+    if (!body?.transactionId) {
+      throw new NotFoundException('Transaction ID is required for reconciliation.');
+    }
+
+    const order = await this.getOrder(orderId, req);
+
+    if (!this.wompiAdapter) {
+      throw new NotFoundException('Payment provider is not configured.');
+    }
+
+    const processor = new PaymentProcessorService(
+      this.wompiAdapter,
+      this.ordersStore || globalOrdersStore,
+      this.uow
+    );
+
+    return processor.reconcilePendingOrder(order.id, body.transactionId);
   }
 }
 

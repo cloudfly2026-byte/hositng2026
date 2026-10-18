@@ -398,4 +398,39 @@ export class AuthController {
       managedBy: 'Velupi Cloud',
     };
   }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refreshToken(@Body() body: { refreshToken: string }) {
+    if (!body?.refreshToken) {
+      throw new BadRequestException('Refresh token is required.');
+    }
+    try {
+      return await this.authService.refreshToken(body.refreshToken);
+    } catch {
+      throw new UnauthorizedException('Session is expired, revoked, or invalid.');
+    }
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout(@Req() req: any, @Body() body?: { refreshToken?: string }) {
+    let token: string | undefined;
+    const authHeader = req.headers?.['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    } else if (req.cookies?.['velupi_session']) {
+      token = req.cookies['velupi_session'];
+    } else if (req.cookies?.['velupi_access_token']) {
+      token = req.cookies['velupi_access_token'];
+    }
+
+    const refreshToken = body?.refreshToken;
+    await this.authService.logout(token, refreshToken);
+
+    return {
+      success: true,
+      message: 'Session successfully revoked and logged out.',
+    };
+  }
 }

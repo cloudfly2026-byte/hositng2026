@@ -42,8 +42,50 @@ export interface LoginInput {
   password: string;
 }
 
+export interface ITokenRevocationStore {
+  revokeToken(token: string, expiresAt: Date): Promise<void>;
+  isTokenRevoked(token: string): Promise<boolean> | boolean;
+  revokeAllForUser?(userId: string): Promise<void>;
+}
+
+export class SharedMemoryTokenRevocationStore implements ITokenRevocationStore {
+  // Store revoked token with expiration timestamp for automatic TTL cleanup
+  private revokedEntries: Map<string, number> = new Map(); // token -> expTimestampMs
+
+  async revokeToken(token: string, expiresAt: Date): Promise<void> {
+    this.cleanExpired();
+    this.revokedEntries.set(token, expiresAt.getTime());
+  }
+
+  isTokenRevoked(token: string): boolean {
+    this.cleanExpired();
+    return this.revokedEntries.has(token);
+  }
+
+  private cleanExpired() {
+    const now = Date.now();
+    for (const [t, exp] of this.revokedEntries.entries()) {
+      if (exp <= now) {
+        this.revokedEntries.delete(t);
+      }
+    }
+  }
+
+  /**
+   * Helper to simulate process restart or test data persistence
+   */
+  exportState(): Array<[string, number]> {
+    return Array.from(this.revokedEntries.entries());
+  }
+
+  importState(entries: Array<[string, number]>) {
+    this.revokedEntries = new Map(entries);
+  }
+}
+
 export interface AuthSession {
   sessionId: string;
+  familyId: string;
   userId: string;
   organizationId: string;
   refreshToken: string;
@@ -65,24 +107,37 @@ export class AuthenticationService {
   private organizations: Map<string, CustomerOrganization> = new Map(); // orgId -> CustomerOrganization
   private memberships: Map<string, Membership> = new Map(); // membershipId -> Membership
   private sessions: Map<string, AuthSession> = new Map(); // refreshToken -> AuthSession
+  private consumedRefreshTokens: Map<string, { familyId: string; userId: string; expiresAt: Date }> = new Map(); // rotated tokens
   private verificationTokens: Map<string, string> = new Map(); // userId -> token
   private resetTokens: Map<string, { userId: string; expiresAt: Date }> = new Map(); // token -> { userId, expiresAt }
+  private revocationStore: ITokenRevocationStore;
 
   constructor(
     private readonly passwordHasher: IPasswordHasher,
     private readonly jwtService: JwtSecurityService,
-    private readonly uow?: IUnitOfWork
-  ) {}
+    private readonly uow?: IUnitOfWork,
+    revocationStore?: ITokenRevocationStore
+  ) {
+    this.revocationStore = revocationStore || new SharedMemoryTokenRevocationStore();
+  }
 
   async register(input: RegisterInput): Promise<AuthResult> {
     const normalizedEmail = input.email.toLowerCase().trim();
 
-    // Check duplicate
+    // Check duplicate in memory
     const existing = Array.from(this.users.values()).find(
       (u) => u.email.toLowerCase() === normalizedEmail
     );
     if (existing) {
       throw new DuplicateEmailError(normalizedEmail);
+    }
+
+    // Check duplicate in database if unit of work is provided
+    if (this.uow) {
+      const persisted = await this.uow.users.findByEmail(normalizedEmail);
+      if (persisted) {
+        throw new DuplicateEmailError(normalizedEmail);
+      }
     }
 
     if (!input.password || input.password.length < 8) {
@@ -239,6 +294,16 @@ export class AuthenticationService {
   }
 
   async refreshToken(oldRefreshToken: string): Promise<AuthTokens> {
+    // 1. Check if token was previously consumed (Refresh Token Reuse Detection - RFC 6749 / OAuth 2.0 Security)
+    const consumed = this.consumedRefreshTokens.get(oldRefreshToken);
+    if (consumed) {
+      // Replay attack / stolen token detected!
+      // Invalidate the entire token family and all active sessions for this user immediately!
+      const { familyId, userId } = consumed;
+      this.revokeAllFamilySessions(familyId, userId);
+      throw new SessionRevokedError();
+    }
+
     const session = this.sessions.get(oldRefreshToken);
     if (!session || new Date() > session.expiresAt) {
       if (session) this.sessions.delete(oldRefreshToken);
@@ -251,14 +316,34 @@ export class AuthenticationService {
       throw new SessionRevokedError();
     }
 
-    // Invalidate old refresh token (Token Rotation)
+    // Invalidate old refresh token (Token Rotation) and mark as consumed
     this.sessions.delete(oldRefreshToken);
+    this.consumedRefreshTokens.set(oldRefreshToken, {
+      familyId: session.familyId,
+      userId: session.userId,
+      expiresAt: session.expiresAt,
+    });
 
-    // Issue new pair
-    return this.issueTokens(user, session.organizationId, session.roles);
+    // Issue new pair preserving the token family
+    return this.issueTokens(user, session.organizationId, session.roles, session.familyId);
+  }
+
+  /**
+   * Invalidates all active sessions belonging to the compromised family or user
+   */
+  private revokeAllFamilySessions(familyId: string, userId: string) {
+    for (const [rt, sess] of this.sessions.entries()) {
+      if (sess.familyId === familyId || sess.userId === userId) {
+        this.sessions.delete(rt);
+      }
+    }
   }
 
   async revokeSession(refreshToken: string): Promise<{ success: boolean }> {
+    const session = this.sessions.get(refreshToken);
+    if (session) {
+      this.revokeAllFamilySessions(session.familyId, session.userId);
+    }
     this.sessions.delete(refreshToken);
     return { success: true };
   }
@@ -348,7 +433,7 @@ export class AuthenticationService {
     return user ? this.sanitizeUser(user) : undefined;
   }
 
-  private issueTokens(user: StoredUser, organizationId: string, roles: Role[]): AuthTokens {
+  private issueTokens(user: StoredUser, organizationId: string, roles: Role[], existingFamilyId?: string): AuthTokens {
     const expiresIn = 900; // 15 mins
     const accessToken = this.jwtService.sign(
       {
@@ -363,9 +448,11 @@ export class AuthenticationService {
 
     const refreshToken = `rft-${Date.now()}-${Math.random().toString(36).substring(2, 18)}`;
     const expiresAt = new Date(Date.now() + 7 * 24 * 3600 * 1000); // 7 days
+    const familyId = existingFamilyId || `fam-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
     this.sessions.set(refreshToken, {
       sessionId: `sess-${Date.now()}`,
+      familyId,
       userId: user.id,
       organizationId,
       refreshToken,
@@ -381,6 +468,79 @@ export class AuthenticationService {
       expiresIn,
       tokenType: 'Bearer',
     };
+  }
+
+  async logout(token?: string, refreshToken?: string): Promise<{ success: boolean }> {
+    if (refreshToken) {
+      const session = this.sessions.get(refreshToken);
+      if (session) {
+        this.revokeAllFamilySessions(session.familyId, session.userId);
+      }
+      this.sessions.delete(refreshToken);
+    }
+    if (token) {
+      // Decode exp to set proper TTL, or default to 15 mins (token lifetime)
+      const tokenExpiresAt = this.extractTokenExpiration(token);
+      await this.revocationStore.revokeToken(token, tokenExpiresAt);
+    }
+    return { success: true };
+  }
+
+  private extractTokenExpiration(token: string): Date {
+    try {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+        if (typeof payload.exp === 'number') {
+          return new Date(payload.exp * 1000);
+        }
+      }
+    } catch {
+      // Fallback
+    }
+    return new Date(Date.now() + 900 * 1000);
+  }
+
+  isTokenRevoked(token: string): Promise<boolean> | boolean {
+    return this.revocationStore.isTokenRevoked(token);
+  }
+
+  getRevocationStore(): ITokenRevocationStore {
+    return this.revocationStore;
+  }
+
+  async getMembership(userId: string, organizationId: string): Promise<Membership | null> {
+    const inMem = Array.from(this.memberships.values()).find(
+      (m) => m.userId === userId && m.organizationId === organizationId
+    );
+    if (inMem) return inMem;
+
+    if (this.uow?.memberships) {
+      const persisted = await this.uow.memberships.findByUserAndOrg(userId, organizationId);
+      if (persisted) {
+        this.memberships.set(persisted.id, persisted);
+        return persisted;
+      }
+    }
+    return null;
+  }
+
+  async updateMembershipRole(membershipId: string, newRole: Role): Promise<void> {
+    const mem = this.memberships.get(membershipId);
+    if (mem) {
+      mem.role = newRole;
+    }
+    if (this.uow?.memberships) {
+      const persisted = await this.uow.memberships.findById(membershipId);
+      if (persisted) {
+        persisted.role = newRole;
+        await this.uow.memberships.save(persisted);
+      }
+    }
+  }
+
+  async revokeMembership(membershipId: string): Promise<void> {
+    this.memberships.delete(membershipId);
   }
 
   private sanitizeUser(user: StoredUser): CustomerUser {

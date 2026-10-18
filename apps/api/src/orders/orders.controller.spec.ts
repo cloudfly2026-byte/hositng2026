@@ -7,7 +7,7 @@ import {
   OrderService,
   OrderStatus,
 } from '@cloudfly/domain';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
 
 describe('OrdersController (GET /orders/:orderId)', () => {
   let catalog: ProductCatalogService;
@@ -107,39 +107,114 @@ describe('OrdersController (GET /orders/:orderId)', () => {
     expect(foundByNumber.id).toBe('ord-db-123');
   });
 
-  it('retrieves an existing order when queried with Wompi transaction ID matching ord- prefix', async () => {
-    const secondaryMap = new Map<string, any>();
-    const extraOrder = { id: 'ord-1109555-1792243444-91875', orderNumber: 'VEL-226357', status: OrderStatus.PAID };
-    secondaryMap.set('ord-1109555-1792243444-91875', extraOrder);
-
-    const controllerWithFallback = new OrdersController(orderService, secondaryMap as any);
-    const found = await controllerWithFallback.getOrder('1109555-1792243444-91875');
-    expect(found.id).toBe('ord-1109555-1792243444-91875');
-    expect(found.status).toBe(OrderStatus.PAID);
+  it('rejects accessing an order using raw Wompi transaction ID if no pre-existing payment links it', async () => {
+    // Rule 2: Transaction ID does not substitute internal order ID
+    await expect(controller.getOrder('1109555-1792243444-91875')).rejects.toThrow(NotFoundException);
   });
 
-  it('retrieves and reconstitutes active order via wompiAdapter fallback when transaction is APPROVED', async () => {
-    const mockWompi = {
-      queryTransactionStatus: async (trxId: string) => ({
-        transactionId: trxId,
-        reference: 'ord-1109555-1792243444-91875',
-        status: 'APPROVED',
-        amountCents: 4165000,
-        currency: 'COP',
-      }),
+  it('allows access via transaction ID only if authoritative payment record links it to the order', async () => {
+    const mockUow = {
+      payments: {
+        findByProviderTransactionId: async (trxId: string) =>
+          trxId === 'trx-authorized-linked' ? { orderId: testOrderId } : null,
+      },
+      orders: {
+        findById: async (id: string) => (id === testOrderId ? orderService.getOrderById(testOrderId) : null),
+      },
     };
 
-    const controllerWithWompi = new OrdersController(
-      orderService,
-      undefined,
-      undefined,
-      mockWompi as any
-    );
+    const controllerWithPaymentLink = new OrdersController(orderService, undefined, mockUow as any);
+    const found = await controllerWithPaymentLink.getOrder('trx-authorized-linked');
+    expect(found.id).toBe(testOrderId);
+  });
 
-    const found = await controllerWithWompi.getOrder('1109555-1792243444-91875');
-    expect(found.id).toBe('ord-1109555-1792243444-91875');
-    expect(found.status).toBe(OrderStatus.COMPLETED);
-    expect(found.totalCents).toBe(4165000);
+  it('strictly blocks cross-tenant access: throws ForbiddenException when requesting user belongs to another organization', async () => {
+    const foreignUser = {
+      userId: 'usr-attacker-007',
+      organizationId: 'org-attacker-tenant',
+      roles: ['ADMIN' as const],
+      permissions: ['orders:read'],
+    };
+
+    await expect(
+      controller.getOrder(testOrderId, { user: foreignUser as any })
+    ).rejects.toThrow(ForbiddenException);
+  });
+
+  it('allows access when user belongs to the owning organization or is a platform operator', async () => {
+    const legitimateUser = {
+      userId: 'usr-legit-001',
+      organizationId: 'org-client-test', // Same as sampleOrder
+      roles: ['ADMIN' as const],
+      permissions: ['orders:read'],
+    };
+
+    const found = await controller.getOrder(testOrderId, { user: legitimateUser as any });
+    expect(found.id).toBe(testOrderId);
+
+    const operatorUser = {
+      userId: 'usr-operator-001',
+      organizationId: 'org-velupi-internal',
+      isOperator: true,
+      roles: ['OWNER' as const],
+      permissions: ['*'],
+    };
+
+    const foundByOperator = await controller.getOrder(testOrderId, { user: operatorUser as any });
+    expect(foundByOperator.id).toBe(testOrderId);
+  });
+
+  it('strictly blocks customer OWNER of another organization from accessing foreign order', async () => {
+    // Security Rule 7 & 8: Customer OWNER is NOT an operator and cannot access other tenants' orders
+    const foreignOwner = {
+      userId: 'usr-foreign-owner',
+      organizationId: 'org-foreign-corp',
+      roles: ['OWNER' as const],
+      isOperator: false,
+      permissions: ['*'],
+    };
+
+    await expect(
+      controller.getOrder(testOrderId, { user: foreignOwner as any })
+    ).rejects.toThrow(ForbiddenException);
+  });
+
+  it('listOrders returns only orders belonging to requesting user organization', async () => {
+    const legitimateUser = {
+      userId: 'usr-legit-001',
+      organizationId: 'org-client-test',
+      roles: ['ADMIN' as const],
+      isOperator: false,
+    };
+
+    const orders = await controller.listOrders({ user: legitimateUser as any });
+    expect(orders.length).toBeGreaterThan(0);
+    expect(orders.every((o) => o.organizationId === 'org-client-test')).toBe(true);
+  });
+
+  it('listOrders strictly blocks non-operator from querying another organization', async () => {
+    const legitimateUser = {
+      userId: 'usr-legit-001',
+      organizationId: 'org-client-test',
+      roles: ['OWNER' as const],
+      isOperator: false,
+    };
+
+    await expect(
+      controller.listOrders({ user: legitimateUser as any }, 'org-foreign-corp')
+    ).rejects.toThrow(ForbiddenException);
+  });
+
+  it('listOrders allows platform operator to inspect all orders', async () => {
+    const operatorUser = {
+      userId: 'usr-operator-001',
+      organizationId: 'org-velupi-internal',
+      isOperator: true,
+      roles: ['SUPER_ADMIN' as const],
+    };
+
+    const allOrders = await controller.listOrders({ user: operatorUser as any });
+    expect(allOrders.length).toBeGreaterThanOrEqual(1);
   });
 
   it('throws NotFoundException for unknown order ID', async () => {

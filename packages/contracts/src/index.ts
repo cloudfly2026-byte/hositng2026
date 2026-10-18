@@ -1,4 +1,69 @@
-export type Role = 'OWNER' | 'ADMIN' | 'DEVELOPER' | 'VIEWER';
+export type OrganizationRole = 'OWNER' | 'ADMIN' | 'DEVELOPER' | 'VIEWER';
+export type PlatformRole = 'SUPER_ADMIN' | 'OPERATOR' | 'SUPPORT';
+export type Role = OrganizationRole | PlatformRole;
+
+export const Permissions = {
+  // Hosting Web
+  HOSTING_READ: 'hosting.read',
+  HOSTING_MANAGE: 'hosting.manage',
+  // DNS
+  DNS_READ: 'dns.read',
+  DNS_MANAGE: 'dns.manage',
+  // Cloud Apps & Containers
+  APPS_READ: 'apps.read',
+  APPS_DEPLOY: 'apps.deploy',
+  // Databases
+  DATABASES_MANAGE: 'databases.manage',
+  // Web features
+  FILES_MANAGE: 'files.manage',
+  EMAILS_MANAGE: 'emails.manage',
+  SSL_MANAGE: 'ssl.manage',
+  BACKUPS_MANAGE: 'backups.manage',
+  // Gateway & Microservices Studio
+  GATEWAY_MANAGE: 'gateway.manage',
+  STUDIO_ACCESS: 'studio.access',
+  // Projects
+  PROJECTS_READ: 'projects.read',
+  PROJECTS_MANAGE: 'projects.manage',
+  // Governance & Billing
+  MEMBERS_MANAGE: 'members.manage',
+  BILLING_READ: 'billing.read',
+  BILLING_MANAGE: 'billing.manage',
+  AUDIT_READ: 'audit.read',
+  // Platform Superadmin / Operator permissions
+  PLATFORM_NODES_MANAGE: 'platform.nodes.manage',
+  PLATFORM_QUEUES_MANAGE: 'platform.queues.manage',
+  PLATFORM_AUDIT_READ: 'platform.audit.read',
+  PLATFORM_CONFIG_MANAGE: 'platform.config.manage',
+  PLATFORM_TENANTS_MANAGE: 'platform.tenants.manage',
+  PLATFORM_TENANTS_READ: 'platform.tenants.read',
+  PLATFORM_OPERATORS_MANAGE: 'platform.operators.manage',
+} as const;
+
+export type Permission = (typeof Permissions)[keyof typeof Permissions] | string;
+
+export interface EffectiveCapabilities {
+  organization: {
+    id: string;
+    name: string;
+    slug: string;
+    isInternalPilot: boolean;
+  };
+  role: Role;
+  permissions: string[];
+  visibleModules: string[];
+  enabledActions: string[];
+  contractedCapabilities: string[];
+  servicesStatus: {
+    hasActivePlan: boolean;
+    subscriptionStatus: string;
+    gracePeriod: boolean;
+    suspended: boolean;
+    activePlans: string[];
+  };
+  isOperator: boolean;
+  platformRole?: PlatformRole;
+}
 
 export type DnsRecordType = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT' | 'CAA' | 'SRV';
 
@@ -21,6 +86,7 @@ export interface AuthorizedContext {
   roles: Role[];
   permissions: string[];
   isOperator?: boolean;
+  platformRole?: PlatformRole;
 }
 
 export interface AuthTokens {

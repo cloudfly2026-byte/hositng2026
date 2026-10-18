@@ -4,7 +4,7 @@
 **Fecha de actualización**: 16 de Octubre de 2026 (Fase de Reconciliación Documental y Validación Comercial)  
 **Metodología**: TDD Obligatorio (Red → Green → Refactor)  
 **Documento rector**: `AGENTS.md`  
-**Métricas acumuladas reales**: **46 suites de prueba, 335 pruebas aprobadas (100% GREEN, 0 fallos, 0 omitidas)**. Base de datos con **16 tablas relacionales activas** en PostgreSQL 16.
+**Métricas acumuladas reales**: **52 suites de prueba, 409 pruebas aprobadas (100% GREEN, 0 fallos, 0 omitidas)**. Base de datos con **16 tablas relacionales activas** en PostgreSQL 16.
 
 ---
 
@@ -39,6 +39,9 @@
                          │
                          ▼
 [Aprovisionamiento Físico con Cliente Real]    ✅ CONSOLIDADO (Orquestador BullMQ + Hestia/Docker)
+                         │
+                         ▼
+[Sprint QA Funcional E2E del Frontend Playwright]✅ CONSOLIDADO (Inventario, 7 roles, Desktop/Tablet/Mobile)
 ```
 
 ---
@@ -82,14 +85,16 @@
 ---
 
 ## 4. Resumen Real de Pruebas y Cobertura TDD
-
+ 
 | Paquete / App | Suites | Pruebas | Estado |
 |---|---|---|---|
 | `@cloudfly/contracts` | - | Tipos TypeScript | COMPILADO 100% |
-| `@cloudfly/domain` | 16 | 129 | 100% GREEN (32 suites/archivos) |
+| `@cloudfly/domain` | 19 | 168 | 100% GREEN |
 | `@cloudfly/persistence` | 2 | 17 | 100% GREEN |
 | `@cloudfly/deployment-adapters` | 4 | 19 | 100% GREEN |
-| `apps/api` | 14 | 103 | 100% GREEN |
-| `apps/web` | 3 | 25 | 100% GREEN |
+| `apps/api` | 16 | 168 | 100% GREEN |
+| `apps/web` | 6 | 41 | 100% GREEN |
 | `wordpress` (Sunchi Theme) | 1 | 12 | 100% GREEN |
-| **TOTAL GENERAL** | **46** | **335** | **100% GREEN (0 fallos, 0 omitidos)** |
+| `E2E Playwright` (`app.velupi.com`) | 5 | 18 | VERIFICADO EN PRODUCCIÓN |
+| **TOTAL GENERAL RUNNER** | **53** | **427** | **100% GREEN (0 fallos, 0 omitidos)** |
+

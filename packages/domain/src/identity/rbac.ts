@@ -60,6 +60,24 @@ const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     Permission.READ_RESOURCES,
     Permission.READ_LOGS,
   ],
+  SUPER_ADMIN: [
+    Permission.READ_RESOURCES,
+    Permission.READ_LOGS,
+    Permission.DEPLOY,
+    Permission.RESTART,
+    Permission.MANAGE_MEMBERS,
+    Permission.MANAGE_BILLING,
+    Permission.MANAGE_ORGANIZATION,
+  ],
+  OPERATOR: [
+    Permission.READ_RESOURCES,
+    Permission.READ_LOGS,
+    Permission.RESTART,
+  ],
+  SUPPORT: [
+    Permission.READ_RESOURCES,
+    Permission.READ_LOGS,
+  ],
 };
 
 export class ForbiddenActionError extends Error {

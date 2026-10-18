@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BillingController } from './billing.controller';
 import {
   SubscriptionService,
@@ -22,6 +22,7 @@ describe('BillingController (API Subscriptions & Invoicing)', () => {
   let orchestrator: ProvisioningOrchestrator;
   let controller: BillingController;
   let planVersionId: string;
+  let adapter: WompiPaymentAdapter;
 
   const tenantAContext: AuthorizedContext = {
     userId: 'usr-1',
@@ -72,7 +73,7 @@ describe('BillingController (API Subscriptions & Invoicing)', () => {
 
     orderService = new OrderService(catalog);
     subscriptionService = new SubscriptionService();
-    const adapter = new WompiPaymentAdapter({
+    adapter = new WompiPaymentAdapter({
       publicKey: 'pub_test',
       privateKey: 'prv_test',
       integritySecret: 'sec_int',
@@ -315,6 +316,14 @@ describe('BillingController (API Subscriptions & Invoicing)', () => {
         billingCycle: BillingCycle.MONTHLY,
         items: [{ planVersionId, quantity: 1 }],
         idempotencyKey: 'idem-reconcile-api-1',
+      });
+
+      vi.spyOn(adapter, 'queryTransactionStatus').mockResolvedValueOnce({
+        transactionId: 'trx-reconcile-approved-1',
+        reference: pendingOrder.orderNumber,
+        status: 'APPROVED',
+        amountCents: pendingOrder.totalCents,
+        currency: pendingOrder.currency,
       });
 
       const result = await controller.reconcileOrder(

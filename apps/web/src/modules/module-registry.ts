@@ -1,4 +1,4 @@
-import { Role } from '@cloudfly/contracts';
+import { Role, EffectiveCapabilities, Permissions } from '@cloudfly/contracts';
 
 export type ModuleCategory =
   | 'GENERAL'
@@ -46,7 +46,10 @@ export interface ModuleSubItem {
   title: string;
   path: string;
   description?: string;
+  requiredPermission?: string;
+  requiredCapability?: string;
   requiredRoles?: Role[];
+  visibilityRule?: (capabilities: EffectiveCapabilities) => boolean;
 }
 
 export interface ModuleDefinition {
@@ -58,7 +61,10 @@ export interface ModuleDefinition {
   category: ModuleCategory;
   badge?: string;
   badgeColor?: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+  requiredPermission?: string;
+  requiredCapability?: string;
   requiredRoles?: Role[];
+  visibilityRule?: (capabilities: EffectiveCapabilities) => boolean;
   subItems?: ModuleSubItem[];
 }
 
@@ -90,10 +96,12 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     icon: 'LanguageRounded',
     description: 'Administración de sitios web, WordPress, tiendas en línea y entornos PHP.',
     category: 'WEB_HOSTING',
+    requiredPermission: Permissions.HOSTING_READ,
+    requiredCapability: 'web_hosting',
     subItems: [
-      { id: 'hosting-sites', title: 'Sitios Activos', path: '/hosting' },
-      { id: 'hosting-new', title: 'Nuevo Sitio', path: '/hosting/new', requiredRoles: ['OWNER', 'ADMIN', 'DEVELOPER'] },
-      { id: 'hosting-php', title: 'Versiones PHP', path: '/hosting/php' },
+      { id: 'hosting-sites', title: 'Sitios Activos', path: '/hosting', requiredPermission: Permissions.HOSTING_READ },
+      { id: 'hosting-new', title: 'Nuevo Sitio', path: '/hosting/new', requiredPermission: Permissions.HOSTING_MANAGE, requiredRoles: ['OWNER', 'ADMIN', 'DEVELOPER'] },
+      { id: 'hosting-php', title: 'Versiones PHP', path: '/hosting/php', requiredPermission: Permissions.HOSTING_MANAGE },
     ],
   },
 
@@ -105,6 +113,8 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     icon: 'FolderSharedRounded',
     description: 'Explorador seguro de archivos web, editor integrado y gestor de permisos.',
     category: 'WEB_HOSTING',
+    requiredPermission: Permissions.FILES_MANAGE,
+    requiredCapability: 'web_hosting',
     requiredRoles: ['OWNER', 'ADMIN', 'DEVELOPER'],
   },
 
@@ -116,6 +126,8 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     icon: 'StorageRounded',
     description: 'Gestión de bases de datos relacionales, credenciales, usuarios y administración SQL.',
     category: 'WEB_HOSTING',
+    requiredPermission: Permissions.DATABASES_MANAGE,
+    requiredCapability: 'databases',
     subItems: [
       { id: 'db-list', title: 'Bases de Datos', path: '/databases' },
       { id: 'db-users', title: 'Usuarios DB', path: '/databases/users' },
@@ -131,6 +143,8 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     icon: 'AlternateEmailRounded',
     description: 'Cuentas de correo corporativo bajo tu propio dominio, alias, cuotas y acceso webmail.',
     category: 'WEB_HOSTING',
+    requiredPermission: Permissions.EMAILS_MANAGE,
+    requiredCapability: 'emails',
     subItems: [
       { id: 'email-accounts', title: 'Cuentas de Correo', path: '/emails' },
       { id: 'email-forwarders', title: 'Reenviadores', path: '/emails/forwarders' },
@@ -148,9 +162,11 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     category: 'NETWORK_DOMAINS',
     badge: 'ns1/ns2',
     badgeColor: 'info',
+    requiredPermission: Permissions.DNS_READ,
+    requiredCapability: 'dns',
     subItems: [
-      { id: 'dns-zones', title: 'Zonas DNS', path: '/dns' },
-      { id: 'dns-records', title: 'Registros DNS', path: '/dns/records' },
+      { id: 'dns-zones', title: 'Zonas DNS', path: '/dns', requiredPermission: Permissions.DNS_READ },
+      { id: 'dns-records', title: 'Registros DNS', path: '/dns/records', requiredPermission: Permissions.DNS_MANAGE },
     ],
   },
 
@@ -162,6 +178,8 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     icon: 'HttpsRounded',
     description: 'Emisión automatizada de certificados TLS/SSL, renovación y certificados personalizados.',
     category: 'WEB_HOSTING',
+    requiredPermission: Permissions.SSL_MANAGE,
+    requiredCapability: 'ssl',
     subItems: [
       { id: 'ssl-letsencrypt', title: 'Let\'s Encrypt Automático', path: '/ssl' },
       { id: 'ssl-custom', title: 'Certificados Personalizados', path: '/ssl/custom' },
@@ -176,6 +194,8 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     icon: 'BackupRounded',
     description: 'Copias de seguridad programadas, snapshots de aplicaciones y puntos de restauración instantáneos.',
     category: 'WEB_HOSTING',
+    requiredPermission: Permissions.BACKUPS_MANAGE,
+    requiredCapability: 'backups',
     subItems: [
       { id: 'backups-list', title: 'Copias de Seguridad', path: '/backups' },
       { id: 'backups-restore', title: 'Puntos de Restauración', path: '/backups/restore' },
@@ -190,10 +210,12 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     icon: 'AppsRounded',
     description: 'Despliegue y ejecución de contenedores Docker, aplicaciones Node.js, Python, workers y staging.',
     category: 'CLOUD_SERVICES',
+    requiredPermission: Permissions.APPS_READ,
+    requiredCapability: 'cloud_apps',
     subItems: [
-      { id: 'apps-list', title: 'Aplicaciones', path: '/services/apps' },
-      { id: 'apps-deploy', title: 'Despliegues', path: '/services/apps#deployments' },
-      { id: 'apps-logs', title: 'Logs en Vivo', path: '/services/apps#logs' },
+      { id: 'apps-list', title: 'Aplicaciones', path: '/services/apps', requiredPermission: Permissions.APPS_READ },
+      { id: 'apps-deploy', title: 'Despliegues', path: '/services/apps#deployments', requiredPermission: Permissions.APPS_DEPLOY },
+      { id: 'apps-logs', title: 'Logs en Vivo', path: '/services/apps#logs', requiredPermission: Permissions.APPS_READ },
     ],
   },
 
@@ -205,6 +227,8 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     icon: 'AltRouteRounded',
     description: 'Enrutamiento perimetral, balanceo de carga, proxy inverso y terminación TLS de microservicios.',
     category: 'CLOUD_SERVICES',
+    requiredPermission: Permissions.GATEWAY_MANAGE,
+    requiredCapability: 'gateway',
     subItems: [
       { id: 'gateway-routes', title: 'Rutas y Proxies', path: '/gateway' },
       { id: 'gateway-tls', title: 'Reglas TLS / SNI', path: '/gateway/tls' },
@@ -221,6 +245,8 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     category: 'CLOUD_SERVICES',
     badge: 'Pro',
     badgeColor: 'primary',
+    requiredPermission: Permissions.STUDIO_ACCESS,
+    requiredCapability: 'microservices_studio',
     subItems: [
       { id: 'studio-canvas', title: 'Canvas de Arquitectura', path: '/studio' },
       { id: 'studio-templates', title: 'Plantillas de Stacks', path: '/studio/templates' },
@@ -235,6 +261,7 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     icon: 'ReceiptLongRounded',
     description: 'Historial de órdenes, suscripciones activas, facturas descargables y gestión de planes.',
     category: 'ADMINISTRATION',
+    requiredPermission: Permissions.BILLING_READ,
     requiredRoles: ['OWNER', 'ADMIN'],
     subItems: [
       { id: 'billing-overview', title: 'Suscripciones', path: '/billing' },
@@ -251,11 +278,11 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     icon: 'AdminPanelSettingsRounded',
     description: 'Gestión de organizaciones, miembros del equipo, roles RBAC, credenciales y registro de auditoría.',
     category: 'ADMINISTRATION',
-    requiredRoles: ['OWNER', 'ADMIN', 'DEVELOPER'],
+    requiredRoles: ['OWNER', 'ADMIN', 'DEVELOPER', 'VIEWER'],
     subItems: [
       { id: 'account-profile', title: 'Perfil & Seguridad', path: '/account' },
-      { id: 'account-members', title: 'Equipo & Roles', path: '/account/members' },
-      { id: 'account-audit', title: 'Registro de Auditoría', path: '/account/audit' },
+      { id: 'account-members', title: 'Equipo & Roles', path: '/account/members', requiredPermission: Permissions.MEMBERS_MANAGE },
+      { id: 'account-audit', title: 'Registro de Auditoría', path: '/account/audit', requiredPermission: Permissions.AUDIT_READ },
     ],
   },
 ];
@@ -387,4 +414,84 @@ export function filterModulesByRole(registry: ModuleDefinition[], role: Role): M
     }
     return mod.requiredRoles.includes(role);
   });
+}
+
+/**
+ * Filtra los módulos y sub-items de navegación según las capacidades efectivas devueltas por el backend.
+ */
+export function filterNavigationByCapabilities(
+  registry: ModuleDefinition[],
+  capabilities?: EffectiveCapabilities,
+  fallbackRole?: Role
+): ModuleDefinition[] {
+  if (!capabilities) {
+    return filterModulesByRole(registry, fallbackRole || 'OWNER');
+  }
+
+  return registry
+    .filter((mod) => {
+      // 1. Backend visibleModules whitelist check
+      if (capabilities.visibleModules && capabilities.visibleModules.length > 0) {
+        if (!capabilities.visibleModules.includes(mod.id)) {
+          return false;
+        }
+      }
+
+      // 2. Custom visibility rule
+      if (mod.visibilityRule && !mod.visibilityRule(capabilities)) {
+        return false;
+      }
+
+      // 3. Required capability
+      if (
+        mod.requiredCapability &&
+        !capabilities.contractedCapabilities?.includes(mod.requiredCapability)
+      ) {
+        return false;
+      }
+
+      // 4. Required permission
+      if (
+        mod.requiredPermission &&
+        !capabilities.permissions?.includes(mod.requiredPermission)
+      ) {
+        return false;
+      }
+
+      // 5. Role restrictions
+      if (mod.requiredRoles && !mod.requiredRoles.includes(capabilities.role)) {
+        return false;
+      }
+
+      return true;
+    })
+    .map((mod) => {
+      if (!mod.subItems) return mod;
+      const filteredSubs = mod.subItems.filter((sub) => {
+        if (sub.visibilityRule && !sub.visibilityRule(capabilities)) {
+          return false;
+        }
+        if (
+          sub.requiredCapability &&
+          !capabilities.contractedCapabilities?.includes(sub.requiredCapability)
+        ) {
+          return false;
+        }
+        if (
+          sub.requiredPermission &&
+          !capabilities.permissions?.includes(sub.requiredPermission)
+        ) {
+          return false;
+        }
+        if (sub.requiredRoles && !sub.requiredRoles.includes(capabilities.role)) {
+          return false;
+        }
+        return true;
+      });
+
+      return {
+        ...mod,
+        subItems: filteredSubs,
+      };
+    });
 }

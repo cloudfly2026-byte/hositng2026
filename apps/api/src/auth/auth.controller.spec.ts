@@ -299,6 +299,29 @@ describe('AuthController (End-to-End API Endpoints & Security)', () => {
         )
       ).rejects.toThrow(BadRequestException);
     });
+
+    it('revokes session and blacklists token on POST /auth/logout', async () => {
+      const reg = await controller.register({
+        email: 'logout.test@velupi.com',
+        password: 'Password123!',
+        fullName: 'Logout User',
+        organizationName: 'Logout Org',
+      });
+
+      const token = reg.tokens.accessToken;
+      const refreshToken = reg.tokens.refreshToken;
+
+      const res = await controller.logout(
+        { headers: { authorization: `Bearer ${token}` } },
+        { refreshToken }
+      );
+
+      expect(res.success).toBe(true);
+      expect(res.message).toContain('revoked');
+
+      // Subsequent refresh attempt must fail
+      await expect(controller.refreshToken({ refreshToken })).rejects.toThrow();
+    });
   });
 });
 

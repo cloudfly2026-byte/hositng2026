@@ -34,17 +34,17 @@ describe('Authentication & Authorization Security Guards (TDD)', () => {
   });
 
   describe('Unauthenticated Access Prevention', () => {
-    it('should throw UnauthorizedException when no Authorization header is present', () => {
+    it('should throw UnauthorizedException when no Authorization header is present', async () => {
       const context = mockExecutionContext({ headers: {} });
-      expect(() => jwtGuard.canActivate(context)).toThrow(UnauthorizedException);
+      await expect(jwtGuard.canActivate(context)).rejects.toThrow(UnauthorizedException);
     });
 
-    it('should throw UnauthorizedException when Authorization header is malformed', () => {
+    it('should throw UnauthorizedException when Authorization header is malformed', async () => {
       const context = mockExecutionContext({ headers: { authorization: 'Basic some-base64' } });
-      expect(() => jwtGuard.canActivate(context)).toThrow(UnauthorizedException);
+      await expect(jwtGuard.canActivate(context)).rejects.toThrow(UnauthorizedException);
     });
 
-    it('should throw UnauthorizedException when token signature is invalid or tampered', () => {
+    it('should throw UnauthorizedException when token signature is invalid or tampered', async () => {
       const validToken = jwtService.sign({
         sub: 'usr-1',
         email: 'attacker@velupi.com',
@@ -55,10 +55,10 @@ describe('Authentication & Authorization Security Guards (TDD)', () => {
       const tamperedToken = validToken.substring(0, validToken.length - 5) + 'xxxxx';
       const context = mockExecutionContext({ headers: { authorization: `Bearer ${tamperedToken}` } });
 
-      expect(() => jwtGuard.canActivate(context)).toThrow(UnauthorizedException);
+      await expect(jwtGuard.canActivate(context)).rejects.toThrow(UnauthorizedException);
     });
 
-    it('should attach authenticated user context to request when token is valid', () => {
+    it('should attach authenticated user context to request when token is valid', async () => {
       const validToken = jwtService.sign({
         sub: 'usr-owner-1',
         email: 'owner@velupi.com',
@@ -69,7 +69,7 @@ describe('Authentication & Authorization Security Guards (TDD)', () => {
       const req: Record<string, any> = { headers: { authorization: `Bearer ${validToken}` } };
       const context = mockExecutionContext(req);
 
-      const result = jwtGuard.canActivate(context);
+      const result = await jwtGuard.canActivate(context);
       expect(result).toBe(true);
       expect(req.user).toBeDefined();
       expect(req.user.userId).toBe('usr-owner-1');

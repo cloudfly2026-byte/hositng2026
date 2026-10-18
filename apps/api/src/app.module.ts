@@ -13,6 +13,9 @@ import { ProvisioningController } from './provisioning/provisioning.controller';
 import { BillingController } from './billing/billing.controller';
 import { DashboardController } from './dashboard/dashboard.controller';
 import { OrdersController } from './orders/orders.controller';
+import { MeController } from './me/me.controller';
+import { PermissionsGuard } from './auth/permissions.guard';
+import { PlatformOperatorGuard } from './auth/platform-operator.guard';
 import {
   ProductCatalogService,
   CartService,
@@ -31,6 +34,8 @@ import {
   CloudAppsService,
   ProvisioningWorkerService,
   SubscriptionService,
+  AccessPolicyService,
+  FileManagerService,
 } from '@cloudfly/domain';
 import {
   HestiaDnsAdapter,
@@ -59,6 +64,7 @@ export const globalOrdersStore = new Map<string, Order>();
     BillingController,
     DashboardController,
     OrdersController,
+    MeController,
   ],
   providers: [
     {
@@ -104,6 +110,10 @@ export const globalOrdersStore = new Map<string, Order>();
         };
         return new HostingManagementService(transport);
       },
+    },
+    {
+      provide: FileManagerService,
+      useFactory: () => new FileManagerService(),
     },
 
     {
@@ -271,6 +281,13 @@ export const globalOrdersStore = new Map<string, Order>();
         return new ProvisioningWorkerService(engine);
       },
     },
+    {
+      provide: AccessPolicyService,
+      useFactory: (catalog: ProductCatalogService) => new AccessPolicyService(catalog),
+      inject: [ProductCatalogService],
+    },
+    PermissionsGuard,
+    PlatformOperatorGuard,
   ],
 })
 export class AppModule {}
