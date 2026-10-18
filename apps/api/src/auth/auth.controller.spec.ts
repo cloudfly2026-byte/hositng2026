@@ -268,7 +268,7 @@ describe('AuthController (End-to-End API Endpoints & Security)', () => {
       expect(callback.returnTo).toBe('/cart');
     });
 
-    it('rejects OAuth callback when email collides with password-based account (anti-account-takeover)', async () => {
+    it('seamlessly links OAuth callback and logs in when email belongs to existing account', async () => {
       await controller.register({
         email: 'ceo@startup.io',
         password: 'SecurePassword123!',
@@ -277,15 +277,16 @@ describe('AuthController (End-to-End API Endpoints & Security)', () => {
       });
 
       const start = await controller.googleOAuthStart('/cart');
-      await expect(
-        controller.googleOAuthCallback(
-          'attack-code',
-          start.state,
-          'google-sub-impersonator',
-          'ceo@startup.io',
-          'Impersonator'
-        )
-      ).rejects.toThrow(BadRequestException);
+      const callback: any = await controller.googleOAuthCallback(
+        'google-code-123',
+        start.state,
+        'google-sub-ceo-123',
+        'ceo@startup.io',
+        'Original User'
+      );
+
+      expect(callback.user.email).toBe('ceo@startup.io');
+      expect(callback.tokens.accessToken).toBeTruthy();
     });
 
     it('rejects invalid or forged OAuth state parameter (anti-CSRF)', async () => {

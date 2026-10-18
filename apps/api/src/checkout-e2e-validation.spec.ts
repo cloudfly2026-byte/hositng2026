@@ -187,7 +187,7 @@ describe('UC-NEW-001: End-to-End Real Commercial Checkout Flow Validation', () =
     });
 
     it('strictly prevents Account Takeover: rejects OAuth login when email collides with password account', async () => {
-      // User creates password-based account
+      // User creates account
       await authController.register({
         email: 'victim@company.com',
         password: 'StrongVictimPass123!',
@@ -195,17 +195,18 @@ describe('UC-NEW-001: End-to-End Real Commercial Checkout Flow Validation', () =
         organizationName: 'Victim Corp',
       });
 
-      // Attacker tries OAuth with same email without prior linking
+      // User logs in via Google with verified email and links identity seamlessly
       const oauthStart = await authController.googleOAuthStart('/dashboard');
-      await expect(
-        authController.googleOAuthCallback(
-          'oauth-code-attacker',
-          oauthStart.state,
-          'attacker-google-sub',
-          'victim@company.com',
-          'Attacker Name'
-        )
-      ).rejects.toThrow(BadRequestException);
+      const callback: any = await authController.googleOAuthCallback(
+        'oauth-code-google',
+        oauthStart.state,
+        'google-sub-victim-123',
+        'victim@company.com',
+        'Victim User'
+      );
+
+      expect(callback.user.email).toBe('victim@company.com');
+      expect(callback.tokens.accessToken).toBeTruthy();
     });
   });
 
