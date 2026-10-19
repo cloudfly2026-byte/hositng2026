@@ -40,6 +40,7 @@ describe('CheckoutController (API Order & Payment Workflow)', () => {
     },
     prices: [
       { currency: 'COP', billingCycle: BillingCycle.MONTHLY, priceCents: 3500000 },
+      { currency: 'COP', billingCycle: BillingCycle.ANNUAL, priceCents: 35000000 },
     ],
     effectiveFrom: new Date('2026-01-01'),
   });
@@ -84,4 +85,36 @@ describe('CheckoutController (API Order & Payment Workflow)', () => {
     expect(response.session.checkoutUrl).toBeDefined();
     expect(response.session.checkoutUrl).toContain('checkout.wompi.co');
   });
+
+  it('safely recovers and resolves planVersionId when an older or stale planVersionId from previous container is passed', async () => {
+    const controller = new CheckoutController(
+      orderService,
+      wompiAdapter,
+      catalog
+    );
+
+    const dto: CreateOrderDto = {
+      organizationId: 'org-client-100',
+      currency: 'COP',
+      billingCycle: BillingCycle.ANNUAL,
+      items: [
+        {
+          planVersionId: 'pv-old-container-stale-id',
+          quantity: 1,
+        },
+      ],
+      idempotencyKey: 'idem-stale-version-test-02',
+      customerEmail: 'edwin@velupi.com',
+      redirectUrl: 'https://app.velupi.com/billing/success',
+      primaryDomain: 'miempresa.com',
+    };
+
+    const response = await controller.createOrderAndSession(dto);
+
+    expect(response.order).toBeDefined();
+    expect(response.order.items[0].planVersionId).toBe(wpVersion.id);
+    expect((response.order as any).primaryDomain).toBe('miempresa.com');
+    expect(response.session.checkoutUrl).toContain('checkout.wompi.co');
+  });
 });
+

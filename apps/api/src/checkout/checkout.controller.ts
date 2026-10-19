@@ -4,6 +4,7 @@ import {
   WompiPaymentAdapter,
   Order,
   BillingCycle,
+  ProductCatalogService,
 } from '@cloudfly/domain';
 import { PaymentSessionResult } from '@cloudfly/contracts';
 import { globalOrdersStore } from '../app.module';
@@ -33,6 +34,7 @@ export class CheckoutController {
   constructor(
     private orderService: OrderService,
     private wompiAdapter: WompiPaymentAdapter,
+    @Optional() private catalogService?: ProductCatalogService,
     @Optional() @Inject('ORDERS_STORE') private ordersStore?: Map<string, Order>,
     @Optional() @Inject('IUnitOfWork') private uow?: any
   ) {}
@@ -41,10 +43,11 @@ export class CheckoutController {
   async createOrderAndSession(
     @Body() dto: CreateOrderDto
   ): Promise<CreateOrderAndSessionResponse> {
-    // Resolve dynamic planVersionId if fallback or code is provided
+    const catalog = this.catalogService || (this.orderService as any)?.catalog;
+
+    // Resolve dynamic planVersionId if fallback, old cart ID, or code is provided
     const resolvedItems = dto.items.map((item) => {
       let vId = item.planVersionId;
-      const catalog = (this.orderService as any)?.catalog;
       if (catalog) {
         let exists = false;
         try {
@@ -56,18 +59,43 @@ export class CheckoutController {
           exists = false;
         }
 
-        if (!exists && typeof catalog.listPlans === 'function') {
-          const allPlans = catalog.listPlans() || [];
-          const found = allPlans.find(
-            (p: any) =>
-              p.activeVersion?.id === vId ||
-              p.code === vId ||
-              (vId.includes('wp-starter') && p.code === 'wp-starter') ||
-              (vId.includes('node') && p.code === 'cloud-apps-pro') ||
-              (vId.includes('vps') && p.code === 'vps-dedicated')
-          );
-          if (found?.activeVersion?.id) {
-            vId = found.activeVersion.id;
+        if (!exists) {
+          // 1. Try finding by plan code directly
+          const planCode =
+            vId === 'ver-wp-starter-v1' || vId.includes('wp-starter')
+              ? 'wp-starter'
+              : vId === 'ver-node-starter-v1' || vId.includes('node') || vId.includes('cloud-apps')
+              ? 'cloud-apps-pro'
+              : vId === 'ver-vps-pro-v1' || vId.includes('vps')
+              ? 'vps-dedicated'
+              : null;
+
+          if (planCode && typeof catalog.getPlanByCode === 'function') {
+            const plan = catalog.getPlanByCode(planCode);
+            if (plan?.activeVersion?.id) {
+              vId = plan.activeVersion.id;
+              exists = true;
+            }
+          }
+
+          // 2. Fallback to scanning all plans
+          if (!exists && typeof catalog.listPlans === 'function') {
+            const allPlans = catalog.listPlans() || [];
+            const found = allPlans.find(
+              (p: any) =>
+                p.activeVersion?.id === vId ||
+                p.code === vId ||
+                (vId.includes('wp-starter') && p.code === 'wp-starter') ||
+                (vId.includes('node') && p.code === 'cloud-apps-pro') ||
+                (vId.includes('vps') && p.code === 'vps-dedicated')
+            );
+            if (found?.activeVersion?.id) {
+              vId = found.activeVersion.id;
+              exists = true;
+            } else if (allPlans.length > 0 && allPlans[0].activeVersion?.id) {
+              // Default to first active plan (WordPress Starter) if ID is from an older container instance
+              vId = allPlans[0].activeVersion.id;
+            }
           }
         }
       }
