@@ -111,6 +111,22 @@ describe('HostingManagementService (White-Label Hosting Management)', () => {
 
       const available = await service.checkDomainAvailability('completely-new-domain.com');
       expect(available.available).toBe(true);
+
+      // Edge case: Hestia returns returnCode 0 but output is '3' (E_NOTEXIST from returncode=yes)
+      mockHestiaTransport.executeCommand.mockResolvedValueOnce({ returnCode: 0, output: '3' });
+      const testCode3 = await service.checkDomainAvailability('not-existing-domain.com');
+      expect(testCode3.available).toBe(true);
+
+      // Edge case: Hestia returns returnCode 400 with empty output (from returncode=no)
+      mockHestiaTransport.executeCommand.mockResolvedValueOnce({ returnCode: 400, output: '' });
+      const testHttp400 = await service.checkDomainAvailability('another-new-domain.com');
+      expect(testHttp400.available).toBe(true);
+
+      // Edge case: Domain exists on Hestia with owner
+      mockHestiaTransport.executeCommand.mockResolvedValueOnce({ returnCode: 0, output: 'u_another_tenant' });
+      const testTakenOnHestia = await service.checkDomainAvailability('taken-on-hestia.com');
+      expect(testTakenOnHestia.available).toBe(false);
+      expect(testTakenOnHestia.reason).toContain('ya se encuentra configurado');
     });
 
     it('lists only websites belonging to caller organization (Strict Tenant Isolation)', async () => {

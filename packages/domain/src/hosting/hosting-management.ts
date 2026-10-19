@@ -327,7 +327,15 @@ export class HostingManagementService {
     if (this.transport) {
       try {
         const res = await this.transport.executeCommand('v-search-domain-owner', [cleanDomain]);
-        if (res.returnCode === 0 && res.output && !res.output.toLowerCase().includes('not found')) {
+        const out = res.output ? res.output.trim() : '';
+        const isNotFound =
+          res.returnCode !== 0 ||
+          !out ||
+          out === '3' ||
+          out.toLowerCase().includes('not found') ||
+          out.toLowerCase().includes('error');
+
+        if (!isNotFound) {
           return { available: false, reason: `El dominio '${cleanDomain}' ya se encuentra configurado en los servidores de hosting.` };
         }
       } catch {

@@ -886,6 +886,24 @@ Se cumplió de forma estricta la **regla de no creación manual**: todos los rec
 - **Video de navegación interactiva E2E**: Archivo registrado y archivado como evidencia en `.webp`:
   - `easysnotes_e2e_video_1792444950452.webp` (disponible en el directorio de artefactos para revisión y auditoría).
 
+---
+
+#### 6. Corrección Crítica: Falso Positivo en Disponibilidad de Dominio en Carrito (`edwing.com`)
+- **Problema Detectado**: Al ingresar un dominio no registrado (ej. `edwing.com`) en `app.velupi.com/cart`, el sistema mostraba el error: *"El dominio 'edwing.com' ya se encuentra configurado en los servidores de hosting"*, bloqueando el botón de checkout.
+- **Causa Raíz Diagnosticada**:
+  1. `HestiaHttpsTransport` enviaba `returncode=yes` en el cuerpo de la petición API a HestiaCP.
+  2. Cuando un dominio no existe en Hestia (`v-search-domain-owner`), Hestia responde con HTTP 200 y cuerpo `"3"` (código de error de Hestia para `E_NOTEXIST`).
+  3. Al ser HTTP 200 (`response.ok === true`), `HestiaHttpsTransport` asignaba `returnCode = 0` y `output = "3"`.
+  4. La condición de disponibilidad evaluaba `res.returnCode === 0 && res.output && !res.output.includes('not found')`, la cual se cumplía incorrectamente porque `"3"` no contiene la palabra `"not found"`.
+- **Solución Implementada (TDD)**:
+  1. Se actualizó `HestiaHttpsTransport` para solicitar `returncode=no`, lo que permite recibir la salida estándar real del comando o el código HTTP 400 en caso de fallo.
+  2. Se agregó un analizador numérico en `HestiaHttpsTransport`: si el cuerpo es puramente numérico (como `"0"` o `"3"`), se respeta dicho número como el `returnCode` real.
+  3. Se incluyó `v-search-domain-owner` en `HESTIA_READ_ONLY_COMMANDS`.
+  4. Se robusteció `checkDomainAvailability` en `HostingManagementService` para descartar explícitamente códigos `"3"`, salidas vacías o errores, considerando únicamente como ocupado un dominio que devuelva un propietario válido.
+- **Resultado de Pruebas**:
+  - `packages/domain/src/hosting/hosting-management.spec.ts` y `packages/deployment-adapters/src/hestia/hestia-https-transport.spec.ts`: **18/18 pruebas aprobadas (100% GREEN)**.
+
+
 
 
 

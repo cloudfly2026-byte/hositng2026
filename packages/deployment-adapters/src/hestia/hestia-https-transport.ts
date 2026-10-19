@@ -40,6 +40,7 @@ export const HESTIA_READ_ONLY_COMMANDS = new Set([
   'v-list-sys-info',
   'v-list-sys-services',
   'v-list-user-ips',
+  'v-search-domain-owner',
 ]);
 
 export class HestiaHttpsTransport implements HestiaTransport {
@@ -132,7 +133,7 @@ export class HestiaHttpsTransport implements HestiaTransport {
     } else if (this.password) {
       bodyParams.append('password', this.password);
     }
-    bodyParams.append('returncode', 'yes');
+    bodyParams.append('returncode', 'no');
     bodyParams.append('cmd', command);
 
     args.forEach((arg, idx) => {
@@ -153,9 +154,14 @@ export class HestiaHttpsTransport implements HestiaTransport {
       });
 
       const text = await response.text();
+      const trimmed = text.trim();
+      let returnCode = response.ok ? 0 : response.status;
+      if (/^\d+$/.test(trimmed)) {
+        returnCode = parseInt(trimmed, 10);
+      }
 
       return {
-        returnCode: response.ok ? 0 : response.status,
+        returnCode,
         output: text,
       };
     } finally {
