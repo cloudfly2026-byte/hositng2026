@@ -1,3 +1,6 @@
+import * as net from 'node:net';
+import * as tls from 'node:tls';
+
 export interface EmailMessage {
   to: string;
   subject: string;
@@ -31,7 +34,100 @@ export class MailerService {
   constructor(private readonly config: MailerConfig) {
     if (config.transport) {
       this.transport = config.transport;
+    } else if (config.smtpHost) {
+      this.transport = {
+        sendMail: (msg: any) => this.sendViaSmtpSocket(msg),
+      };
     }
+  }
+
+  private sendViaSmtpSocket(msg: any): Promise<{ messageId: string }> {
+    return new Promise((resolve, reject) => {
+      const host = this.config.smtpHost || '127.0.0.1';
+      const port = this.config.smtpPort || 25;
+      const user = this.config.smtpUser;
+      const password = this.config.smtpPassword;
+      const fromEmail = this.config.fromEmail || 'noreply@velupi.com';
+
+      const socket = net.createConnection(port, host);
+      let step = 0;
+      let secureSocket: tls.TLSSocket | null = null;
+
+      const handleData = (activeSocket: any, data: Buffer) => {
+        const str = data.toString();
+
+        if (str.startsWith('220') && step === 0) {
+          step = 1;
+          activeSocket.write('EHLO cloudfly.com.co\r\n');
+        } else if (str.startsWith('250') && step === 1) {
+          // If port 587 and user/pass, initiate STARTTLS
+          if (port === 587 || user) {
+            step = 2;
+            activeSocket.write('STARTTLS\r\n');
+          } else {
+            step = 7;
+            activeSocket.write(`MAIL FROM:<${fromEmail}>\r\n`);
+          }
+        } else if (str.startsWith('220') && step === 2) {
+          step = 3;
+          secureSocket = tls.connect({ socket: activeSocket, rejectUnauthorized: false }, () => {
+            secureSocket!.write('EHLO cloudfly.com.co\r\n');
+          });
+          secureSocket.on('data', (d: Buffer) => handleData(secureSocket, d));
+          secureSocket.on('error', reject);
+        } else if (str.startsWith('250') && step === 3) {
+          if (user && password) {
+            step = 4;
+            secureSocket!.write('AUTH LOGIN\r\n');
+          } else {
+            step = 7;
+            secureSocket!.write(`MAIL FROM:<${fromEmail}>\r\n`);
+          }
+        } else if (str.startsWith('334') && step === 4) {
+          step = 5;
+          secureSocket!.write(Buffer.from(user!).toString('base64') + '\r\n');
+        } else if (str.startsWith('334') && step === 5) {
+          step = 6;
+          secureSocket!.write(Buffer.from(password!).toString('base64') + '\r\n');
+        } else if (str.startsWith('235') && step === 6) {
+          step = 7;
+          secureSocket!.write(`MAIL FROM:<${fromEmail}>\r\n`);
+        } else if (str.startsWith('250') && step === 7) {
+          step = 8;
+          const target = secureSocket || activeSocket;
+          target.write(`RCPT TO:<${msg.to}>\r\n`);
+        } else if (str.startsWith('250') && step === 8) {
+          step = 9;
+          const target = secureSocket || activeSocket;
+          target.write('DATA\r\n');
+        } else if (str.startsWith('354') && step === 9) {
+          step = 10;
+          const target = secureSocket || activeSocket;
+          const raw = [
+            `From: ${msg.from || `"${this.config.fromName}" <${fromEmail}>`}`,
+            `To: <${msg.to}>`,
+            `Subject: ${msg.subject}`,
+            'MIME-Version: 1.0',
+            'Content-Type: text/html; charset=UTF-8',
+            '',
+            msg.html || msg.text || '',
+            '.',
+            '',
+          ].join('\r\n');
+          target.write(raw);
+        } else if (str.startsWith('250') && step === 10) {
+          step = 11;
+          const target = secureSocket || activeSocket;
+          target.write('QUIT\r\n');
+          resolve({ messageId: `smtp-${Date.now()}` });
+        } else if (str.startsWith('4') || str.startsWith('5')) {
+          reject(new Error(`SMTP Error: ${str.trim()}`));
+        }
+      };
+
+      socket.on('data', (d: Buffer) => handleData(socket, d));
+      socket.on('error', reject);
+    });
   }
 
   async sendMail(msg: EmailMessage): Promise<SendEmailResult> {

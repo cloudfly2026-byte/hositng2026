@@ -130,10 +130,12 @@ export const globalOrdersStore = new Map<string, Order>();
       provide: MailerService,
       useFactory: () => {
         return new MailerService({
-          fromEmail: process.env.MAIL_FROM || 'noreply@velupi.com',
+          fromEmail: process.env.MAIL_FROM || 'proeba1@cloudfly.com.co',
           fromName: 'Velupi Cloud Platform',
-          smtpHost: process.env.SMTP_HOST || '127.0.0.1',
-          smtpPort: Number(process.env.SMTP_PORT || 25),
+          smtpHost: process.env.SMTP_HOST || '89.117.147.134',
+          smtpPort: Number(process.env.SMTP_PORT || 587),
+          smtpUser: process.env.SMTP_USER || 'proeba1@cloudfly.com.co',
+          smtpPassword: process.env.SMTP_PASSWORD || 'Velupi2026Secure!',
         });
       },
     },
