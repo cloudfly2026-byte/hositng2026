@@ -29,6 +29,18 @@ export interface CreateWebSiteSpec {
   sslEnabled?: boolean;
 }
 
+export type HostingOperationalStatus =
+  | 'PENDING_PAYMENT'
+  | 'PAID'
+  | 'PROVISIONING'
+  | 'HOSTING_PROVISIONED'
+  | 'DNS_PENDING'
+  | 'DNS_VERIFIED'
+  | 'SSL_PENDING'
+  | 'ACTIVE'
+  | 'PROVISIONING_FAILED'
+  | 'SUSPENDED';
+
 export interface WebSiteDetail {
   domain: string;
   organizationId: string;
@@ -36,6 +48,8 @@ export interface WebSiteDetail {
   phpVersion: string;
   sslStatus: 'ACTIVE' | 'PENDING' | 'DISABLED';
   status: 'HEALTHY' | 'WARNING' | 'ERROR' | 'SUSPENDED';
+  hostingStatus?: HostingOperationalStatus;
+  dnsVerified?: boolean;
   diskUsedMb: number;
   ip: string;
   createdAt: Date;
@@ -139,6 +153,8 @@ export class HostingManagementService {
       phpVersion,
       sslStatus: spec.sslEnabled !== false ? 'ACTIVE' : 'DISABLED',
       status: 'HEALTHY',
+      hostingStatus: 'HOSTING_PROVISIONED',
+      dnsVerified: false,
       diskUsedMb: 120,
       ip: '89.117.147.134',
       createdAt: new Date(),
@@ -302,6 +318,85 @@ export class HostingManagementService {
 
     return { available: true };
   }
+
+  async verifyDomainDns(
+    domain: string,
+    context: AuthorizedContext,
+    dnsResolver?: (hostname: string) => Promise<string[]>
+  ): Promise<{
+    verified: boolean;
+    hostingStatus: HostingOperationalStatus;
+    resolvedIps: string[];
+    expectedIp: string;
+    message: string;
+  }> {
+    const cleanDomain = domain.toLowerCase().trim();
+    const site = this.websites.get(cleanDomain);
+    if (!site) {
+      throw new WebSiteNotFoundError(cleanDomain);
+    }
+
+    if (site.organizationId !== context.organizationId) {
+      throw new CrossTenantViolationError(context.organizationId, site.organizationId);
+    }
+
+    const expectedIp = site.ip || '89.117.147.134';
+    let resolvedIps: string[] = [];
+
+    try {
+      if (dnsResolver) {
+        resolvedIps = await dnsResolver(cleanDomain);
+      } else {
+        const dns = await import('node:dns');
+        resolvedIps = await dns.promises.resolve4(cleanDomain);
+      }
+    } catch {
+      resolvedIps = [];
+    }
+
+    const pointsToHosting = resolvedIps.includes(expectedIp);
+
+    if (pointsToHosting) {
+      site.dnsVerified = true;
+      site.hostingStatus = 'DNS_VERIFIED';
+
+      // If SSL is active or can be enabled, advance to ACTIVE
+      if (site.sslStatus === 'ACTIVE') {
+        site.hostingStatus = 'ACTIVE';
+      } else {
+        site.hostingStatus = 'SSL_PENDING';
+        try {
+          await this.enableSsl(cleanDomain, context);
+          site.hostingStatus = 'ACTIVE';
+        } catch {
+          // Keep SSL_PENDING if issuance is still in progress
+        }
+      }
+
+      return {
+        verified: true,
+        hostingStatus: site.hostingStatus,
+        resolvedIps,
+        expectedIp,
+        message:
+          site.hostingStatus === 'ACTIVE'
+            ? 'DNS verificado y certificado SSL activo. Tu sitio web está funcionando correctamente.'
+            : 'DNS verificado correctamente. Emisión de SSL en progreso.',
+      };
+    } else {
+      site.dnsVerified = false;
+      site.hostingStatus = 'DNS_PENDING';
+
+      return {
+        verified: false,
+        hostingStatus: 'DNS_PENDING',
+        resolvedIps,
+        expectedIp,
+        message: `El dominio todavía no apunta a la IP de hosting ${expectedIp}. Registros detectados: ${resolvedIps.length > 0 ? resolvedIps.join(', ') : 'Ninguno (sin propagación)'}.`,
+      };
+    }
+  }
+
 
   async updatePhpVersion(
     domain: string,

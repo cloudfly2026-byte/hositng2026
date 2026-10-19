@@ -764,8 +764,39 @@ Cada acción ha sido auditada y clasificada según su nivel real de ejecución:
    - Redirección dinámica en `apps/web/src/app/login/page.tsx` consumiendo `getDestination`.
 
 5. **Métricas de Calidad y Verificación TDD Real**:
-   - **Vitest**: **54 suites de prueba, 443 pruebas aprobadas (100% GREEN, 0 fallidas)**.
+   - **Vitest**: **54 suites de prueba, 448 pruebas aprobadas (100% GREEN, 0 fallidas)**.
    - **Build Composite TypeScript & Next.js 15**: 23 rutas prerenderizadas exitosamente sin errores de tipos.
+
+---
+
+## O. Sprint de Auditoría y Cierre del Flujo Comercial V2 (19 de Octubre de 2026)
+### Dominio Principal Obligatorio, Aprovisionamiento HestiaCP, Notificación DNS y Máquina de Estados Operativa
+
+#### 1. Resumen de Entregables Implementados y Validados
+
+1. **Eliminación Definitiva de Promesas de Subdominios Gratuitos en Checkout/Cart**:
+   - Se removió cualquier mención de subdominios automáticos comerciales (`*.apps.velupi.com`, `*.velupi.com`) en [apps/web/src/app/cart/page.tsx](file:///c:/Users/Edwin/Desktop/hosting2026/apps/web/src/app/cart/page.tsx).
+   - Todo servicio comercial de hosting exige un dominio principal propio suministrado por el cliente (`miempresa.com`, `mitienda.com.co`).
+
+2. **Plantillas Transaccionales en MailerService (`Warm Solar Light`)**:
+   - `sendHostingProvisionedDnsEmail`: Despachado inmediatamente tras la creación del vhost en el cluster (`HOSTING_PROVISIONED`). Proporciona instrucciones exactas con IP del servidor de hosting (`89.117.147.134`), servidores de nombres (`ns1.velupi.com`, `ns2.velupi.com`) y registros alternativos A (@) y CNAME (www).
+   - `sendServiceActiveEmail`: Confirmación de activación definitiva (`ACTIVE`) con enlace seguro HTTPS y botón de acceso a Site Tools.
+
+3. **Máquina de Estados Operativa y Verificación DNS en Backend**:
+   - Se extendió el modelo con `HostingOperationalStatus`: `PENDING_PAYMENT` $\rightarrow$ `PAID` $\rightarrow$ `PROVISIONING` $\rightarrow$ `HOSTING_PROVISIONED` $\rightarrow$ `DNS_PENDING` $\rightarrow$ `DNS_VERIFIED` $\rightarrow$ `SSL_PENDING` $\rightarrow$ `ACTIVE`.
+   - Se implementó `verifyDomainDns(domain, context, dnsResolver?)` en `HostingManagementService`.
+   - Se expuso el endpoint `POST /hosting/verify-dns` en `HostingController`, protegido por roles de tenant y verificación de aislamiento multi-tenant.
+
+4. **Integración Automática en Reconciliación de Órdenes (`OrdersController`)**:
+   - En `OrdersController.reconcileOrder`, al confirmarse el estado `PAID` de una orden con `primaryDomain`, se crea el sitio web vhost e inmediatamente se despacha el correo de configuración DNS al cliente con los datos reales del nodo.
+
+5. **Tarjeta de Conexión de Dominio en WordPress Site Tools (`apps/web`)**:
+   - Componente interactivo "Conexión de Dominio & Estado DNS" con chips reactivos de estado, instrucciones para opción A (Nameservers) y opción B (Registros A/CNAME), y botón interactivo "Verificar DNS nuevamente".
+
+6. **Métricas de Calidad y Verificación**:
+   - **Vitest**: **54 suites de prueba, 448 pruebas aprobadas (100% GREEN, 0 fallidas)**.
+   - **Compilación Next.js 15**: 23 rutas prerenderizadas exitosamente sin errores de compilación ni de tipos.
+
 
 
 

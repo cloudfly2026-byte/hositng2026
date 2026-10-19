@@ -261,5 +261,69 @@ describe('OrdersController (GET /orders/:orderId)', () => {
       ).rejects.toThrow();
     });
   });
+
+  describe('reconcileOrder with primary domain and DNS welcome email', () => {
+    it('provisions website and sends DNS configuration email when order is reconciled to PAID', async () => {
+      const mockHostingService = {
+        createWebSite: vi.fn().mockResolvedValue({
+          domain: 'miempresa.com',
+          ip: '89.117.147.134',
+          organizationId: 'org-client-test',
+          type: 'WordPress Starter',
+        }),
+      };
+      const mockMailer = {
+        sendHostingProvisionedDnsEmail: vi.fn().mockResolvedValue({ success: true }),
+      };
+      const mockWompi = {
+        queryTransactionStatus: vi.fn().mockResolvedValue({
+          transactionId: 'trx-reconcile-dns',
+          status: 'APPROVED',
+          amountCents: 6545000,
+          currency: 'COP',
+          reference: testOrderNumber,
+        }),
+      };
+
+      const orderWithMeta = orderService.getOrderById(testOrderId)!;
+      (orderWithMeta as any).primaryDomain = 'miempresa.com';
+      (orderWithMeta as any).customerEmail = 'edwin@miempresa.com';
+      (orderWithMeta as any).customerName = 'Edwin Guevara';
+
+      const testOrdersStore = new Map<string, any>();
+      testOrdersStore.set(testOrderId, orderWithMeta);
+
+      const controllerWithDnsEmail = new OrdersController(
+        orderService,
+        testOrdersStore,
+        undefined,
+        mockWompi as any,
+        undefined,
+        undefined,
+        mockHostingService as any,
+        mockMailer as any
+      );
+
+      const result = await controllerWithDnsEmail.reconcileOrder(testOrderId, {
+        transactionId: 'trx-reconcile-dns',
+      });
+
+      expect(result.status).toBe('RECONCILED_PAID');
+      expect(mockHostingService.createWebSite).toHaveBeenCalledWith(
+        { domain: 'miempresa.com', type: 'WordPress Starter' },
+        expect.any(Object)
+      );
+      expect(mockMailer.sendHostingProvisionedDnsEmail).toHaveBeenCalledTimes(1);
+      expect(mockMailer.sendHostingProvisionedDnsEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          toEmail: 'edwin@miempresa.com',
+          domain: 'miempresa.com',
+          hostingServerIp: '89.117.147.134',
+          primaryNameserver: 'ns1.velupi.com',
+          secondaryNameserver: 'ns2.velupi.com',
+        })
+      );
+    });
+  });
 });
 

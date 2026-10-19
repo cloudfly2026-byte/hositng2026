@@ -25,7 +25,30 @@ export default function WordPressSiteToolsPage() {
   const [activeSite, setActiveSite] = React.useState<{ domain: string; phpVersion: string; sslEnabled: boolean } | null>(null);
   const [updatingPhp, setUpdatingPhp] = React.useState(false);
   const [enablingSsl, setEnablingSsl] = React.useState(false);
+  const [verifyingDns, setVerifyingDns] = React.useState(false);
+  const [dnsCheckResult, setDnsCheckResult] = React.useState<{ verified: boolean; message: string } | null>(null);
   const [actionFeedback, setActionFeedback] = React.useState<string | null>(null);
+
+  const handleVerifyDns = async () => {
+    const domain = activeSite?.domain || 'velupi.com';
+    setVerifyingDns(true);
+    setDnsCheckResult(null);
+    try {
+      const res = await defaultApiClient.verifyHostingDns(domain);
+      setDnsCheckResult(res);
+      if (res.hostingStatus) {
+        setActiveSite((prev) => (prev ? { ...prev, hostingStatus: res.hostingStatus } : prev));
+      }
+    } catch (err: any) {
+      setDnsCheckResult({
+        verified: false,
+        message: err?.message || 'Error al conectar con el verificador de DNS.',
+      });
+    } finally {
+      setVerifyingDns(false);
+    }
+  };
+
 
   React.useEffect(() => {
     defaultApiClient
@@ -120,6 +143,115 @@ export default function WordPressSiteToolsPage() {
           </Button>
         </Box>
       </Box>
+
+      {/* Domain Connection & DNS Status Card */}
+      <Paper
+        sx={{
+          p: 3,
+          mb: 4,
+          backgroundColor: '#FFFFFF',
+          border: '1px solid #F2E8DC',
+          borderRadius: 3,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
+              <Typography variant="h6" sx={{ color: '#2D1B17', fontWeight: 800 }}>
+                Conexión de Dominio & Estado DNS
+              </Typography>
+              <Chip
+                label={
+                  (activeSite as any)?.hostingStatus === 'ACTIVE'
+                    ? 'ACTIVO & SEGURO'
+                    : (activeSite as any)?.hostingStatus === 'DNS_VERIFIED'
+                    ? 'DNS VERIFICADO'
+                    : (activeSite as any)?.hostingStatus === 'SSL_PENDING'
+                    ? 'EMITIENDO SSL'
+                    : 'HOSTING PREPARADO — DNS PENDIENTE'
+                }
+                size="small"
+                color={
+                  (activeSite as any)?.hostingStatus === 'ACTIVE'
+                    ? 'success'
+                    : (activeSite as any)?.hostingStatus === 'DNS_VERIFIED'
+                    ? 'info'
+                    : 'warning'
+                }
+                sx={{ fontWeight: 700 }}
+              />
+            </Box>
+            <Typography variant="body2" sx={{ color: '#667085' }}>
+              Para que tu sitio web funcione bajo <strong>{activeSite?.domain || 'velupi.com'}</strong>, delega tus servidores DNS o apunta tu registro A.
+            </Typography>
+          </Box>
+
+          <Button
+            variant="outlined"
+            color="primary"
+            disabled={verifyingDns}
+            onClick={handleVerifyDns}
+            sx={{ fontWeight: 700 }}
+          >
+            {verifyingDns ? 'Comprobando DNS...' : 'Verificar DNS nuevamente'}
+          </Button>
+        </Box>
+
+        {dnsCheckResult && (
+          <Box
+            sx={{
+              p: 2,
+              mb: 2.5,
+              borderRadius: 2,
+              backgroundColor: dnsCheckResult.verified ? '#F0FDF4' : '#FFFBEB',
+              border: `1px solid ${dnsCheckResult.verified ? '#BBF7D0' : '#FDE68A'}`,
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{
+                color: dnsCheckResult.verified ? '#166534' : '#92400E',
+                fontWeight: 600,
+              }}
+            >
+              {dnsCheckResult.message}
+            </Typography>
+          </Box>
+        )}
+
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={6}>
+            <Box sx={{ p: 2, backgroundColor: '#FFFDF9', border: '1px dashed #F2E8DC', borderRadius: 2 }}>
+              <Typography variant="subtitle2" sx={{ color: '#FF6B00', fontWeight: 700, mb: 1 }}>
+                Opción A: Delegar Servidores Nameservers (Recomendado)
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#667085', display: 'block', mb: 1 }}>
+                Configura estos servidores en tu proveedor de dominio (GoDaddy, Namecheap, etc.):
+              </Typography>
+              <Box sx={{ fontFamily: 'monospace', fontSize: '0.85rem', color: '#2D1B17', backgroundColor: '#FFFFFF', p: 1.5, borderRadius: 1, border: '1px solid #F2E8DC' }}>
+                <div><strong>NS1:</strong> ns1.velupi.com</div>
+                <div style={{ marginTop: 4 }}><strong>NS2:</strong> ns2.velupi.com</div>
+              </Box>
+            </Box>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Box sx={{ p: 2, backgroundColor: '#FFFDF9', border: '1px dashed #F2E8DC', borderRadius: 2 }}>
+              <Typography variant="subtitle2" sx={{ color: '#2D1B17', fontWeight: 700, mb: 1 }}>
+                Opción B: Mantener DNS actual y apuntar Registros
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#667085', display: 'block', mb: 1 }}>
+                Si gestionas tu propio DNS, añade estos registros en tu zona:
+              </Typography>
+              <Box sx={{ fontFamily: 'monospace', fontSize: '0.85rem', color: '#2D1B17', backgroundColor: '#FFFFFF', p: 1.5, borderRadius: 1, border: '1px solid #F2E8DC' }}>
+                <div><strong>A:</strong> @ $\rightarrow$ 89.117.147.134</div>
+                <div style={{ marginTop: 4 }}><strong>CNAME:</strong> www $\rightarrow$ {activeSite?.domain || 'velupi.com'}</div>
+              </Box>
+            </Box>
+          </Grid>
+        </Grid>
+      </Paper>
 
       {/* Site Tools Action Grid */}
       <Typography variant="h6" sx={{ color: '#2D1B17', fontWeight: 800, mb: 2 }}>

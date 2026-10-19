@@ -23,6 +23,7 @@ import {
   SubscriptionService,
   HostingManagementService,
   TenantAccessPolicy,
+  MailerService,
 } from '@cloudfly/domain';
 import { AuthorizedContext } from '@cloudfly/contracts';
 import { globalOrdersStore } from '../app.module';
@@ -37,7 +38,8 @@ export class OrdersController {
     @Optional() private readonly wompiAdapter?: WompiPaymentAdapter,
     @Optional() private readonly orchestrator?: ProvisioningOrchestrator,
     @Optional() private readonly subscriptionService?: SubscriptionService,
-    @Optional() private readonly hostingService?: HostingManagementService
+    @Optional() private readonly hostingService?: HostingManagementService,
+    @Optional() private readonly mailerService?: MailerService
   ) {}
 
   @Get()
@@ -212,7 +214,7 @@ export class OrdersController {
       const primaryDomain = (paidOrder as any).primaryDomain || (paidOrder as any).metadata?.primaryDomain;
       if (primaryDomain && this.hostingService) {
         try {
-          await this.hostingService.createWebSite(
+          const site = await this.hostingService.createWebSite(
             { domain: primaryDomain, type: 'WordPress Starter' },
             {
               userId: (paidOrder as any).userId || 'system',
@@ -221,6 +223,32 @@ export class OrdersController {
               permissions: ['*'],
             }
           );
+
+          // Dispatch transactional DNS configuration email upon HOSTING_PROVISIONED
+          if (this.mailerService) {
+            const customerEmail =
+              (paidOrder as any).customerEmail ||
+              (paidOrder as any).metadata?.customerEmail ||
+              (paidOrder as any).email;
+            const customerName =
+              (paidOrder as any).customerName ||
+              (paidOrder as any).metadata?.customerName ||
+              'Cliente Velupi';
+
+            if (customerEmail) {
+              await this.mailerService.sendHostingProvisionedDnsEmail({
+                toEmail: customerEmail,
+                fullName: customerName,
+                planName: 'WordPress Starter',
+                domain: primaryDomain,
+                orderNumber: paidOrder.orderNumber,
+                hostingServerIp: site.ip || '89.117.147.134',
+                primaryNameserver: 'ns1.velupi.com',
+                secondaryNameserver: 'ns2.velupi.com',
+                panelUrl: 'https://app.velupi.com',
+              });
+            }
+          }
         } catch (siteErr) {
           console.warn('[OrdersController] Primary domain site provisioning note:', siteErr);
         }

@@ -60,4 +60,54 @@ describe('MailerService — Velupi Transactional Email Service', () => {
     expect(result.success).toBe(false);
     expect(result.error).toContain('SMTP Connection Refused');
   });
+
+  it('renders and sends DNS configuration instructions when hosting is provisioned (HOSTING_PROVISIONED)', async () => {
+    const result = await (mailer as any).sendHostingProvisionedDnsEmail({
+      toEmail: 'edwin@miempresa.com',
+      fullName: 'Edwin Guevara',
+      planName: 'WordPress Pro',
+      domain: 'miempresa.com',
+      orderNumber: 'ORD-2026-999',
+      hostingServerIp: '89.117.147.134',
+      primaryNameserver: 'ns1.velupi.com',
+      secondaryNameserver: 'ns2.velupi.com',
+      panelUrl: 'https://app.velupi.com',
+    });
+
+    expect(result.success).toBe(true);
+    expect(mockTransport.sendMail).toHaveBeenCalledTimes(1);
+
+    const callArgs = mockTransport.sendMail.mock.calls[0][0];
+    expect(callArgs.to).toBe('edwin@miempresa.com');
+    expect(callArgs.subject).toContain('¡Tu hosting Velupi está preparado! Conecta tu dominio');
+    expect(callArgs.html).toContain('miempresa.com');
+    expect(callArgs.html).toContain('WordPress Pro');
+    expect(callArgs.html).toContain('89.117.147.134');
+    expect(callArgs.html).toContain('ns1.velupi.com');
+    expect(callArgs.html).toContain('ns2.velupi.com');
+    expect(callArgs.html).toContain('https://app.velupi.com');
+    expect(callArgs.html).toContain('ORD-2026-999');
+  });
+
+  it('renders and sends service activated confirmation email (ACTIVE)', async () => {
+    const result = await (mailer as any).sendServiceActiveEmail({
+      toEmail: 'edwin@miempresa.com',
+      fullName: 'Edwin Guevara',
+      planName: 'WordPress Pro',
+      domain: 'miempresa.com',
+      orderNumber: 'ORD-2026-999',
+      panelUrl: 'https://app.velupi.com',
+    });
+
+    expect(result.success).toBe(true);
+    expect(mockTransport.sendMail).toHaveBeenCalledTimes(1);
+
+    const callArgs = mockTransport.sendMail.mock.calls[0][0];
+    expect(callArgs.to).toBe('edwin@miempresa.com');
+    expect(callArgs.subject).toContain('Tu sitio web ya está activo en Velupi');
+    expect(callArgs.html).toContain('miempresa.com');
+    expect(callArgs.html).toContain('WordPress Pro');
+    expect(callArgs.html).toContain('https://app.velupi.com');
+  });
 });
+

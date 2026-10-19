@@ -75,6 +75,36 @@ describe('HostingController (Hosting API & Tenant Guards)', () => {
       expect(res.message).toContain('SSL');
     });
 
+    it('verifies DNS resolution and advances hostingStatus to DNS_VERIFIED / ACTIVE when matching IP', async () => {
+      await controller.createSite({ domain: 'verify-domain.com' }, userContext as any);
+
+      // Verify with mock resolver returning hosting IP
+      const verification = await hostingService.verifyDomainDns(
+        'verify-domain.com',
+        userContext.user as any,
+        async () => ['89.117.147.134']
+      );
+
+      expect(verification.verified).toBe(true);
+      expect(verification.hostingStatus).toBe('ACTIVE');
+      expect(verification.resolvedIps).toEqual(['89.117.147.134']);
+    });
+
+    it('verifies DNS resolution returns verified=false and DNS_PENDING when IP does not match', async () => {
+      await controller.createSite({ domain: 'pending-domain.com' }, userContext as any);
+
+      const verification = await hostingService.verifyDomainDns(
+        'pending-domain.com',
+        userContext.user as any,
+        async () => ['1.1.1.1']
+      );
+
+      expect(verification.verified).toBe(false);
+      expect(verification.hostingStatus).toBe('DNS_PENDING');
+      expect(verification.message).toContain('todavía no apunta');
+    });
+
+
     it('imports an existing site using authenticated user context', async () => {
       const imported = await controller.importSite(
         { domain: 'cloudfly.com.co', phpVersion: '8.2' },

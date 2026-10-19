@@ -63,7 +63,7 @@ const AVAILABLE_PLANS: PlanMetadata[] = [
     features: [
       'Despliegue de contenedores Docker en caliente',
       'Soporte Node.js, Python, Java y Go',
-      'Subdominio automático *.apps.velupi.com',
+      'Asociación a dominio propio del cliente',
       'Consola de logs y métricas en vivo',
       'Enrutamiento Traefik v3.7 con TLS 1.3',
       'Secret Vault cifrado multi-tenant',

@@ -240,6 +240,19 @@ export class ApiClient {
     return this.request<any>('/hosting/sites', { headers });
   }
 
+  async verifyHostingDns(domain: string, organizationId?: string): Promise<any> {
+    const headers: Record<string, string> = {};
+    if (organizationId) {
+      headers['x-tenant-id'] = organizationId;
+    }
+    return this.request<any>('/hosting/verify-dns', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ domain }),
+    });
+  }
+
+
   async listCloudApps(organizationId: string): Promise<any> {
     return this.request<any>(`/apps?organizationId=${encodeURIComponent(organizationId)}`, {
       headers: {

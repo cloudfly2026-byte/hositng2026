@@ -116,6 +116,27 @@ export class HostingController {
     return await this.hostingService.checkDomainAvailability(domain);
   }
 
+  @Post('verify-dns')
+  @UseGuards(HttpRolesGuard)
+  @Roles('OWNER', 'ADMIN', 'DEVELOPER')
+  async verifyDns(@Body() body: { domain: string }, @Req() req: any) {
+    if (!body?.domain || !body.domain.trim()) {
+      throw new BadRequestException('El parámetro domain es obligatorio.');
+    }
+    try {
+      return await this.hostingService.verifyDomainDns(body.domain, req.user);
+    } catch (error: any) {
+      if (error instanceof WebSiteNotFoundError) {
+        throw new NotFoundException(error.message);
+      }
+      if (error instanceof CrossTenantViolationError) {
+        throw new ForbiddenException(error.message);
+      }
+      throw new BadRequestException(error.message || 'Error al verificar DNS.');
+    }
+  }
+
+
   @Post('sites/import')
   @UseGuards(HttpRolesGuard)
   @Roles('OWNER', 'ADMIN')
