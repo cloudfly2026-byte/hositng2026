@@ -178,19 +178,19 @@ export class OAuthService {
     if (existingIdentity) {
       // Returning user via existing linked OAuthIdentity
       const user = await this.findUserById(existingIdentity.userId);
-      if (!user) {
-        throw new Error('Associated user identity record not found.');
+      if (user) {
+        const organization = await this.findFirstOrganizationForUser(user.id);
+        const tokens = await this.generateSessionTokens(user, organization);
+
+        return {
+          user,
+          organization,
+          tokens,
+          returnTo: stateRecord.returnTo,
+        };
       }
-
-      const organization = await this.findFirstOrganizationForUser(user.id);
-      const tokens = await this.generateSessionTokens(user, organization);
-
-      return {
-        user,
-        organization,
-        tokens,
-        returnTo: stateRecord.returnTo,
-      };
+      // If user was purged/deleted, drop the orphaned OAuthIdentity and proceed to fresh registration/link
+      this.identities.delete(identityKey);
     }
 
     // Check if an account with this email already exists

@@ -159,6 +159,8 @@ function LoginContent() {
           if (response?.organization?.id) {
             localStorage.setItem('velupi_active_org_id', response.organization.id);
           }
+          document.cookie = `velupi_session=${response.tokens.accessToken}; path=/; max-age=604800; SameSite=Lax`;
+          document.cookie = `velupi_access_token=${response.tokens.accessToken}; path=/; max-age=604800; SameSite=Lax`;
         }
       }
 
