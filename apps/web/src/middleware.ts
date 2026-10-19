@@ -127,7 +127,14 @@ export async function middleware(request: NextRequest) {
   if (hasValidSession && (pathname === '/login' || pathname === '/register')) {
     const returnTo = request.nextUrl.searchParams.get('returnTo') || '/';
     const safeReturnTo =
-      returnTo.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/';
+      returnTo.startsWith('/') &&
+      !returnTo.startsWith('//') &&
+      returnTo !== '/login' &&
+      returnTo !== '/register' &&
+      !returnTo.startsWith('/login?') &&
+      !returnTo.startsWith('/register?')
+        ? returnTo
+        : '/';
     return NextResponse.redirect(new URL(safeReturnTo, request.url));
   }
 
