@@ -222,36 +222,67 @@ export class OAuthService {
     const randomPassword = randomBytes(24).toString('base64');
     const orgName = `${input.profile.fullName} Workspace`;
 
-    const registerResult = await this.authService.register({
-      email: input.profile.email,
-      password: randomPassword,
-      fullName: input.profile.fullName,
-      organizationName: orgName,
-    });
+    try {
+      const registerResult = await this.authService.register({
+        email: input.profile.email,
+        password: randomPassword,
+        fullName: input.profile.fullName,
+        organizationName: orgName,
+      });
 
-    // Mark email as verified since it was verified by Google / GitHub
-    registerResult.user.emailVerified = true;
+      // Mark email as verified since it was verified by Google / GitHub
+      registerResult.user.emailVerified = true;
 
-    // Link identity
-    const identity: OAuthIdentity = {
-      id: randomUUID(),
-      userId: registerResult.user.id,
-      provider: input.provider,
-      providerSubject: input.profile.providerSubject,
-      email: input.profile.email,
-      createdAt: new Date(),
-    };
-    this.identities.set(identityKey, identity);
+      // Link identity
+      const identity: OAuthIdentity = {
+        id: randomUUID(),
+        userId: registerResult.user.id,
+        provider: input.provider,
+        providerSubject: input.profile.providerSubject,
+        email: input.profile.email,
+        createdAt: new Date(),
+      };
+      this.identities.set(identityKey, identity);
 
-    return {
-      user: registerResult.user,
-      organization: registerResult.organization,
-      tokens: registerResult.tokens,
-      returnTo: stateRecord.returnTo,
-    };
+      return {
+        user: registerResult.user,
+        organization: registerResult.organization,
+        tokens: registerResult.tokens,
+        returnTo: stateRecord.returnTo,
+      };
+    } catch (err: any) {
+      // If user exists due to race or prior registration, fetch user and log them in
+      const fallbackUser = await this.findUserByEmail(input.profile.email);
+      if (fallbackUser) {
+        const identity: OAuthIdentity = {
+          id: randomUUID(),
+          userId: fallbackUser.id,
+          provider: input.provider,
+          providerSubject: input.profile.providerSubject,
+          email: input.profile.email,
+          createdAt: new Date(),
+        };
+        this.identities.set(identityKey, identity);
+
+        const organization = await this.findFirstOrganizationForUser(fallbackUser.id);
+        const tokens = await this.generateSessionTokens(fallbackUser, organization);
+
+        return {
+          user: fallbackUser,
+          organization,
+          tokens,
+          returnTo: stateRecord.returnTo,
+        };
+      }
+      throw err;
+    }
   }
 
   private async findUserByEmail(email: string): Promise<CustomerUser | undefined> {
+    if (typeof (this.authService as any).getUserByEmail === 'function') {
+      const user = await (this.authService as any).getUserByEmail(email);
+      if (user) return user;
+    }
     const anyAuth = this.authService as any;
     if (anyAuth.users && anyAuth.users instanceof Map) {
       return (Array.from(anyAuth.users.values()) as CustomerUser[]).find(

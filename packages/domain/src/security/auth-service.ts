@@ -602,6 +602,21 @@ export class AuthenticationService {
     return user ? this.sanitizeUser(user) : undefined;
   }
 
+  async getUserByEmail(email: string): Promise<CustomerUser | undefined> {
+    const normalizedEmail = email.toLowerCase().trim();
+    const inMem = Array.from(this.users.values()).find(
+      (u) => u.email.toLowerCase() === normalizedEmail
+    );
+    if (inMem) return this.sanitizeUser(inMem);
+
+    if (this.uow) {
+      const persisted = await this.uow.users.findByEmail(normalizedEmail);
+      if (persisted) return persisted;
+    }
+
+    return undefined;
+  }
+
   private issueTokens(user: StoredUser, organizationId: string, roles: Role[], existingFamilyId?: string): AuthTokens {
     const expiresIn = 900; // 15 mins
     const accessToken = this.jwtService.sign(
