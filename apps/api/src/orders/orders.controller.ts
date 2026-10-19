@@ -15,9 +15,12 @@ import {
 import {
   OrderService,
   Order,
+  OrderStatus,
   IUnitOfWork,
   WompiPaymentAdapter,
   PaymentProcessorService,
+  ProvisioningOrchestrator,
+  SubscriptionService,
   TenantAccessPolicy,
 } from '@cloudfly/domain';
 import { AuthorizedContext } from '@cloudfly/contracts';
@@ -30,7 +33,9 @@ export class OrdersController {
     private readonly orderService: OrderService,
     @Optional() @Inject('ORDERS_STORE') private readonly ordersStore?: Map<string, Order>,
     @Optional() @Inject('IUnitOfWork') private readonly uow?: IUnitOfWork,
-    @Optional() private readonly wompiAdapter?: WompiPaymentAdapter
+    @Optional() private readonly wompiAdapter?: WompiPaymentAdapter,
+    @Optional() private readonly orchestrator?: ProvisioningOrchestrator,
+    @Optional() private readonly subscriptionService?: SubscriptionService
   ) {}
 
   @Get()
@@ -180,7 +185,29 @@ export class OrdersController {
       this.uow
     );
 
-    return processor.reconcilePendingOrder(order.id, body.transactionId);
+    const result = await processor.reconcilePendingOrder(order.id, body.transactionId);
+
+    // If order was successfully reconciled to PAID, trigger provisioning and subscription creation
+    if (result.status === 'RECONCILED_PAID' || (result.order && result.order.status === OrderStatus.PAID)) {
+      const paidOrder = result.order || order;
+      if (this.orchestrator) {
+        try {
+          this.orchestrator.orchestratePaidOrder(paidOrder);
+        } catch (orchErr) {
+          console.warn('[OrdersController] Error in orchestratePaidOrder:', orchErr);
+        }
+      }
+      if (this.subscriptionService) {
+        try {
+          const sub = this.subscriptionService.createSubscriptionFromPaidOrder(paidOrder);
+          this.subscriptionService.generateInvoiceForOrder(paidOrder, sub.id);
+        } catch (subErr) {
+          console.warn('[OrdersController] Error in createSubscriptionFromPaidOrder:', subErr);
+        }
+      }
+    }
+
+    return result;
   }
 }
 
