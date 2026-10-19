@@ -463,15 +463,28 @@ export default function DashboardPage() {
           <Grid item xs={12} md={8}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
               <Typography variant="h5" sx={{ color: '#2D1B17', fontWeight: 800 }}>
-                Cliente Piloto #001: Velupi
+                {activeOrgId === 'org-velupi-internal' ? 'Cliente Piloto #001: Velupi' : `Organización: ${activeOrgId}`}
               </Typography>
-              <Chip label="INTERNAL PILOT" size="small" color="primary" sx={{ fontWeight: 700 }} />
+              <Chip
+                label={activeOrgId === 'org-velupi-internal' ? 'INTERNAL PILOT' : (summary?.subscription?.status || 'SIN PLAN ACTIVO')}
+                size="small"
+                color={activeOrgId === 'org-velupi-internal' || summary?.subscription?.status === 'ACTIVE' ? 'primary' : 'default'}
+                sx={{ fontWeight: 700 }}
+              />
             </Box>
             <Typography variant="body2" sx={{ color: '#667085', mb: 1 }}>
-              Plan contratado: <strong>Velupi Web Hosting (Shared Cloud)</strong> — Dominio raíz: <code>velupi.com</code>
+              {activeOrgId === 'org-velupi-internal'
+                ? 'Plan contratado: Velupi Web Hosting (Shared Cloud) — Dominio raíz: velupi.com'
+                : summary?.subscription
+                ? `Plan contratado: ${summary.subscription.billingCycle} — Estado: ${summary.subscription.status}`
+                : 'Esta organización no cuenta con suscripciones activas. Contrata un plan para comenzar.'}
             </Typography>
             <Typography variant="caption" sx={{ color: '#667085' }}>
-              Orden Interna: <code>VEL-INTERNAL-001</code> | SSL: <strong>Let's Encrypt Activo</strong> | DNS: Delegado a <code>cloudfly.com.co</code>
+              {activeOrgId === 'org-velupi-internal'
+                ? "Orden Interna: VEL-INTERNAL-001 | SSL: Let's Encrypt Activo | DNS: Delegado a cloudfly.com.co"
+                : summary?.subscription?.currentPeriodEnd
+                ? `Próxima renovación: ${new Date(summary.subscription.currentPeriodEnd).toLocaleDateString()}`
+                : 'Selecciona un plan de Hosting o Cloud Apps para habilitar servidores y despliegues.'}
             </Typography>
           </Grid>
           <Grid item xs={12} md={4} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
@@ -482,7 +495,7 @@ export default function DashboardPage() {
               color="primary"
               sx={{ fontWeight: 700 }}
             >
-              Ver Planes y Precios
+              {summary?.subscription ? 'Ver Planes Adicionales' : 'Contratar Plan'}
             </Button>
           </Grid>
         </Grid>
