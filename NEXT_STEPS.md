@@ -103,3 +103,22 @@
 ## 5. Evidencias de Pruebas en Vivo (Browser Agent)
 - [proeba1_login_access_1792416168126.webp](file:///c:/Users/Edwin/Desktop/hosting2026/docs/recordings/proeba1_login_access_1792416168126.webp): Grabación del flujo completo de creación de cuenta `proeba1@cloudfly.com.co`, despacho de código por SMTP Hestia, validación de OTP `159395` y redirección exitosa al Dashboard de Velupi (`app.velupi.com`).
 
+---
+
+## 6. POST-MVP — Infraestructura DNS de Alta Disponibilidad y Multinodo (Deuda Técnica)
+
+> **Decisión de Congelación DNS para MVP**: Durante el lanzamiento del MVP, la infraestructura DNS opera con la configuración fija de producción:
+> - `HOSTING_DEFAULT_IP=89.117.147.134`
+> - `DNS_PRIMARY_NS=ns1.velupi.com` (apuntando a `89.117.147.134`)
+> - `DNS_SECONDARY_NS=ns2.velupi.com` (apuntando al mismo VPS por glue records GoDaddy)
+>
+> Se acepta temporalmente que `ns1` y `ns2` resuelvan al mismo VPS sin redundancia DNS ni sincronización multinodo para no bloquear el lanzamiento comercial. No se declara alta disponibilidad DNS en el MVP.
+
+### Hoja de Ruta Post-MVP (Fuera del Alcance Inicial):
+1. **DNS Secundario Independiente**: Desplegar un segundo VPS limpio en una región/proveedor geográficamente separado (ej. Hetzner o Contabo en Frankfurt/EE. UU.) dedicado exclusivamente a DNS secundario BIND9.
+2. **Separación Física de Nameservers**: Migrar `ns2.velupi.com` a la IP pública del nuevo nodo independiente y actualizar Glue Records en GoDaddy.
+3. **Sincronización Autoritative de Zonas (AXFR/NOTIFY)**: Configurar transferencias de zona BIND9 seguras mediante TSIG keys entre el nodo primario (`ns1`) y el secundario (`ns2`).
+4. **Descubrimiento Dinámico de Nodos**: Reemplazar IPs y nameservers estáticos por el Scheduler de asignación de VPS (`NodeInventoryService`), resolviendo el nodo según la carga y región de la organización.
+5. **Failover y Balanceo Anycast / GeoDNS**: Incorporar monitoreo de salud con failover automático entre nodos de datos.
+
+

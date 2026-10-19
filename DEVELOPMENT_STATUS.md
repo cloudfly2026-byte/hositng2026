@@ -797,6 +797,19 @@ Cada acción ha sido auditada y clasificada según su nivel real de ejecución:
    - **Vitest**: **54 suites de prueba, 448 pruebas aprobadas (100% GREEN, 0 fallidas)**.
    - **Compilación Next.js 15**: 23 rutas prerenderizadas exitosamente sin errores de compilación ni de tipos.
 
+#### 2. Congelación de Infraestructura DNS para MVP y Límites de Alcance
+- **Configuración Oficial Fija**:
+  - `HOSTING_DEFAULT_IP=89.117.147.134`
+  - `DNS_PRIMARY_NS=ns1.velupi.com` (apunta a `89.117.147.134`)
+  - `DNS_SECONDARY_NS=ns2.velupi.com` (apunta a `89.117.147.134`)
+- **Aceptación Temporal**:
+  - `ns1` y `ns2` comparten el mismo servidor VPS; no existe redundancia DNS externa ni sincronización AXFR/TSIG en el MVP.
+  - No se declara alta disponibilidad DNS comercial.
+  - La arquitectura multinodo y el descubrimiento dinámico de nodos quedan explícitamente registrados como deuda técnica en `NEXT_STEPS.md` para la fase Post-MVP.
+- **Foco Operativo del MVP Validado**:
+  $$\text{Pago Aprobado} \longrightarrow \text{Aprovisionamiento HestiaCP} \longrightarrow \text{Correo DNS} \longrightarrow \text{Verificación Dominio} \longrightarrow \text{SSL Let's Encrypt} \longrightarrow \text{Servicio Activo}$$
+
+
 
 
 
