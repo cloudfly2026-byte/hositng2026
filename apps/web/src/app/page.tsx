@@ -58,10 +58,24 @@ interface DashboardSummary {
 }
 
 export default function DashboardPage() {
-  const [activeOrgId] = React.useState('org-velupi-internal');
+  const [activeOrgId, setActiveOrgId] = React.useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('velupi_active_org_id') || 'org-velupi-internal';
+    }
+    return 'org-velupi-internal';
+  });
   const [summary, setSummary] = React.useState<DashboardSummary | null>(null);
   const [loading, setLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('velupi_active_org_id');
+      if (stored && stored !== activeOrgId) {
+        setActiveOrgId(stored);
+      }
+    }
+  }, [activeOrgId]);
 
   const fetchSummary = React.useCallback(async () => {
     setLoading(true);

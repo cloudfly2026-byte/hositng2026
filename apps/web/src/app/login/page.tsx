@@ -34,7 +34,15 @@ function LoginContent() {
   const searchParams = useSearchParams();
 
   const rawReturnTo = searchParams.get('returnTo') || '/';
-  const returnTo = rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//') ? rawReturnTo : '/';
+  const returnTo =
+    rawReturnTo.startsWith('/') &&
+    !rawReturnTo.startsWith('//') &&
+    rawReturnTo !== '/login' &&
+    rawReturnTo !== '/register' &&
+    !rawReturnTo.startsWith('/login?') &&
+    !rawReturnTo.startsWith('/register?')
+      ? rawReturnTo
+      : '/';
   const cartId = searchParams.get('cartId');
 
   // Steps: 'ENTER_EMAIL' | 'ENTER_CODE'
@@ -74,6 +82,20 @@ function LoginContent() {
         }
         document.cookie = `velupi_session=${token}; path=/; max-age=604800; SameSite=Lax`;
         document.cookie = `velupi_access_token=${token}; path=/; max-age=604800; SameSite=Lax`;
+
+        // If payload has organizationId, save it to velupi_active_org_id
+        try {
+          const parts = token.split('.');
+          if (parts.length === 3) {
+            const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+            if (payload?.organizationId) {
+              localStorage.setItem('velupi_active_org_id', payload.organizationId);
+            }
+          }
+        } catch {
+          // ignore
+        }
+
         window.location.href = returnTo;
         return;
       }

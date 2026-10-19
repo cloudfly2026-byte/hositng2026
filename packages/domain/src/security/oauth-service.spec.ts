@@ -32,6 +32,9 @@ describe('OAuthService (Social Authentication & Security)', () => {
       expect(validateReturnTo('//attacker.com/steal')).toBe('/');
       expect(validateReturnTo('/\\evil.com')).toBe('/');
       expect(validateReturnTo('javascript:alert(1)')).toBe('/');
+      expect(validateReturnTo('/login')).toBe('/');
+      expect(validateReturnTo('/login?returnTo=%2F')).toBe('/');
+      expect(validateReturnTo('/register')).toBe('/');
       expect(validateReturnTo(undefined)).toBe('/');
       expect(validateReturnTo('')).toBe('/');
     });

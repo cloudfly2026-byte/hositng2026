@@ -67,8 +67,13 @@ export function validateReturnTo(url?: string): string {
     return '/';
   }
 
-  // Prevent scheme injection (e.g. /http:, /javascript:)
-  if (url.includes(':') && !url.includes('?')) {
+  // Prevent redirect loop back to login or register
+  if (
+    url === '/login' ||
+    url === '/register' ||
+    url.startsWith('/login?') ||
+    url.startsWith('/register?')
+  ) {
     return '/';
   }
 

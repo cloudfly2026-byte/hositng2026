@@ -184,7 +184,15 @@ export class AuthController {
           res.cookie('velupi_access_token', result.tokens.accessToken, cookieOpts);
         }
 
-        const targetUrl = new URL(result.returnTo || '/', 'https://app.velupi.com');
+        const rawTarget = result.returnTo || '/';
+        const safeTarget =
+          rawTarget === '/login' ||
+          rawTarget === '/register' ||
+          rawTarget.startsWith('/login?') ||
+          rawTarget.startsWith('/register?')
+            ? '/'
+            : rawTarget;
+        const targetUrl = new URL(safeTarget, 'https://app.velupi.com');
         targetUrl.searchParams.set('token', result.tokens.accessToken);
         targetUrl.searchParams.set('refreshToken', result.tokens.refreshToken);
         return res.redirect(targetUrl.toString());
@@ -295,7 +303,15 @@ export class AuthController {
       });
 
       if (res && typeof res.redirect === 'function') {
-        const targetUrl = new URL(result.returnTo || '/', 'https://app.velupi.com');
+        const rawTarget = result.returnTo || '/';
+        const safeTarget =
+          rawTarget === '/login' ||
+          rawTarget === '/register' ||
+          rawTarget.startsWith('/login?') ||
+          rawTarget.startsWith('/register?')
+            ? '/'
+            : rawTarget;
+        const targetUrl = new URL(safeTarget, 'https://app.velupi.com');
         targetUrl.searchParams.set('token', result.tokens.accessToken);
         targetUrl.searchParams.set('refreshToken', result.tokens.refreshToken);
         return res.redirect(targetUrl.toString());
