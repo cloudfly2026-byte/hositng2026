@@ -148,6 +148,7 @@ jobs:
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
             docker compose --env-file /opt/velupi/.env.production -f docker-compose.prod.yml pull
             docker compose --env-file /opt/velupi/.env.production -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
+            docker image prune -f
             docker compose --env-file /opt/velupi/.env.production -f docker-compose.prod.yml ps
 
             # Verify Traefik and Portainer are running
