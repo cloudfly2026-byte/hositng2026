@@ -83,6 +83,9 @@ export default function BillingPage() {
     },
   ]);
 
+  const [pendingOrders, setPendingOrders] = React.useState<any[]>([]);
+  const [cancellingOrderId, setCancellingOrderId] = React.useState<string | null>(null);
+  const [cancelTargetOrder, setCancelTargetOrder] = React.useState<any | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [fetchNotice, setFetchNotice] = React.useState<string | null>(null);
   const [selectedInvoice, setSelectedInvoice] = React.useState<InvoiceItem | null>(null);
@@ -95,10 +98,18 @@ export default function BillingPage() {
       const orgId =
         (typeof window !== 'undefined' && localStorage.getItem('velupi_active_org_id')) ||
         'org-velupi-internal';
-      const [subsRes, invRes] = await Promise.allSettled([
+      const [subsRes, invRes, ordersRes] = await Promise.allSettled([
         defaultApiClient.getSubscriptions(orgId),
         defaultApiClient.getInvoices(orgId),
+        defaultApiClient.listOrders(orgId),
       ]);
+
+      if (ordersRes.status === 'fulfilled' && Array.isArray(ordersRes.value)) {
+        const pending = ordersRes.value.filter(
+          (o: any) => o.status === 'PENDING_PAYMENT' || o.status === 'DRAFT'
+        );
+        setPendingOrders(pending);
+      }
 
       if (subsRes.status === 'fulfilled' && Array.isArray(subsRes.value) && subsRes.value.length > 0) {
         setSubscriptions(
@@ -143,6 +154,21 @@ export default function BillingPage() {
       setIsLoading(false);
     }
   }, []);
+
+  const handleCancelOrder = async () => {
+    if (!cancelTargetOrder) return;
+    setCancellingOrderId(cancelTargetOrder.id);
+    try {
+      await defaultApiClient.cancelOrder(cancelTargetOrder.id);
+      setFetchNotice(`El pedido ${cancelTargetOrder.orderNumber || cancelTargetOrder.id} ha sido cancelado con éxito.`);
+      setCancelTargetOrder(null);
+      await loadBillingData();
+    } catch (err: any) {
+      setFetchNotice(err?.message || 'Error al cancelar el pedido.');
+    } finally {
+      setCancellingOrderId(null);
+    }
+  };
 
   React.useEffect(() => {
     loadBillingData();
@@ -197,6 +223,106 @@ export default function BillingPage() {
         </Alert>
       )}
 
+      {/* Pending Orders & Collection Documents Section */}
+      {pendingOrders.length > 0 && (
+        <Box sx={{ mb: 4 }}>
+          <Alert
+            severity="warning"
+            icon={<WarningAmberRoundedIcon />}
+            sx={{
+              mb: 2.5,
+              backgroundColor: '#FFFBEB',
+              color: '#B45309',
+              border: '1px solid #FDE68A',
+              borderRadius: 3,
+            }}
+          >
+            <AlertTitle sx={{ fontWeight: 800 }}>Tienes {pendingOrders.length} pedido(s) pendiente(s) de pago</AlertTitle>
+            Completa el pago de tu pedido para activar tus servicios o cancélalo si ya no deseas continuar.
+          </Alert>
+
+          <Typography variant="h6" sx={{ fontWeight: 700, color: '#2D1B17', mb: 2 }}>
+            Documentos y Pedidos Pendientes de Pago
+          </Typography>
+
+          <Grid container spacing={2.5}>
+            {pendingOrders.map((order) => {
+              const amountCop = Math.round((order.totalCents || 0) / 100).toLocaleString('es-CO');
+              return (
+                <Grid item xs={12} key={order.id}>
+                  <Paper
+                    sx={{
+                      p: 3,
+                      backgroundColor: '#FFFFFF',
+                      borderRadius: 3,
+                      border: '1px solid #F59E0B',
+                      boxShadow: '0 4px 12px rgba(245, 158, 11, 0.08)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: 2,
+                    }}
+                  >
+                    <Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 800, color: '#2D1B17' }}>
+                          Pedido #{order.orderNumber || order.id}
+                        </Typography>
+                        <Chip
+                          label="PENDIENTE DE PAGO"
+                          size="small"
+                          sx={{
+                            backgroundColor: '#FEF3C7',
+                            color: '#92400E',
+                            fontWeight: 700,
+                            fontSize: '0.75rem',
+                          }}
+                        />
+                      </Box>
+                      <Typography variant="body2" sx={{ color: '#667085' }}>
+                        Total: <strong>${amountCop} COP</strong> &bull; Moneda: {order.currency || 'COP'}
+                        {order.primaryDomain ? ` • Dominio principal: ${order.primaryDomain}` : ''}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                      <Button
+                        component={Link}
+                        href={`/checkout?orderId=${encodeURIComponent(order.id)}`}
+                        variant="contained"
+                        sx={{
+                          borderRadius: 2,
+                          textTransform: 'none',
+                          fontWeight: 700,
+                          backgroundColor: '#FF6B00',
+                          '&:hover': { backgroundColor: '#E85A00' },
+                        }}
+                      >
+                        Pagar Ahora
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        onClick={() => setCancelTargetOrder(order)}
+                        disabled={cancellingOrderId === order.id}
+                        sx={{
+                          borderRadius: 2,
+                          textTransform: 'none',
+                          fontWeight: 600,
+                          borderColor: '#FCA5A5',
+                        }}
+                      >
+                        {cancellingOrderId === order.id ? 'Cancelando...' : 'Cancelar Pedido'}
+                      </Button>
+                    </Box>
+                  </Paper>
+                </Grid>
+              );
+            })}
+          </Grid>
+        </Box>
+      )}
 
       {/* Subscriptions Section */}
       <Typography variant="h6" sx={{ fontWeight: 700, color: '#2D1B17', mb: 2 }}>
@@ -464,6 +590,43 @@ export default function BillingPage() {
           </Button>
           <Button variant="contained" color="error" onClick={handleConfirmCancel} sx={{ textTransform: 'none' }}>
             Confirmar Cancelación
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Cancel Order Dialog */}
+      <Dialog
+        open={Boolean(cancelTargetOrder)}
+        onClose={() => setCancelTargetOrder(null)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: { backgroundColor: '#FFFFFF', borderRadius: 3, border: '1px solid #F2E8DC', boxShadow: '0 8px 32px rgba(0,0,0,0.08)' },
+        }}
+      >
+        <DialogTitle sx={{ color: '#2D1B17', fontWeight: 800 }}>
+          ¿Cancelar este pedido?
+        </DialogTitle>
+        <DialogContent sx={{ color: '#2D1B17' }}>
+          <Typography variant="body2" sx={{ mb: 1.5 }}>
+            El pedido #{cancelTargetOrder?.orderNumber || cancelTargetOrder?.id} se marcará como <strong>CANCELADO</strong> y la reserva temporal del dominio será liberada.
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#667085' }}>
+            Tu cuenta y los demás servicios activos permanecerán intactos. Podrás iniciar un nuevo pedido en cualquier momento.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setCancelTargetOrder(null)} sx={{ color: '#667085', textTransform: 'none' }}>
+            Volver
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleCancelOrder}
+            disabled={cancellingOrderId !== null}
+            sx={{ textTransform: 'none', fontWeight: 700 }}
+          >
+            {cancellingOrderId ? 'Cancelando...' : 'Confirmar Cancelación'}
           </Button>
         </DialogActions>
       </Dialog>

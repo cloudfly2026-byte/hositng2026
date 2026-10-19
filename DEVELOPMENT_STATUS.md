@@ -730,6 +730,44 @@ Cada acción ha sido auditada y clasificada según su nivel real de ejecución:
    - **Vitest**: **54 suites de prueba, 432 pruebas aprobadas (100% GREEN, 0 fallidas)**.
    - **Despliegue Continuo**: Confirmado vía GitHub Actions hacia el VPS de producción (`169.58.220.244`).
 
+---
+
+## N. Implementación Oficial de Prompt Maestro V2 (19 de Octubre de 2026)
+### Flujo Comercial Unificado, Autenticación OTP, Cancelación Idempotente y Navegación Inteligente
+
+#### 1. Resumen de Entregables Implementados y Validados
+
+1. **Cancelación Segura e Idempotente de Pedidos (`cancelOrder`)**:
+   - Se implementó `cancelOrder(orderId, requestingOrgId, isOperator)` en `OrderService` (`onboarding-order.ts`).
+   - Bloquea cancelaciones cruzadas entre tenants (`CrossTenantViolation`) asegurando aislamiento estricto.
+   - Idempotente: si el pedido ya está en estado `CANCELLED`, retorna la orden sin efectos colaterales.
+   - Bloqueo de seguridad: los pedidos en estado `PAID`, `PROVISIONING` o `COMPLETED` no pueden ser cancelados.
+   - Expuesto en NestJS: `POST /orders/:orderId/cancel` protegido por `JwtAuthGuard` y validación de membresía.
+
+2. **Resolución Inteligente de Destino Post-Login (`GET /me/destination`)**:
+   - Determina el destino final del usuario según su estado real en backend:
+     1. Si es Operador de Plataforma o Super Admin $\rightarrow$ `/` (Dashboard de Operaciones).
+     2. Si existe un carrito activo en progreso $\rightarrow$ `/checkout?cartId=...` para continuar la compra.
+     3. Si tiene suscripciones activas $\rightarrow$ `/` (Dashboard con sus servicios).
+     4. Si tiene servicios suspendidos o en período de gracia $\rightarrow$ `/billing` para regularización.
+     5. Si no tiene servicios activos ni pedidos $\rightarrow$ `/cart` para iniciar un nuevo ciclo de contratación sin bucles.
+
+3. **Banner de Pedidos Pendientes y Facturación en Dashboard y Billing**:
+   - **Dashboard (`apps/web/src/app/page.tsx`)**: Detección reactiva de órdenes en estado `PENDING_PAYMENT` y renderizado de alerta destacada con importe, dominio y botones de acción rápida (*Pagar Ahora* / *Ver Facturación*).
+   - **Billing (`apps/web/src/app/billing/page.tsx`)**:
+     - Sección de *Documentos y Pedidos Pendientes de Pago*.
+     - Botón de **Pagar Ahora** redirigiendo al checkout con la orden preservada.
+     - Botón de **Cancelar Pedido** con modal de confirmación y liberación segura de la reserva.
+
+4. **Cliente API Web (`ApiClient`)**:
+   - Métodos agregados: `cancelOrder(orderId)` y `getDestination(cartId)`.
+   - Redirección dinámica en `apps/web/src/app/login/page.tsx` consumiendo `getDestination`.
+
+5. **Métricas de Calidad y Verificación TDD Real**:
+   - **Vitest**: **54 suites de prueba, 443 pruebas aprobadas (100% GREEN, 0 fallidas)**.
+   - **Build Composite TypeScript & Next.js 15**: 23 rutas prerenderizadas exitosamente sin errores de tipos.
+
+
 
 
 

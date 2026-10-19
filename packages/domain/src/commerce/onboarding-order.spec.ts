@@ -209,6 +209,72 @@ describe('Epic COM-02 & COM-03 - Customer Onboarding and Orders', () => {
       expect(savedOrders).toHaveLength(2);
       expect(savedOrders[1].status).toBe(OrderStatus.PAID);
     });
+
+    describe('Order Cancellation (cancelOrder)', () => {
+      it('successfully cancels an order in PENDING_PAYMENT status and updates status to CANCELLED', () => {
+        const orderService = new OrderService(catalog);
+        const order = orderService.createOrder({
+          organizationId: 'org-test-cancel',
+          currency: 'COP',
+          billingCycle: BillingCycle.MONTHLY,
+          items: [{ planVersionId: planVersion.id, quantity: 1 }],
+          idempotencyKey: 'idem-cancel-success',
+        });
+
+        expect(order.status).toBe(OrderStatus.PENDING_PAYMENT);
+
+        const cancelled = orderService.cancelOrder(order.id, 'org-test-cancel');
+        expect(cancelled.status).toBe(OrderStatus.CANCELLED);
+        expect(orderService.getOrderById(order.id)?.status).toBe(OrderStatus.CANCELLED);
+      });
+
+      it('is idempotent: cancelling an already cancelled order returns CANCELLED without error', () => {
+        const orderService = new OrderService(catalog);
+        const order = orderService.createOrder({
+          organizationId: 'org-test-cancel',
+          currency: 'COP',
+          billingCycle: BillingCycle.MONTHLY,
+          items: [{ planVersionId: planVersion.id, quantity: 1 }],
+          idempotencyKey: 'idem-cancel-idempotent',
+        });
+
+        orderService.cancelOrder(order.id, 'org-test-cancel');
+        const cancelledAgain = orderService.cancelOrder(order.id, 'org-test-cancel');
+        expect(cancelledAgain.status).toBe(OrderStatus.CANCELLED);
+      });
+
+      it('rejects cancellation of a PAID or PROVISIONING order', () => {
+        const orderService = new OrderService(catalog);
+        const order = orderService.createOrder({
+          organizationId: 'org-test-cancel',
+          currency: 'COP',
+          billingCycle: BillingCycle.MONTHLY,
+          items: [{ planVersionId: planVersion.id, quantity: 1 }],
+          idempotencyKey: 'idem-cancel-paid',
+        });
+
+        orderService.updateOrderStatus(order.id, OrderStatus.PAID);
+
+        expect(() => orderService.cancelOrder(order.id, 'org-test-cancel')).toThrow(
+          'Cannot cancel order with status PAID'
+        );
+      });
+
+      it('prevents cross-tenant cancellation: another organization cannot cancel the order', () => {
+        const orderService = new OrderService(catalog);
+        const order = orderService.createOrder({
+          organizationId: 'org-legit-owner',
+          currency: 'COP',
+          billingCycle: BillingCycle.MONTHLY,
+          items: [{ planVersionId: planVersion.id, quantity: 1 }],
+          idempotencyKey: 'idem-cancel-xtenant',
+        });
+
+        expect(() => orderService.cancelOrder(order.id, 'org-attacker')).toThrow(
+          "Tenant 'org-attacker' is not authorized to cancel order belonging to 'org-legit-owner'"
+        );
+      });
+    });
   });
 });
 

@@ -68,6 +68,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
 
+  const [pendingOrders, setPendingOrders] = React.useState<any[]>([]);
+
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('velupi_active_org_id');
@@ -91,16 +93,31 @@ export default function DashboardPage() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const res = await fetch(`${apiUrl}/dashboard/summary?organizationId=${activeOrgId}`, {
-        headers,
-      });
+      const [resSummary, resOrders] = await Promise.allSettled([
+        fetch(`${apiUrl}/dashboard/summary?organizationId=${activeOrgId}`, { headers }),
+        fetch(`${apiUrl}/orders?organizationId=${activeOrgId}`, { headers }),
+      ]);
 
-      if (!res.ok) {
-        throw new Error(`Error ${res.status}: Fallo al consultar métricas del dashboard.`);
+      if (resOrders.status === 'fulfilled' && resOrders.value.ok) {
+        try {
+          const orders = await resOrders.value.json();
+          if (Array.isArray(orders)) {
+            const pending = orders.filter(
+              (o: any) => o.status === 'PENDING_PAYMENT' || o.status === 'DRAFT'
+            );
+            setPendingOrders(pending);
+          }
+        } catch {
+          // Non-blocking
+        }
       }
 
-      const data = await res.json();
-      setSummary(data);
+      if (resSummary.status === 'fulfilled' && resSummary.value.ok) {
+        const data = await resSummary.value.json();
+        setSummary(data);
+      } else {
+        throw new Error('Fallo al consultar métricas del dashboard.');
+      }
     } catch {
       // Fallback seguro: solo mostrar servicios preconfigurados si es el piloto interno
       if (activeOrgId === 'org-velupi-internal') {
@@ -165,6 +182,58 @@ export default function DashboardPage() {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+      {/* Pending Orders Notice Banner */}
+      {pendingOrders.length > 0 && (
+        <Alert
+          severity="warning"
+          icon={<AutoAwesomeIcon sx={{ color: '#FF6B00' }} />}
+          action={
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                component={Link}
+                href={`/checkout?orderId=${encodeURIComponent(pendingOrders[0].id)}`}
+                variant="contained"
+                size="small"
+                sx={{
+                  backgroundColor: '#FF6B00',
+                  color: '#fff',
+                  fontWeight: 700,
+                  textTransform: 'none',
+                  '&:hover': { backgroundColor: '#E85A00' },
+                }}
+              >
+                Pagar Ahora
+              </Button>
+              <Button
+                component={Link}
+                href="/billing"
+                variant="outlined"
+                size="small"
+                sx={{
+                  borderColor: '#F59E0B',
+                  color: '#92400E',
+                  fontWeight: 700,
+                  textTransform: 'none',
+                }}
+              >
+                Ver Facturación
+              </Button>
+            </Box>
+          }
+          sx={{
+            mb: 3,
+            backgroundColor: '#FFFBEB',
+            color: '#B45309',
+            border: '1px solid #FDE68A',
+            borderRadius: 3,
+            alignItems: 'center',
+          }}
+        >
+          <strong>Tienes un pago pendiente.</strong> Completa el pago de tu pedido #{pendingOrders[0].orderNumber || pendingOrders[0].id}
+          {pendingOrders[0].primaryDomain ? ` (${pendingOrders[0].primaryDomain})` : ''} por ${(Math.round((pendingOrders[0].totalCents || 0) / 100)).toLocaleString('es-CO')} COP para activar tus servicios.
+        </Alert>
+      )}
+
       {/* Hero Welcome */}
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
         <Box>

@@ -145,6 +145,11 @@ export class ApiClient {
     });
   }
 
+  async getDestination(cartId?: string): Promise<{ destination: string; reason: string }> {
+    const q = cartId ? `?cartId=${encodeURIComponent(cartId)}` : '';
+    return this.request<{ destination: string; reason: string }>(`/me/destination${q}`);
+  }
+
   async verifyAccessCode(email: string, code: string): Promise<any> {
     return this.request('/auth/verify-code', {
       method: 'POST',
@@ -201,6 +206,12 @@ export class ApiClient {
     return this.request<any>('/billing/reconcile', {
       method: 'POST',
       body: JSON.stringify({ orderId }),
+    });
+  }
+
+  async cancelOrder(orderId: string): Promise<any> {
+    return this.request<any>(`/orders/${encodeURIComponent(orderId)}/cancel`, {
+      method: 'POST',
     });
   }
 

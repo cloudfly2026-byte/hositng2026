@@ -220,5 +220,46 @@ describe('OrdersController (GET /orders/:orderId)', () => {
   it('throws NotFoundException for unknown order ID', async () => {
     await expect(controller.getOrder('non-existent-order')).rejects.toThrow(NotFoundException);
   });
+
+  describe('POST /orders/:orderId/cancel', () => {
+    it('cancels pending order for the owning tenant and returns the cancelled order', async () => {
+      const user = {
+        userId: 'usr-legit-001',
+        organizationId: 'org-client-test',
+        roles: ['OWNER' as const],
+        isOperator: false,
+      };
+
+      const result = await controller.cancelOrder(testOrderId, { user: user as any });
+      expect(result.status).toBe(OrderStatus.CANCELLED);
+    });
+
+    it('rejects cancelling order if requesting user belongs to a different organization', async () => {
+      const foreignUser = {
+        userId: 'usr-attacker-007',
+        organizationId: 'org-attacker-tenant',
+        roles: ['OWNER' as const],
+        isOperator: false,
+      };
+
+      await expect(
+        controller.cancelOrder(testOrderId, { user: foreignUser as any })
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('rejects cancellation if order is already PAID', async () => {
+      orderService.updateOrderStatus(testOrderId, OrderStatus.PAID);
+      const user = {
+        userId: 'usr-legit-001',
+        organizationId: 'org-client-test',
+        roles: ['OWNER' as const],
+        isOperator: false,
+      };
+
+      await expect(
+        controller.cancelOrder(testOrderId, { user: user as any })
+      ).rejects.toThrow();
+    });
+  });
 });
 

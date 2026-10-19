@@ -276,5 +276,40 @@ export class OrderService {
 
     return order;
   }
+
+  cancelOrder(orderId: string, requestingOrgId?: string, isOperator: boolean = false): Order {
+    const order = this.orders.get(orderId);
+    if (!order) {
+      throw new Error(`Order '${orderId}' not found.`);
+    }
+
+    if (requestingOrgId && !isOperator && order.organizationId !== requestingOrgId) {
+      throw new Error(
+        `Tenant '${requestingOrgId}' is not authorized to cancel order belonging to '${order.organizationId}'.`
+      );
+    }
+
+    // Idempotent: already cancelled
+    if (order.status === OrderStatus.CANCELLED) {
+      return order;
+    }
+
+    // Safety constraint: Cannot cancel PAID, PROVISIONING or COMPLETED orders
+    if (
+      order.status === OrderStatus.PAID ||
+      order.status === OrderStatus.PROVISIONING ||
+      order.status === OrderStatus.COMPLETED
+    ) {
+      throw new Error(`Cannot cancel order with status ${order.status}. Only unpaid orders can be cancelled.`);
+    }
+
+    order.status = OrderStatus.CANCELLED;
+
+    if (this.uow) {
+      this.uow.orders.save(order);
+    }
+
+    return order;
+  }
 }
 

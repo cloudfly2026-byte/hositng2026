@@ -304,4 +304,65 @@ describe('MeController — GET /me/capabilities (TDD)', () => {
       controllerWithAuth.getCapabilities(req, 'org-tenant-alpha-different')
     ).rejects.toThrow(ForbiddenException);
   });
+
+  describe('GET /me/destination (Intelligent Post-Login Resolution)', () => {
+    it('redirects platform operators to dashboard /', async () => {
+      const operatorUser = {
+        userId: 'usr-op-1',
+        isOperator: true,
+        roles: ['SUPER_ADMIN'],
+        organizationId: 'org-velupi-internal',
+      };
+      const res = await controller.getPostLoginDestination({ user: operatorUser });
+      expect(res.destination).toBe('/');
+      expect(res.reason).toBe('PLATFORM_OPERATOR');
+    });
+
+    it('redirects user with active cart to checkout', async () => {
+      const normalUser = {
+        userId: 'usr-buyer-1',
+        isOperator: false,
+        roles: ['OWNER'],
+        organizationId: 'org-buyer-corp',
+      };
+      const res = await controller.getPostLoginDestination({ user: normalUser }, 'cart-12345');
+      expect(res.destination).toBe('/checkout?cartId=cart-12345');
+      expect(res.reason).toBe('CART_IN_PROGRESS');
+    });
+
+    it('redirects user with active subscriptions to dashboard /', async () => {
+      // Create active subscription
+      const order = orderService.createOrder({
+        organizationId: 'org-subscribed',
+        currency: 'COP',
+        billingCycle: BillingCycle.MONTHLY,
+        items: [{ planVersionId: hostingPlanVersionId, quantity: 1 }],
+        idempotencyKey: 'idem-dest-active-sub',
+      });
+      orderService.updateOrderStatus(order.id, OrderStatus.PAID);
+      subscriptionService.createSubscriptionFromPaidOrder(order);
+
+      const customer = {
+        userId: 'usr-sub-1',
+        isOperator: false,
+        roles: ['OWNER'],
+        organizationId: 'org-subscribed',
+      };
+      const res = await controller.getPostLoginDestination({ user: customer });
+      expect(res.destination).toBe('/');
+      expect(res.reason).toBe('ACTIVE_SUBSCRIPTION');
+    });
+
+    it('redirects customer with no active subscriptions to /cart', async () => {
+      const emptyCustomer = {
+        userId: 'usr-empty-1',
+        isOperator: false,
+        roles: ['OWNER'],
+        organizationId: 'org-empty-corp',
+      };
+      const res = await controller.getPostLoginDestination({ user: emptyCustomer });
+      expect(res.destination).toBe('/cart');
+      expect(res.reason).toBe('NEW_CYCLE_EXPLORATION');
+    });
+  });
 });

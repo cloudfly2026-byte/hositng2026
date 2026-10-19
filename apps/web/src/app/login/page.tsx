@@ -189,11 +189,24 @@ function LoginContent() {
         }
       }
 
-      // Hard navigation to refresh memory state and render dashboard
+      // Intelligent post-login routing
+      let targetDestination = returnTo;
+      if (!returnTo || returnTo === '/' || returnTo === '/login' || returnTo === '/register') {
+        try {
+          const destRes = await defaultApiClient.getDestination(cartId || undefined);
+          if (destRes?.destination) {
+            targetDestination = destRes.destination;
+          }
+        } catch {
+          targetDestination = cartId ? `/checkout?cartId=${encodeURIComponent(cartId)}` : '/';
+        }
+      }
+
+      // Hard navigation to refresh memory state and render destination
       if (typeof window !== 'undefined') {
-        window.location.href = returnTo;
+        window.location.href = targetDestination;
       } else {
-        router.push(returnTo);
+        router.push(targetDestination);
       }
     } catch (err: any) {
       setError(err?.message || 'Código incorrecto o expirado.');

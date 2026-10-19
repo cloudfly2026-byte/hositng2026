@@ -123,4 +123,47 @@ export class MeController {
       isOperator: user.isOperator ?? false,
     };
   }
+
+  @Get('destination')
+  async getPostLoginDestination(
+    @Req() req: any,
+    @Query('cartId') cartId?: string
+  ): Promise<{ destination: string; reason: string }> {
+    const user = req.user;
+    if (!user) {
+      return { destination: '/login', reason: 'UNAUTHENTICATED' };
+    }
+
+    // 1. Operators & platform admins
+    if (user.isOperator || user.roles?.includes('SUPER_ADMIN') || user.roles?.includes('OPERATOR')) {
+      return { destination: '/', reason: 'PLATFORM_OPERATOR' };
+    }
+
+    // 2. Explicit cart in progress
+    if (cartId) {
+      return { destination: `/checkout?cartId=${encodeURIComponent(cartId)}`, reason: 'CART_IN_PROGRESS' };
+    }
+
+    const orgId = user.organizationId;
+    if (!orgId) {
+      return { destination: '/cart', reason: 'NO_ORGANIZATION' };
+    }
+
+    // 3. Subscriptions check
+    const subs = this.subscriptionService?.getSubscriptionsByOrganization(orgId) || [];
+    const activeSub = subs.find((s) => s.status === 'ACTIVE' || s.status === 'TRIALING');
+    if (activeSub) {
+      return { destination: '/', reason: 'ACTIVE_SUBSCRIPTION' };
+    }
+
+    const suspendedOrGrace = subs.find(
+      (s) => s.status === 'SUSPENDED' || s.status === 'GRACE_PERIOD' || s.status === 'PAST_DUE'
+    );
+    if (suspendedOrGrace) {
+      return { destination: '/billing', reason: 'REGULARIZATION_REQUIRED' };
+    }
+
+    // 4. Default for customers without active services or orders
+    return { destination: '/cart', reason: 'NEW_CYCLE_EXPLORATION' };
+  }
 }

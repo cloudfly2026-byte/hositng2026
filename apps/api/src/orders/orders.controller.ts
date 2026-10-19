@@ -229,5 +229,60 @@ export class OrdersController {
 
     return result;
   }
+
+  @Post(':orderId/cancel')
+  @UseGuards(JwtAuthGuard)
+  async cancelOrder(
+    @Param('orderId') orderId: string,
+    @Req() req?: { user?: AuthorizedContext }
+  ): Promise<Order> {
+    const user = req?.user;
+    if (!user) {
+      throw new ForbiddenException('User session missing.');
+    }
+
+    const order = await this.getOrder(orderId, req);
+
+    const isOperator =
+      user.isOperator === true ||
+      user.roles?.includes('SUPER_ADMIN') ||
+      user.roles?.includes('OPERATOR');
+
+    if (!isOperator && order.organizationId !== user.organizationId) {
+      throw new ForbiddenException(
+        `Tenant '${user.organizationId}' is not authorized to cancel order belonging to '${order.organizationId}'.`
+      );
+    }
+
+    // Safety constraint: Cannot cancel if order is already paid, provisioning or completed
+    if (
+      order.status === OrderStatus.PAID ||
+      order.status === OrderStatus.PROVISIONING ||
+      order.status === OrderStatus.COMPLETED
+    ) {
+      throw new ForbiddenException(`Cannot cancel order with status ${order.status}. Only unpaid orders can be cancelled.`);
+    }
+
+    // Use OrderService cancelOrder
+    const cancelled = this.orderService.cancelOrder(order.id, user.organizationId, isOperator);
+
+    // Sync with secondary stores if any
+    if (this.ordersStore) {
+      this.ordersStore.set(cancelled.id, cancelled);
+      this.ordersStore.set(cancelled.orderNumber, cancelled);
+    }
+    globalOrdersStore.set(cancelled.id, cancelled);
+    globalOrdersStore.set(cancelled.orderNumber, cancelled);
+
+    if (this.uow?.orders) {
+      try {
+        await this.uow.orders.save(cancelled);
+      } catch (e) {
+        console.warn('[OrdersController] Failed to persist cancelled order to DB:', e);
+      }
+    }
+
+    return cancelled;
+  }
 }
 
