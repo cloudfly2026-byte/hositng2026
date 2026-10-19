@@ -306,11 +306,12 @@ export class OAuthService {
     const anyAuth = this.authService as any;
     if (anyAuth.jwtService) {
       const accessToken = anyAuth.jwtService.sign({
-        userId: user.id,
+        sub: user.id,
         email: user.email,
         organizationId: organization.id,
         roles: ['OWNER'],
         permissions: ['*'],
+        isOperator: false,
       });
       const refreshToken = randomBytes(40).toString('hex');
       return {
