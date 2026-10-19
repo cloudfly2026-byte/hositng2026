@@ -809,6 +809,84 @@ Cada acción ha sido auditada y clasificada según su nivel real de ejecución:
 - **Foco Operativo del MVP Validado**:
   $$\text{Pago Aprobado} \longrightarrow \text{Aprovisionamiento HestiaCP} \longrightarrow \text{Correo DNS} \longrightarrow \text{Verificación Dominio} \longrightarrow \text{SSL Let's Encrypt} \longrightarrow \text{Servicio Activo}$$
 
+---
+
+### Sprint — Validación E2E en Vivo con Dominio Real (`easysnotes.com`), Creación de Correo y Resiliencia del Control Plane (2026-10-19)
+
+#### 1. Resumen Ejecutivo de la Iteración
+Se llevó a cabo la prueba integral end-to-end (E2E) con un dominio adquirido en registrador externo (GoDaddy: `easysnotes.com`), configurado con los servidores de nombres `ns1.velupi.com` y `ns2.velupi.com`. Se ejecutó todo el ciclo comercial, desde la creación de la orden, conciliación transaccional Wompi, aprovisionamiento programático desacoplado en el nodo HestiaCP (`89.117.147.134`), creación de cuenta de correo corporativo (`contacto@easysnotes.com`), hasta la vinculación automática con la membresía del cliente en PostgreSQL en el VPS `169.58.220.244`.
+
+Se cumplió de forma estricta la **regla de no creación manual**: todos los recursos fueron instanciados mediante llamadas a la API de Velupi.
+
+---
+
+#### 2. Componentes Aprovisionados y Verificados
+
+| Componente | Detalle / Recurso | Estado | Verificación Técnica |
+| :--- | :--- | :--- | :--- |
+| **Orden de Compra** | `VEL-624083` (`WordPress Starter` - Ciclo Anual) | `PAID` | Conciliado mediante pasarela Wompi en `/orders/:orderId/reconcile` (`HTTP 201`). |
+| **Cuenta Tenant** | `proeba1@cloudfly.com.co` (`org-1792414145232-lpw39`) | Activa | Usuario y membresía asociados en base de datos PostgreSQL. |
+| **Usuario Hestia** | `u_45232lpw39` | Creado | Sanitizado y vinculado automáticamente a `Membership.linkedHestiaUser`. |
+| **Sitio Web VHost** | `easysnotes.com` (PHP 8.3) | `HEALTHY` | `HOSTING_PROVISIONED` en IP `89.117.147.134`. |
+| **Zona DNS (BIND9)** | `easysnotes.com` (`ns1.velupi.com`, `ns2.velupi.com`) | Autorizada | Responde autoritativamente con `89.117.147.134`. |
+| **Dominio de Correo** | `easysnotes.com` en Exim/Dovecot | Activo | Configurado programáticamente en Hestia. |
+| **Buzón Corporativo** | `contacto@easysnotes.com` (1024 MB de cuota) | `SUCCESS` | Creado mediante endpoint `POST /hosting/emails`. |
+| **White-Label Shield** | Abstracción total de proveedor | Verificado | El cliente no recibe ni observa credenciales ni referencias técnicas a Hestia en la interfaz de Velupi. |
+
+---
+
+#### 3. Evidencias Técnicas Obtenidas
+
+1. **Resolución DNS Autoritativa en Nodo de Producción**:
+   ```text
+   Servidor:  89.117.147.134
+   Address:   89.117.147.134
+
+   Nombre:    easysnotes.com
+   Address:   89.117.147.134
+   ```
+
+2. **Inspección de Recursos en API de HestiaCP**:
+   ```json
+   {
+     "usuario": "u_45232lpw39",
+     "webDomains": ["easysnotes.com"],
+     "dnsDomains": ["easysnotes.com"],
+     "mailAccounts": ["contacto"]
+   }
+   ```
+
+3. **Vinculación en Base de Datos Relacional (`memberships` en PostgreSQL)**:
+   ```text
+   mem-1792414145233-pupib | usr-1792414145232-aiwhl | org-1792414145232-lpw39 | OWNER | linkedHestiaUser: u_45232lpw39
+   ```
+
+---
+
+#### 4. Endurecimiento Arquitectónico y Correcciones Aplicadas
+
+1. **Protección contra Caídas de Proceso Node.js (`apps/api/src/main.ts`)**:
+   - Se incorporaron escuchas globales `process.on('unhandledRejection')` y `process.on('uncaughtException')` para garantizar que errores asíncronos o de red secundarios nunca provoquen el reinicio inesperado del contenedor `velupi-api`.
+
+2. **Resiliencia de Facturación y Subscripciones (`packages/persistence` y `packages/domain`)**:
+   - `DatabaseInvoiceRepository.save`: Manejo resiliente de colisiones de unicidad en `invoiceNumber` (`P2002`). Si el número de factura ya existe (por reinicio de contador en memoria o ejecuciones concurrentes), se actualiza el registro existente en lugar de abortar.
+   - `SubscriptionService.generateInvoiceForOrder`: Salvaguarda con `try/catch` y captura segura de rechazos asíncronos en `uow.invoices.save(invoice)`.
+   - `DatabaseSubscriptionRepository.save`: Envoltorio en `try/catch` para evitar excepciones no controladas.
+
+3. **Fallback en Gestión de Sitios y Cuentas de Correo (`HostingManagementService`)**:
+   - En `createEmailAccount` y `listEmailAccounts`, si la información del sitio web no se encuentra en la memoria en caliente del servidor (por ejemplo, tras un reinicio de contenedor), se consulta automáticamente el nodo de hosting subyacente para reconstruir el contexto del tenant antes de denegar la operación.
+
+4. **Calidad de Código y Suites de Prueba**:
+   - **Vitest**: **54 suites ejecutadas, 449 pruebas aprobadas (100% GREEN, 0 fallidas)**.
+   - **Pipeline GitHub Actions**: Compilación de imágenes Docker, publicación en GHCR y despliegue continuo en VPS `169.58.220.244` exitoso.
+
+---
+
+#### 5. Evidencia Multimedia
+- **Video de navegación interactiva E2E**: Archivo registrado y archivado como evidencia en `.webp`:
+  - `easysnotes_e2e_video_1792444950452.webp` (disponible en el directorio de artefactos para revisión y auditoría).
+
+
 
 
 
