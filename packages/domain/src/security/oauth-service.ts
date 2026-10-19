@@ -317,7 +317,11 @@ export class OAuthService {
         if (org) return org;
       }
     }
-    if (anyAuth.uow) {
+    if (anyAuth.uow?.organizations?.listByUser) {
+      const orgs = await anyAuth.uow.organizations.listByUser(userId);
+      if (orgs.length > 0) return orgs[0];
+    }
+    if (anyAuth.uow?.memberships?.findByUserId) {
       const memberships = await anyAuth.uow.memberships.findByUserId(userId);
       if (memberships.length > 0) {
         const org = await anyAuth.uow.organizations.findById(memberships[0].organizationId);
