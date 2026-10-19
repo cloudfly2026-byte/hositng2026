@@ -64,12 +64,14 @@ export interface PlanVersion {
 }
 
 export interface CreateProductInput {
+  id?: string;
   name: string;
   code: string;
   category: ProductCategory;
 }
 
 export interface CreatePlanInput {
+  id?: string;
   productId: string;
   name: string;
   code: string;
@@ -77,6 +79,7 @@ export interface CreatePlanInput {
 }
 
 export interface PublishPlanVersionInput {
+  id?: string;
   planId: string;
   version: number;
   quotas: ResourceQuota;
@@ -106,7 +109,7 @@ export class ProductCatalogService {
 
   createProduct(input: CreateProductInput): Product {
     const product: Product = {
-      id: `prod-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      id: input.id || `prod-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       name: input.name,
       code: input.code,
       category: input.category,
@@ -123,7 +126,7 @@ export class ProductCatalogService {
 
   createPlan(input: CreatePlanInput): Plan {
     const plan: Plan = {
-      id: `plan-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      id: input.id || `plan-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       productId: input.productId,
       name: input.name,
       code: input.code,
@@ -136,7 +139,7 @@ export class ProductCatalogService {
 
   publishPlanVersion(input: PublishPlanVersionInput): PlanVersion {
     const version: PlanVersion = {
-      id: `pv-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      id: input.id || `pv-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       planId: input.planId,
       version: input.version,
       quotas: { ...input.quotas },
@@ -228,17 +231,20 @@ export class ProductCatalogService {
 
     // 1. WordPress
     const wpProduct = this.createProduct({
+      id: 'prod-wp',
       name: 'WordPress Hosting',
       code: 'prod-wp',
       category: ProductCategory.WORDPRESS,
     });
     const wpPlan = this.createPlan({
+      id: 'plan-wp-starter',
       productId: wpProduct.id,
       name: 'Velupi WordPress Starter',
       code: 'wp-starter',
       infrastructureMode: 'SHARED',
     });
     this.publishPlanVersion({
+      id: 'ver-wp-starter-v1',
       planId: wpPlan.id,
       version: 1,
       quotas: {
@@ -260,17 +266,20 @@ export class ProductCatalogService {
 
     // 2. Cloud Apps
     const appProduct = this.createProduct({
+      id: 'prod-cloud-apps',
       name: 'Cloud Apps Docker',
       code: 'prod-cloud-apps',
       category: ProductCategory.CLOUD_APPS,
     });
     const appPlan = this.createPlan({
+      id: 'plan-cloud-apps-pro',
       productId: appProduct.id,
       name: 'Velupi Cloud Apps (Node/Python)',
       code: 'cloud-apps-pro',
       infrastructureMode: 'SHARED',
     });
     this.publishPlanVersion({
+      id: 'ver-cloud-apps-pro-v1',
       planId: appPlan.id,
       version: 1,
       quotas: {
@@ -292,17 +301,20 @@ export class ProductCatalogService {
 
     // 3. Dedicated VPS
     const vpsProduct = this.createProduct({
+      id: 'prod-vps',
       name: 'Dedicated VPS Cloud',
       code: 'prod-vps',
       category: ProductCategory.VPS,
     });
     const vpsPlan = this.createPlan({
+      id: 'plan-vps-dedicated',
       productId: vpsProduct.id,
       name: 'Velupi VPS Dedicado 4 MP',
       code: 'vps-dedicated',
       infrastructureMode: 'DEDICATED',
     });
     this.publishPlanVersion({
+      id: 'ver-vps-dedicated-v1',
       planId: vpsPlan.id,
       version: 1,
       quotas: {
