@@ -702,6 +702,35 @@ Cada acción ha sido auditada y clasificada según su nivel real de ejecución:
   - Cobros reales con tarjetas de crédito en Wompi Producción (deliberadamente bloqueado en QA).
   - Borrado físico de bases de datos o vhosts en producción sin confirmación autorizada de dos factores.
 
+---
+
+## M. Actualización de Sprint (19 de Octubre de 2026): Menú Hosting, Validación Pre-Checkout y Aprovisionamiento con Dominio Principal
+
+### 1. Elementos Integrados y Validados
+
+1. **Submenús de Hosting Web (`module-registry.ts`)**:
+   - Se agregaron las opciones **Cuentas de Correo** (`/emails`) y **Cuentas FTP** (`/hosting/ftp`) dentro del menú desplegable de **Hosting Web**.
+   - Los permisos correspondientes (`Permissions.EMAILS_MANAGE` y `Permissions.FILES_MANAGE`) y la capacidad requerida (`web_hosting`) se encuentran debidamente aplicados.
+
+2. **Petición Obligatoria de Dominio Pre-Checkout (`cart/page.tsx`)**:
+   - Al seleccionar un plan de hosting (ej. `Velupi WordPress Starter` / `wp-starter`), se solicita de forma obligatoria el nombre de dominio a activar/registrar antes de avanzar al checkout.
+   - Si el campo está vacío o el formato no cumple con la sintaxis de dominio estándar (`RFC 1035`), la interfaz bloquea el avance con alertas contextuales amigables.
+
+3. **Validación de No Existencia del Dominio en la Plataforma**:
+   - Se implementó `checkDomainAvailability` en el núcleo de dominio (`HostingManagementService`), con verificación en memoria y consulta al motor de hosting subyacente.
+   - Si el dominio ya existe en la plataforma o en los servidores, se lanza `DomainAlreadyExistsError` y la API retorna error descriptivo al usuario impidiendo colisiones.
+   - Se expuso el endpoint público `GET /catalog/check-domain?domain=...` para validaciones en tiempo real durante la cotización del carrito sin requerir autenticación previa.
+
+4. **Propagación del Dominio y Aprovisionamiento Principal**:
+   - El dominio validado se transfiere a través de `localStorage` y parámetros de URL hacia `/checkout`.
+   - Se visualiza claramente en el **Resumen de la Orden** (`🌐 Dominio principal: <dominio>`).
+   - Al formalizar la orden y registrar el pago o su conciliación (`OrdersController.reconcileOrder` / `CheckoutController`), se despacha la creación automática del sitio web con dicho dominio como la cuenta principal de hosting.
+
+5. **Métricas de Calidad y Tests**:
+   - **Vitest**: **54 suites de prueba, 432 pruebas aprobadas (100% GREEN, 0 fallidas)**.
+   - **Despliegue Continuo**: Confirmado vía GitHub Actions hacia el VPS de producción (`169.58.220.244`).
+
+
 
 
 
