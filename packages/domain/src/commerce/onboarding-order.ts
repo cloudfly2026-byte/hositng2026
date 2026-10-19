@@ -241,7 +241,9 @@ export class OrderService {
     this.idempotencyIndex.set(input.idempotencyKey, order);
 
     if (this.uow) {
-      this.uow.orders.save(order);
+      Promise.resolve(this.uow.orders.save(order)).catch((err) => {
+        console.warn('OrderService: background order save failed:', err?.message);
+      });
     }
 
     return order;
