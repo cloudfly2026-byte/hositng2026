@@ -140,8 +140,12 @@ function CheckoutContent() {
           ? `${window.location.origin}/checkout/return`
           : 'https://app.velupi.com/checkout/return';
 
+      const activeOrgId =
+        (typeof window !== 'undefined' && localStorage.getItem('velupi_active_org_id')) ||
+        'org-velupi-internal';
+
       const result = await defaultApiClient.createCheckoutOrder({
-        organizationId: 'org-velupi-internal',
+        organizationId: activeOrgId,
         currency: 'COP',
         billingCycle,
         items: [{ planVersionId, quantity: 1 }],

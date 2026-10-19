@@ -380,8 +380,8 @@ export function Sidebar({
             <Typography variant="caption" sx={{ color: '#9E7A6E', display: 'block', fontSize: '0.68rem', fontWeight: 600 }}>
               ORGANIZACIÓN
             </Typography>
-            <Typography variant="body2" sx={{ fontWeight: 700, color: '#2D1B17', fontSize: '0.82rem' }}>
-              org-velupi-internal
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#2D1B17', fontSize: '0.82rem', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {capabilities?.organization?.name || capabilities?.organization?.id || optionalContext?.activeOrgId || 'org-velupi-internal'}
             </Typography>
           </Box>
           <Chip

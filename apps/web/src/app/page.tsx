@@ -81,7 +81,7 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://169.58.220.244:4000';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.velupi.com';
       const token = typeof window !== 'undefined' ? localStorage.getItem('velupi_access_token') : null;
 
       const headers: Record<string, string> = {
@@ -102,43 +102,53 @@ export default function DashboardPage() {
       const data = await res.json();
       setSummary(data);
     } catch {
-      // Fallback autoritativo al piloto interno predeterminado
-      setSummary({
-        organizationId: activeOrgId,
-        counts: {
-          websites: 1,
-          cloudApps: 0,
-          dnsZones: 1,
-          databases: 1,
-          subscriptions: 1,
-        },
-        quotas: {
-          diskUsedMb: 120,
-          diskLimitMb: 10240,
-          sitesCount: 1,
-          maxSites: 10,
-          databasesCount: 1,
-          maxDatabases: 20,
-          emailsCount: 0,
-          maxEmails: 50,
-        },
-        services: [
-          {
-            id: 'site-velupi.com',
-            name: 'velupi.com',
-            type: 'WEBSITE',
-            domain: 'velupi.com',
-            status: 'HEALTHY',
-            createdAt: new Date().toISOString(),
+      // Fallback seguro: solo mostrar servicios preconfigurados si es el piloto interno
+      if (activeOrgId === 'org-velupi-internal') {
+        setSummary({
+          organizationId: activeOrgId,
+          counts: {
+            websites: 1,
+            cloudApps: 0,
+            dnsZones: 1,
+            databases: 1,
+            subscriptions: 1,
           },
-        ],
-        subscription: {
-          id: 'sub-org-velupi-001',
-          status: 'ACTIVE',
-          billingCycle: 'ANNUAL',
-          currentPeriodEnd: '2027-10-13T00:00:00.000Z',
-        },
-      });
+          quotas: {
+            diskUsedMb: 120,
+            diskLimitMb: 10240,
+            sitesCount: 1,
+            maxSites: 10,
+            databasesCount: 1,
+            maxDatabases: 20,
+            emailsCount: 0,
+            maxEmails: 50,
+          },
+          services: [
+            {
+              id: 'site-velupi.com',
+              name: 'velupi.com',
+              type: 'WEBSITE',
+              domain: 'velupi.com',
+              status: 'HEALTHY',
+              createdAt: new Date().toISOString(),
+            },
+          ],
+          subscription: {
+            id: 'sub-org-velupi-001',
+            status: 'ACTIVE',
+            billingCycle: 'ANNUAL',
+            currentPeriodEnd: '2027-10-13T00:00:00.000Z',
+          },
+        });
+      } else {
+        setSummary({
+          organizationId: activeOrgId,
+          counts: { websites: 0, cloudApps: 0, dnsZones: 0, databases: 0, subscriptions: 0 },
+          quotas: { diskUsedMb: 0, diskLimitMb: 10240, sitesCount: 0, maxSites: 10, databasesCount: 0, maxDatabases: 20, emailsCount: 0, maxEmails: 50 },
+          services: [],
+          subscription: null,
+        });
+      }
     } finally {
       setLoading(false);
     }

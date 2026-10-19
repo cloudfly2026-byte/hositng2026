@@ -89,6 +89,43 @@ export function Topbar({
 
   const currentRole = capabilities?.role || 'OWNER';
 
+  const [currentUser, setCurrentUser] = React.useState<{ name: string; email: string }>({
+    name: 'Usuario',
+    email: 'usuario@velupi.com',
+  });
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const stored = localStorage.getItem('velupi_user');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed?.fullName || parsed?.email) {
+          setCurrentUser({
+            name: parsed.fullName || parsed.email.split('@')[0],
+            email: parsed.email,
+          });
+          return;
+        }
+      }
+      const token = localStorage.getItem('velupi_access_token');
+      if (token) {
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+          if (payload?.email) {
+            setCurrentUser({
+              name: payload.email.split('@')[0],
+              email: payload.email,
+            });
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   return (
     <AppBar
       position="sticky"
@@ -240,11 +277,11 @@ export function Topbar({
                 color: '#FFFFFF',
               }}
             >
-              E
+              {(currentUser.name || 'U').charAt(0).toUpperCase()}
             </Avatar>
             <Box sx={{ display: { xs: 'none', lg: 'block' } }}>
-              <Typography variant="body2" sx={{ fontWeight: 700, color: '#2D1B17', fontSize: '0.82rem', lineHeight: 1.1 }}>
-                Edwin
+              <Typography variant="body2" sx={{ fontWeight: 700, color: '#2D1B17', fontSize: '0.82rem', lineHeight: 1.1, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {currentUser.name}
               </Typography>
               <Typography variant="caption" sx={{ color: '#FF6B00', fontWeight: 800, fontSize: '0.68rem' }}>
                 {currentRole}
@@ -271,10 +308,10 @@ export function Topbar({
           >
             <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #F2E8DC' }}>
               <Typography variant="body2" sx={{ fontWeight: 700, color: '#2D1B17' }}>
-                Edwin
+                {currentUser.name}
               </Typography>
               <Typography variant="caption" sx={{ color: '#667085' }}>
-                admin@velupi.com
+                {currentUser.email}
               </Typography>
             </Box>
             <MenuItem onClick={handleCloseUserMenu} sx={{ py: 1, gap: 1.5, fontSize: '0.85rem', color: '#2D1B17' }}>

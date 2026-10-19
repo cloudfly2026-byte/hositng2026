@@ -91,6 +91,16 @@ function LoginContent() {
             if (payload?.organizationId) {
               localStorage.setItem('velupi_active_org_id', payload.organizationId);
             }
+            if (payload?.email) {
+              localStorage.setItem(
+                'velupi_user',
+                JSON.stringify({
+                  id: payload.sub,
+                  email: payload.email,
+                  fullName: payload.name || payload.email.split('@')[0],
+                })
+              );
+            }
           }
         } catch {
           // ignore
@@ -158,6 +168,9 @@ function LoginContent() {
           }
           if (response?.organization?.id) {
             localStorage.setItem('velupi_active_org_id', response.organization.id);
+          }
+          if (response?.user) {
+            localStorage.setItem('velupi_user', JSON.stringify(response.user));
           }
           document.cookie = `velupi_session=${response.tokens.accessToken}; path=/; max-age=604800; SameSite=Lax`;
           document.cookie = `velupi_access_token=${response.tokens.accessToken}; path=/; max-age=604800; SameSite=Lax`;

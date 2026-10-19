@@ -91,7 +91,7 @@ export function CapabilitiesProvider({ children, initialOrgId }: CapabilitiesPro
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://169.58.220.244:4000';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.velupi.com';
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };

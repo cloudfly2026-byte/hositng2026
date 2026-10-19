@@ -92,7 +92,9 @@ export default function BillingPage() {
     setIsLoading(true);
     setFetchNotice(null);
     try {
-      const orgId = 'org-velupi-internal';
+      const orgId =
+        (typeof window !== 'undefined' && localStorage.getItem('velupi_active_org_id')) ||
+        'org-velupi-internal';
       const [subsRes, invRes] = await Promise.allSettled([
         defaultApiClient.getSubscriptions(orgId),
         defaultApiClient.getInvoices(orgId),

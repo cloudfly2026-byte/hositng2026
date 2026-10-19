@@ -98,3 +98,8 @@
 | `E2E Playwright` (`app.velupi.com`) | 5 | 18 | VERIFICADO EN PRODUCCIÓN |
 | **TOTAL GENERAL RUNNER** | **53** | **427** | **100% GREEN (0 fallos, 0 omitidos)** |
 
+---
+
+## 5. Evidencias de Pruebas en Vivo (Browser Agent)
+- [proeba1_login_access_1792416168126.webp](file:///c:/Users/Edwin/Desktop/hosting2026/docs/recordings/proeba1_login_access_1792416168126.webp): Grabación del flujo completo de creación de cuenta `proeba1@cloudfly.com.co`, despacho de código por SMTP Hestia, validación de OTP `159395` y redirección exitosa al Dashboard de Velupi (`app.velupi.com`).
+
