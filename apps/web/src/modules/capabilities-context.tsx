@@ -99,7 +99,25 @@ export function CapabilitiesProvider({ children, initialOrgId }: CapabilitiesPro
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const res = await fetch(`${apiUrl}/me/capabilities?organizationId=${activeOrgId}`, {
+      let queryOrg = activeOrgId;
+      try {
+        if (token) {
+          const parts = token.split('.');
+          if (parts.length === 3) {
+            const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+            if (payload?.organizationId) {
+              if (activeOrgId === 'org-velupi-internal' && payload.organizationId !== 'org-velupi-internal') {
+                queryOrg = payload.organizationId;
+                setActiveOrgId(payload.organizationId);
+              }
+            }
+          }
+        }
+      } catch {
+        // ignore
+      }
+
+      const res = await fetch(`${apiUrl}/me/capabilities?organizationId=${queryOrg}`, {
         headers,
       });
 
