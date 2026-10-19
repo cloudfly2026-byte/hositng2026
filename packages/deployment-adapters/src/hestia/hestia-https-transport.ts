@@ -119,6 +119,10 @@ export class HestiaHttpsTransport implements HestiaTransport {
       throw new HestiaReadOnlyViolationError(command);
     }
 
+    if (!this.rejectUnauthorized && process.env.NODE_TLS_REJECT_UNAUTHORIZED !== '0') {
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    }
+
     const endpoint = `https://${this.host}:${this.port}/api/`;
 
     const bodyParams = new URLSearchParams();

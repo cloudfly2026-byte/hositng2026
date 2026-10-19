@@ -2,6 +2,10 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
+if (process.env.HESTIA_ALLOW_SELF_SIGNED === 'true' || process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0') {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
