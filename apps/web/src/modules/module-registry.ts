@@ -100,6 +100,8 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     requiredCapability: 'web_hosting',
     subItems: [
       { id: 'hosting-sites', title: 'Sitios Activos', path: '/hosting', requiredPermission: Permissions.HOSTING_READ },
+      { id: 'hosting-emails', title: 'Cuentas de Correo', path: '/emails', requiredPermission: Permissions.EMAILS_MANAGE },
+      { id: 'hosting-ftp', title: 'Cuentas FTP', path: '/hosting/ftp', requiredPermission: Permissions.FILES_MANAGE },
       { id: 'hosting-new', title: 'Nuevo Sitio', path: '/hosting/new', requiredPermission: Permissions.HOSTING_MANAGE, requiredRoles: ['OWNER', 'ADMIN', 'DEVELOPER'] },
       { id: 'hosting-php', title: 'Versiones PHP', path: '/hosting/php', requiredPermission: Permissions.HOSTING_MANAGE },
     ],

@@ -21,6 +21,7 @@ import {
   PaymentProcessorService,
   ProvisioningOrchestrator,
   SubscriptionService,
+  HostingManagementService,
   TenantAccessPolicy,
 } from '@cloudfly/domain';
 import { AuthorizedContext } from '@cloudfly/contracts';
@@ -35,7 +36,8 @@ export class OrdersController {
     @Optional() @Inject('IUnitOfWork') private readonly uow?: IUnitOfWork,
     @Optional() private readonly wompiAdapter?: WompiPaymentAdapter,
     @Optional() private readonly orchestrator?: ProvisioningOrchestrator,
-    @Optional() private readonly subscriptionService?: SubscriptionService
+    @Optional() private readonly subscriptionService?: SubscriptionService,
+    @Optional() private readonly hostingService?: HostingManagementService
   ) {}
 
   @Get()
@@ -203,6 +205,24 @@ export class OrdersController {
           this.subscriptionService.generateInvoiceForOrder(paidOrder, sub.id);
         } catch (subErr) {
           console.warn('[OrdersController] Error in createSubscriptionFromPaidOrder:', subErr);
+        }
+      }
+
+      // Provision primary domain website if provided in order metadata
+      const primaryDomain = (paidOrder as any).primaryDomain || (paidOrder as any).metadata?.primaryDomain;
+      if (primaryDomain && this.hostingService) {
+        try {
+          await this.hostingService.createWebSite(
+            { domain: primaryDomain, type: 'WordPress Starter' },
+            {
+              userId: (paidOrder as any).userId || 'system',
+              organizationId: paidOrder.organizationId,
+              roles: ['OWNER'],
+              permissions: ['*'],
+            }
+          );
+        } catch (siteErr) {
+          console.warn('[OrdersController] Primary domain site provisioning note:', siteErr);
         }
       }
     }

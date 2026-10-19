@@ -20,6 +20,7 @@ export interface CreateOrderDto {
   idempotencyKey: string;
   customerEmail: string;
   redirectUrl: string;
+  primaryDomain?: string;
 }
 
 export interface CreateOrderAndSessionResponse {
@@ -83,6 +84,10 @@ export class CheckoutController {
       items: resolvedItems,
       idempotencyKey: dto.idempotencyKey,
     });
+
+    if (dto.primaryDomain) {
+      (order as any).primaryDomain = dto.primaryDomain.toLowerCase().trim();
+    }
 
     globalOrdersStore.set(order.id, order);
     globalOrdersStore.set(order.orderNumber, order);

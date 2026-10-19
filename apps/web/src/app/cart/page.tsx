@@ -12,12 +12,15 @@ import CardContent from '@mui/material/CardContent';
 import Divider from '@mui/material/Divider';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
+import TextField from '@mui/material/TextField';
+import InputAdornment from '@mui/material/InputAdornment';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LockIcon from '@mui/icons-material/Lock';
 import SecurityIcon from '@mui/icons-material/Security';
 import SpeedIcon from '@mui/icons-material/Speed';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
+import LanguageIcon from '@mui/icons-material/Language';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { defaultApiClient } from '../../modules/api-client';
 
@@ -153,11 +156,47 @@ function CartContent() {
     syncCartWithServer();
   }, [selectedPlanCode, billingCycle]);
 
-  const handleProceedToCheckout = () => {
+  const [primaryDomain, setPrimaryDomain] = React.useState<string>('');
+  const [domainError, setDomainError] = React.useState<string | null>(null);
+
+  const isHostingPlan = selectedPlan.code === 'wp-starter';
+
+  const handleProceedToCheckout = async () => {
+    setDomainError(null);
+    const cleanDomain = primaryDomain.trim().toLowerCase();
+
+    if (isHostingPlan) {
+      if (!cleanDomain) {
+        setDomainError('Por favor ingresa el dominio que deseas activar con tu plan de hosting.');
+        return;
+      }
+      const domainRegex = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/;
+      if (!domainRegex.test(cleanDomain)) {
+        setDomainError('Ingresa un formato de dominio válido (ej. miempresa.com o miventa.co).');
+        return;
+      }
+
+      // Check if domain is already registered on the platform
+      try {
+        const check = await defaultApiClient.checkDomainAvailability(cleanDomain);
+        if (!check.available) {
+          setDomainError(check.reason || `El dominio '${cleanDomain}' ya existe en la plataforma. Por favor ingresa otro dominio.`);
+          return;
+        }
+      } catch {
+        // Continue if check endpoint is temporarily unreachable
+      }
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('velupi_primary_domain', cleanDomain);
+      }
+    }
+
     const token = defaultApiClient.getAuthToken();
+    const domainQuery = cleanDomain ? `&domain=${encodeURIComponent(cleanDomain)}` : '';
     const checkoutPath = cartId
-      ? `/checkout?cartId=${encodeURIComponent(cartId)}&plan=${selectedPlan.code}&cycle=${billingCycle}`
-      : `/checkout?plan=${selectedPlan.code}&cycle=${billingCycle}`;
+      ? `/checkout?cartId=${encodeURIComponent(cartId)}&plan=${selectedPlan.code}&cycle=${billingCycle}${domainQuery}`
+      : `/checkout?plan=${selectedPlan.code}&cycle=${billingCycle}${domainQuery}`;
 
     if (!token) {
       const returnTo = encodeURIComponent(checkoutPath);
@@ -385,6 +424,44 @@ function CartContent() {
                 </Typography>
               </Box>
             </Box>
+
+            {/* Domain input for Hosting/WordPress plans */}
+            {isHostingPlan && (
+              <Box sx={{ mb: 3, p: 2, backgroundColor: '#FFF9F5', borderRadius: 2, border: '1px solid #FFE0CC' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#2D1B17', mb: 0.5, display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                  <LanguageIcon sx={{ color: '#FF6B00', fontSize: 18 }} /> Dominio Principal a Registrar / Activar
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#667085', display: 'block', mb: 1.5 }}>
+                  Este dominio se configurará como la cuenta principal de tu hosting WordPress.
+                </Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="ej. miempresa.com"
+                  value={primaryDomain}
+                  onChange={(e) => {
+                    setPrimaryDomain(e.target.value);
+                    if (domainError) setDomainError(null);
+                  }}
+                  error={Boolean(domainError)}
+                  helperText={domainError}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LanguageIcon sx={{ color: '#9CA3AF', fontSize: 18 }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: 1.5,
+                    '& .MuiOutlinedInput-root': {
+                      fontSize: '0.9rem',
+                    },
+                  }}
+                />
+              </Box>
+            )}
 
             <Button
               fullWidth

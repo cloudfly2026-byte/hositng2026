@@ -4,6 +4,7 @@ import {
   CreateWebSiteSpec,
   InvalidPhpVersionError,
   WebSiteNotFoundError,
+  DomainAlreadyExistsError,
 } from './hosting-management';
 import { AuthorizedContext } from '@cloudfly/contracts';
 import { CrossTenantViolationError } from '../identity/rbac';
@@ -41,6 +42,12 @@ describe('HostingManagementService (White-Label Hosting Management)', () => {
               },
             }),
           };
+        }
+        if (command === 'v-search-domain-owner') {
+          if (args[0] === 'registered.com' || args[0] === 'duplicate.com') {
+            return { returnCode: 0, output: 'admin' };
+          }
+          return { returnCode: 3, output: 'Error: not found' };
         }
         return { returnCode: 0, output: 'Success' };
       }),
@@ -86,6 +93,24 @@ describe('HostingManagementService (White-Label Hosting Management)', () => {
       await expect(service.createWebSite(spec, tenantAContext)).rejects.toThrow(
         InvalidPhpVersionError
       );
+    });
+
+    it('rejects domain creation if the domain already exists on the platform', async () => {
+      await service.createWebSite({ domain: 'duplicate.com' }, tenantAContext);
+
+      await expect(
+        service.createWebSite({ domain: 'duplicate.com' }, tenantBContext)
+      ).rejects.toThrow(DomainAlreadyExistsError);
+    });
+
+    it('checks domain availability correctly', async () => {
+      await service.createWebSite({ domain: 'registered.com' }, tenantAContext);
+
+      const taken = await service.checkDomainAvailability('registered.com');
+      expect(taken.available).toBe(false);
+
+      const available = await service.checkDomainAvailability('completely-new-domain.com');
+      expect(available.available).toBe(true);
     });
 
     it('lists only websites belonging to caller organization (Strict Tenant Isolation)', async () => {

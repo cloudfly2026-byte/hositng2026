@@ -15,6 +15,13 @@ export class WebSiteNotFoundError extends Error {
   }
 }
 
+export class DomainAlreadyExistsError extends Error {
+  constructor(domain: string) {
+    super(`El dominio '${domain}' ya existe en la plataforma.`);
+    this.name = 'DomainAlreadyExistsError';
+  }
+}
+
 export interface CreateWebSiteSpec {
   domain: string;
   type?: string;
@@ -96,6 +103,11 @@ export class HostingManagementService {
 
   async createWebSite(spec: CreateWebSiteSpec, context: AuthorizedContext): Promise<WebSiteDetail> {
     const domain = spec.domain.toLowerCase().trim();
+
+    if (this.websites.has(domain)) {
+      throw new DomainAlreadyExistsError(domain);
+    }
+
     const phpVersion = spec.phpVersion || '8.3';
 
     if (!SUPPORTED_PHP_VERSIONS.includes(phpVersion)) {
@@ -263,6 +275,32 @@ export class HostingManagementService {
     }
 
     return site;
+  }
+
+  async checkDomainAvailability(domain: string): Promise<{ available: boolean; reason?: string }> {
+    const cleanDomain = domain.toLowerCase().trim();
+    if (!cleanDomain) {
+      return { available: false, reason: 'El nombre de dominio es requerido.' };
+    }
+
+    // 1. Check in-memory / platform registry
+    if (this.websites.has(cleanDomain)) {
+      return { available: false, reason: `El dominio '${cleanDomain}' ya se encuentra registrado en la plataforma.` };
+    }
+
+    // 2. Check live hosting transport if available
+    if (this.transport) {
+      try {
+        const res = await this.transport.executeCommand('v-search-domain-owner', [cleanDomain]);
+        if (res.returnCode === 0 && res.output && !res.output.toLowerCase().includes('not found')) {
+          return { available: false, reason: `El dominio '${cleanDomain}' ya se encuentra configurado en los servidores de hosting.` };
+        }
+      } catch {
+        // Fallback to platform memory check
+      }
+    }
+
+    return { available: true };
   }
 
   async updatePhpVersion(

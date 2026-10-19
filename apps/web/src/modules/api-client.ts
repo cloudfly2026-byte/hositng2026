@@ -30,6 +30,7 @@ export interface CreateOrderPayload {
   idempotencyKey: string;
   customerEmail: string;
   redirectUrl: string;
+  primaryDomain?: string;
 }
 
 export class ApiClient {
@@ -161,6 +162,12 @@ export class ApiClient {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+  }
+
+  async checkDomainAvailability(domain: string): Promise<{ available: boolean; reason?: string }> {
+    return this.request<{ available: boolean; reason?: string }>(
+      `/hosting/check-domain?domain=${encodeURIComponent(domain)}`
+    );
   }
 
   async getSubscriptions(orgId: string): Promise<any> {

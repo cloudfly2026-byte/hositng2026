@@ -5,6 +5,7 @@ import {
   Patch,
   Body,
   Param,
+  Query,
   Req,
   UseGuards,
   BadRequestException,
@@ -15,6 +16,7 @@ import {
   HostingManagementService,
   InvalidPhpVersionError,
   WebSiteNotFoundError,
+  DomainAlreadyExistsError,
   CrossTenantViolationError,
   FileManagerService,
   PathTraversalError,
@@ -99,8 +101,19 @@ export class HostingController {
       if (error instanceof InvalidPhpVersionError) {
         throw new BadRequestException(error.message);
       }
+      if (error instanceof DomainAlreadyExistsError || error?.name === 'DomainAlreadyExistsError') {
+        throw new BadRequestException(error.message);
+      }
       throw new BadRequestException(error.message || 'Error al crear el sitio web.');
     }
+  }
+
+  @Get('check-domain')
+  async checkDomain(@Query('domain') domain: string) {
+    if (!domain || !domain.trim()) {
+      throw new BadRequestException('El parámetro domain es obligatorio.');
+    }
+    return await this.hostingService.checkDomainAvailability(domain);
   }
 
   @Post('sites/import')

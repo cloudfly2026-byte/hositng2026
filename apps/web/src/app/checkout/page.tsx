@@ -45,6 +45,7 @@ function CheckoutContent() {
   const cartId = searchParams.get('cartId');
   const planQuery = searchParams.get('plan') || 'wp-starter';
   const cycleQuery = searchParams.get('cycle')?.toUpperCase() === 'ANNUAL' ? 'ANNUAL' : 'MONTHLY';
+  const domainQuery = searchParams.get('domain') || (typeof window !== 'undefined' ? localStorage.getItem('velupi_primary_domain') : null) || '';
 
   const [cart, setCart] = React.useState<any | null>(null);
   const [loadingCart, setLoadingCart] = React.useState(true);
@@ -152,6 +153,7 @@ function CheckoutContent() {
         idempotencyKey,
         customerEmail: billingEmail,
         redirectUrl,
+        primaryDomain: domainQuery || undefined,
       });
 
       if (result?.order) {
@@ -424,9 +426,14 @@ function CheckoutContent() {
                   <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#FF6B00' }}>
                     {planName}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: '#667085', fontWeight: 600 }}>
+                  <Typography variant="caption" sx={{ color: '#667085', fontWeight: 600, display: 'block' }}>
                     Período: {billingCycle === 'ANNUAL' ? 'Facturación Anual (12 Meses con 2 meses gratis)' : 'Facturación Mensual'}
                   </Typography>
+                  {domainQuery && (
+                    <Typography variant="caption" sx={{ color: '#059669', fontWeight: 700, display: 'block', mt: 0.5 }}>
+                      🌐 Dominio principal: {domainQuery}
+                    </Typography>
+                  )}
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
