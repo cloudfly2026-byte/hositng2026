@@ -166,7 +166,7 @@ export class ApiClient {
 
   async checkDomainAvailability(domain: string): Promise<{ available: boolean; reason?: string }> {
     return this.request<{ available: boolean; reason?: string }>(
-      `/hosting/check-domain?domain=${encodeURIComponent(domain)}`
+      `/catalog/check-domain?domain=${encodeURIComponent(domain)}`
     );
   }
 

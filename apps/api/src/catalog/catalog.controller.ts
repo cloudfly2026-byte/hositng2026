@@ -1,13 +1,27 @@
-import { Controller, Get, Param, NotFoundException } from '@nestjs/common';
-import { ProductCatalogService } from '@cloudfly/domain';
+import { Controller, Get, Param, Query, NotFoundException, BadRequestException, Optional } from '@nestjs/common';
+import { ProductCatalogService, HostingManagementService } from '@cloudfly/domain';
 
 @Controller('catalog')
 export class CatalogController {
-  constructor(private readonly catalogService: ProductCatalogService) {}
+  constructor(
+    private readonly catalogService: ProductCatalogService,
+    @Optional() private readonly hostingService?: HostingManagementService
+  ) {}
 
   @Get('plans')
   async listPlans() {
     return this.catalogService.listPlans();
+  }
+
+  @Get('check-domain')
+  async checkDomain(@Query('domain') domain: string) {
+    if (!domain || !domain.trim()) {
+      throw new BadRequestException('El parámetro domain es obligatorio.');
+    }
+    if (!this.hostingService) {
+      return { available: true };
+    }
+    return await this.hostingService.checkDomainAvailability(domain);
   }
 
   @Get('plans/:code')
