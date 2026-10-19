@@ -516,7 +516,15 @@ export class HostingManagementService {
     context: AuthorizedContext
   ): Promise<OperationReceipt> {
     const cleanDomain = spec.domain.toLowerCase().trim();
-    const site = this.websites.get(cleanDomain);
+    let site = this.websites.get(cleanDomain);
+    if (!site && this.transport) {
+      try {
+        const sites = await this.listWebSites(context.organizationId, (context as any).linkedHestiaUser);
+        site = sites.find((s) => s.domain === cleanDomain) || this.websites.get(cleanDomain);
+      } catch {
+        // Fallback
+      }
+    }
     if (!site) {
       throw new WebSiteNotFoundError(cleanDomain);
     }
@@ -560,7 +568,15 @@ export class HostingManagementService {
 
   async listEmailAccounts(domain: string, context: AuthorizedContext): Promise<EmailAccountSummary[]> {
     const cleanDomain = domain.toLowerCase().trim();
-    const site = this.websites.get(cleanDomain);
+    let site = this.websites.get(cleanDomain);
+    if (!site && this.transport) {
+      try {
+        const sites = await this.listWebSites(context.organizationId, (context as any).linkedHestiaUser);
+        site = sites.find((s) => s.domain === cleanDomain) || this.websites.get(cleanDomain);
+      } catch {
+        // Fallback
+      }
+    }
     if (!site) {
       throw new WebSiteNotFoundError(cleanDomain);
     }

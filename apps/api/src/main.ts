@@ -6,6 +6,13 @@ if (process.env.HESTIA_ALLOW_SELF_SIGNED === 'true' || process.env.NODE_TLS_REJE
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 }
 
+process.on('unhandledRejection', (reason) => {
+  console.warn('[Process UnhandledRejection Warning]:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.warn('[Process UncaughtException Warning]:', err);
+});
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 

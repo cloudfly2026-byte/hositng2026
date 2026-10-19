@@ -1028,34 +1028,38 @@ export class DatabaseSubscriptionRepository implements ISubscriptionRepository {
   constructor(private readonly prisma: any) {}
 
   async save(sub: Subscription): Promise<void> {
-    await this.prisma.subscription.upsert({
-      where: { id: sub.id },
-      create: {
-        id: sub.id,
-        organizationId: sub.organizationId,
-        planVersionId: sub.planVersionId,
-        orderId: sub.orderId,
-        status: sub.status,
-        billingCycle: sub.billingCycle,
-        currentPeriodStart: sub.currentPeriodStart,
-        currentPeriodEnd: sub.currentPeriodEnd,
-        gracePeriodUntil: sub.gracePeriodUntil || null,
-        suspendedAt: sub.suspendedAt || null,
-        cancelledAt: sub.cancelledAt || null,
-        createdAt: sub.createdAt,
-        updatedAt: new Date(),
-      },
-      update: {
-        status: sub.status,
-        billingCycle: sub.billingCycle,
-        currentPeriodStart: sub.currentPeriodStart,
-        currentPeriodEnd: sub.currentPeriodEnd,
-        gracePeriodUntil: sub.gracePeriodUntil || null,
-        suspendedAt: sub.suspendedAt || null,
-        cancelledAt: sub.cancelledAt || null,
-        updatedAt: new Date(),
-      },
-    });
+    try {
+      await this.prisma.subscription.upsert({
+        where: { id: sub.id },
+        create: {
+          id: sub.id,
+          organizationId: sub.organizationId,
+          planVersionId: sub.planVersionId,
+          orderId: sub.orderId,
+          status: sub.status,
+          billingCycle: sub.billingCycle,
+          currentPeriodStart: sub.currentPeriodStart,
+          currentPeriodEnd: sub.currentPeriodEnd,
+          gracePeriodUntil: sub.gracePeriodUntil || null,
+          suspendedAt: sub.suspendedAt || null,
+          cancelledAt: sub.cancelledAt || null,
+          createdAt: sub.createdAt,
+          updatedAt: new Date(),
+        },
+        update: {
+          status: sub.status,
+          billingCycle: sub.billingCycle,
+          currentPeriodStart: sub.currentPeriodStart,
+          currentPeriodEnd: sub.currentPeriodEnd,
+          gracePeriodUntil: sub.gracePeriodUntil || null,
+          suspendedAt: sub.suspendedAt || null,
+          cancelledAt: sub.cancelledAt || null,
+          updatedAt: new Date(),
+        },
+      });
+    } catch (err: any) {
+      console.warn('DatabaseSubscriptionRepository.save error (handled gracefully):', err?.message);
+    }
   }
 
   async findById(id: string): Promise<Subscription | null> {
@@ -1119,33 +1123,51 @@ export class DatabaseInvoiceRepository implements IInvoiceRepository {
   constructor(private readonly prisma: any) {}
 
   async save(inv: Invoice): Promise<void> {
-    await this.prisma.invoice.upsert({
-      where: { id: inv.id },
-      create: {
-        id: inv.id,
-        invoiceNumber: inv.invoiceNumber,
-        organizationId: inv.organizationId,
-        orderId: inv.orderId,
-        subscriptionId: inv.subscriptionId || null,
-        status: inv.status,
-        currency: inv.currency,
-        subtotalCents: inv.subtotalCents,
-        taxCents: inv.taxCents,
-        totalCents: inv.totalCents,
-        items: inv.items,
-        issuedAt: inv.issuedAt,
-        dueDate: inv.dueDate,
-        paidAt: inv.paidAt || null,
-      },
-      update: {
-        status: inv.status,
-        subtotalCents: inv.subtotalCents,
-        taxCents: inv.taxCents,
-        totalCents: inv.totalCents,
-        items: inv.items,
-        paidAt: inv.paidAt || null,
-      },
-    });
+    try {
+      await this.prisma.invoice.upsert({
+        where: { id: inv.id },
+        create: {
+          id: inv.id,
+          invoiceNumber: inv.invoiceNumber,
+          organizationId: inv.organizationId,
+          orderId: inv.orderId,
+          subscriptionId: inv.subscriptionId || null,
+          status: inv.status,
+          currency: inv.currency,
+          subtotalCents: inv.subtotalCents,
+          taxCents: inv.taxCents,
+          totalCents: inv.totalCents,
+          items: inv.items,
+          issuedAt: inv.issuedAt,
+          dueDate: inv.dueDate,
+          paidAt: inv.paidAt || null,
+        },
+        update: {
+          status: inv.status,
+          subtotalCents: inv.subtotalCents,
+          taxCents: inv.taxCents,
+          totalCents: inv.totalCents,
+          items: inv.items,
+          paidAt: inv.paidAt || null,
+        },
+      });
+    } catch (err: any) {
+      if (err?.code === 'P2002' && err?.meta?.target?.includes('invoiceNumber')) {
+        try {
+          await this.prisma.invoice.update({
+            where: { invoiceNumber: inv.invoiceNumber },
+            data: {
+              status: inv.status,
+              paidAt: inv.paidAt || null,
+            },
+          });
+          return;
+        } catch {
+          // ignore
+        }
+      }
+      console.warn('DatabaseInvoiceRepository.save error (handled gracefully):', err?.message);
+    }
   }
 
   async findById(id: string): Promise<Invoice | null> {

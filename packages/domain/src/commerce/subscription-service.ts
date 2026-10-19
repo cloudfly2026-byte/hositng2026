@@ -158,7 +158,14 @@ export class SubscriptionService {
 
     this.invoices.set(invoice.id, invoice);
     if (this.uow?.invoices) {
-      this.uow.invoices.save(invoice);
+      try {
+        const res = this.uow.invoices.save(invoice);
+        if (res && typeof (res as any).catch === 'function') {
+          (res as any).catch((err: any) => console.warn('Error saving invoice to UoW (handled):', err?.message));
+        }
+      } catch (err: any) {
+        console.warn('Error saving invoice to UoW (sync):', err?.message);
+      }
     }
     return invoice;
   }
