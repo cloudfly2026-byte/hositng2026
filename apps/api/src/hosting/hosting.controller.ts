@@ -11,6 +11,8 @@ import {
   BadRequestException,
   NotFoundException,
   ForbiddenException,
+  Inject,
+  Optional,
 } from '@nestjs/common';
 import {
   HostingManagementService,
@@ -21,6 +23,7 @@ import {
   FileManagerService,
   PathTraversalError,
   QuotaExceededError,
+  IUnitOfWork,
 } from '@cloudfly/domain';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { HttpRolesGuard } from '../auth/roles.guard';
@@ -73,13 +76,37 @@ export class InstallCustomSslDto {
 export class HostingController {
   constructor(
     private readonly hostingService: HostingManagementService,
-    private readonly fileManagerService?: FileManagerService
+    private readonly fileManagerService?: FileManagerService,
+    @Optional() @Inject('IUnitOfWork') private readonly uow?: IUnitOfWork
   ) {}
+
+  private async ensureLinkedHestiaUser(req: any): Promise<string | undefined> {
+    if (!req?.user) return undefined;
+    if (req.user.linkedHestiaUser) return req.user.linkedHestiaUser;
+    if (this.uow?.memberships) {
+      try {
+        const mem = await this.uow.memberships.findByUserAndOrg(req.user.userId, req.user.organizationId);
+        if (mem?.linkedHestiaUser) {
+          req.user.linkedHestiaUser = mem.linkedHestiaUser;
+          return mem.linkedHestiaUser;
+        }
+        const list = await this.uow.memberships.listByOrganization(req.user.organizationId);
+        const existing = list.find((m) => m.linkedHestiaUser);
+        if (existing?.linkedHestiaUser) {
+          req.user.linkedHestiaUser = existing.linkedHestiaUser;
+          return existing.linkedHestiaUser;
+        }
+      } catch {
+        // Fallback gracefully
+      }
+    }
+    return undefined;
+  }
 
   @Get('sites')
   async listSites(@Req() req: any) {
     const orgId = req.user.organizationId;
-    const linkedHestiaUser = req.user.linkedHestiaUser;
+    const linkedHestiaUser = await this.ensureLinkedHestiaUser(req);
     return await this.hostingService.listWebSites(orgId, linkedHestiaUser);
   }
 
@@ -88,7 +115,8 @@ export class HostingController {
   @Roles('OWNER', 'ADMIN', 'DEVELOPER')
   async createSite(@Body() body: CreateSiteDto, @Req() req: any) {
     try {
-      return await this.hostingService.createWebSite(
+      await this.ensureLinkedHestiaUser(req);
+      const site = await this.hostingService.createWebSite(
         {
           domain: body.domain,
           type: body.type,
@@ -97,6 +125,23 @@ export class HostingController {
         },
         req.user
       );
+
+      // Associate Hestia user with client membership in Velupi
+      if (site?.provisionedUser && this.uow?.memberships) {
+        try {
+          const list = await this.uow.memberships.listByOrganization(req.user.organizationId);
+          for (const mem of list) {
+            if (!mem.linkedHestiaUser) {
+              mem.linkedHestiaUser = site.provisionedUser;
+              await this.uow.memberships.save(mem);
+            }
+          }
+        } catch (memErr) {
+          console.warn('[HostingController] Error linking hestia user to membership:', memErr);
+        }
+      }
+
+      return site;
     } catch (error: any) {
       if (error instanceof InvalidPhpVersionError) {
         throw new BadRequestException(error.message);
@@ -198,6 +243,7 @@ export class HostingController {
   @Roles('OWNER', 'ADMIN')
   async enableSsl(@Param('domain') domain: string, @Req() req: any) {
     try {
+      await this.ensureLinkedHestiaUser(req);
       return await this.hostingService.enableSsl(domain, req.user);
     } catch (error: any) {
       if (error instanceof WebSiteNotFoundError) {
@@ -221,6 +267,7 @@ export class HostingController {
   @Roles('OWNER', 'ADMIN')
   async createDatabase(@Body() body: CreateDatabaseDto, @Req() req: any) {
     try {
+      await this.ensureLinkedHestiaUser(req);
       return await this.hostingService.createDatabase(
         {
           databaseName: body.databaseName,
@@ -238,6 +285,7 @@ export class HostingController {
   @Get('emails/:domain')
   async listEmails(@Param('domain') domain: string, @Req() req: any) {
     try {
+      await this.ensureLinkedHestiaUser(req);
       return await this.hostingService.listEmailAccounts(domain, req.user);
     } catch (error: any) {
       if (error instanceof WebSiteNotFoundError) {
@@ -255,6 +303,7 @@ export class HostingController {
   @Roles('OWNER', 'ADMIN')
   async createEmail(@Body() body: CreateEmailDto, @Req() req: any) {
     try {
+      await this.ensureLinkedHestiaUser(req);
       return await this.hostingService.createEmailAccount(
         {
           domain: body.domain,

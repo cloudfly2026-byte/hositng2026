@@ -285,16 +285,58 @@ export const globalOrdersStore = new Map<string, Order>();
     },
     {
       provide: ProvisioningWorkerService,
-      useFactory: () => {
+      useFactory: (hostingService: HostingManagementService, uow: any) => {
         const engine = {
-          provision: async (job: any) => ({
-            success: true,
-            output: `Provisioned successfully for engine ${job.targetEngine}`,
-          }),
+          provision: async (job: any) => {
+            if (job.targetEngine === 'HESTIA' && hostingService) {
+              const domain = job.primaryDomain || job.metadata?.domain;
+              if (domain) {
+                let linkedHestiaUser: string | undefined;
+                if (uow?.memberships) {
+                  try {
+                    const list = await uow.memberships.listByOrganization(job.organizationId);
+                    linkedHestiaUser = list.find((m: any) => m.linkedHestiaUser)?.linkedHestiaUser;
+                  } catch {
+                    // Fallback
+                  }
+                }
+
+                const site = await hostingService.createWebSite(
+                  { domain, type: 'WordPress Starter' },
+                  {
+                    userId: job.userId || 'system',
+                    organizationId: job.organizationId,
+                    roles: ['OWNER'],
+                    permissions: ['*'],
+                    linkedHestiaUser,
+                  }
+                );
+
+                if (site?.provisionedUser && uow?.memberships) {
+                  try {
+                    const list = await uow.memberships.listByOrganization(job.organizationId);
+                    for (const mem of list) {
+                      if (!mem.linkedHestiaUser) {
+                        mem.linkedHestiaUser = site.provisionedUser;
+                        await uow.memberships.save(mem);
+                      }
+                    }
+                  } catch (e) {
+                    console.warn('[ProvisioningWorker] Error linking hestia user:', e);
+                  }
+                }
+              }
+            }
+            return {
+              success: true,
+              output: `Provisioned successfully for engine ${job.targetEngine}`,
+            };
+          },
           rollback: async (_job: any) => {},
         };
         return new ProvisioningWorkerService(engine);
       },
+      inject: [HostingManagementService, 'IUnitOfWork'],
     },
     {
       provide: AccessPolicyService,

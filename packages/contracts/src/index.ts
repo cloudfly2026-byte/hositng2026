@@ -87,6 +87,7 @@ export interface AuthorizedContext {
   permissions: string[];
   isOperator?: boolean;
   platformRole?: PlatformRole;
+  linkedHestiaUser?: string;
 }
 
 export interface AuthTokens {

@@ -214,6 +214,16 @@ export class OrdersController {
       const primaryDomain = (paidOrder as any).primaryDomain || (paidOrder as any).metadata?.primaryDomain;
       if (primaryDomain && this.hostingService) {
         try {
+          let linkedHestiaUser: string | undefined;
+          if (this.uow?.memberships) {
+            try {
+              const list = await this.uow.memberships.listByOrganization(paidOrder.organizationId);
+              linkedHestiaUser = list.find((m) => m.linkedHestiaUser)?.linkedHestiaUser;
+            } catch {
+              // Fallback
+            }
+          }
+
           const site = await this.hostingService.createWebSite(
             { domain: primaryDomain, type: 'WordPress Starter' },
             {
@@ -221,8 +231,24 @@ export class OrdersController {
               organizationId: paidOrder.organizationId,
               roles: ['OWNER'],
               permissions: ['*'],
+              linkedHestiaUser,
             }
           );
+
+          // Associate Hestia user with client membership in Velupi
+          if (site?.provisionedUser && this.uow?.memberships) {
+            try {
+              const list = await this.uow.memberships.listByOrganization(paidOrder.organizationId);
+              for (const mem of list) {
+                if (!mem.linkedHestiaUser) {
+                  mem.linkedHestiaUser = site.provisionedUser;
+                  await this.uow.memberships.save(mem);
+                }
+              }
+            } catch (memErr) {
+              console.warn('[OrdersController] Error linking hestia user to membership:', memErr);
+            }
+          }
 
           // Dispatch transactional DNS configuration email upon HOSTING_PROVISIONED
           if (this.mailerService) {

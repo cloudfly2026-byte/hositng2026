@@ -53,6 +53,7 @@ export interface WebSiteDetail {
   diskUsedMb: number;
   ip: string;
   createdAt: Date;
+  provisionedUser?: string;
 }
 
 export interface CreateDatabaseSpec {
@@ -128,7 +129,7 @@ export class HostingManagementService {
       throw new InvalidPhpVersionError(phpVersion);
     }
 
-    const orgUser = this.sanitizeUser(context.organizationId);
+    const orgUser = this.sanitizeUser(context.organizationId, (context as any).linkedHestiaUser);
 
     // 1. Create tenant user in hosting provider if not present
     await this.runIdempotent('v-add-user', [
@@ -141,9 +142,26 @@ export class HostingManagementService {
     // 2. Create web domain
     await this.runIdempotent('v-add-web-domain', [orgUser, domain]);
 
-    // 3. Issue SSL if requested or default true
+    // 3. Create DNS zone in BIND9 pointing to velupi nameservers
+    await this.runIdempotent('v-add-dns-domain', [
+      orgUser,
+      domain,
+      '89.117.147.134',
+      'ns1.velupi.com',
+      'ns2.velupi.com',
+      'yes',
+    ]);
+
+    // 4. Create mail domain in Exim/Dovecot for email accounts
+    await this.runIdempotent('v-add-mail-domain', [orgUser, domain]);
+
+    // 5. Issue SSL if requested or default true
     if (spec.sslEnabled !== false) {
-      await this.runIdempotent('v-add-letsencrypt-domain', [orgUser, domain]);
+      try {
+        await this.runIdempotent('v-add-letsencrypt-domain', [orgUser, domain]);
+      } catch {
+        // Will retry automatically once external DNS propagation settles
+      }
     }
 
     const site: WebSiteDetail = {
@@ -158,6 +176,7 @@ export class HostingManagementService {
       diskUsedMb: 120,
       ip: '89.117.147.134',
       createdAt: new Date(),
+      provisionedUser: orgUser,
     };
 
     this.websites.set(domain, site);
@@ -276,7 +295,7 @@ export class HostingManagementService {
 
     // Refresh live status from underlying engine if available
     try {
-      const orgUser = this.sanitizeUser(context.organizationId);
+      const orgUser = this.sanitizeUser(context.organizationId, (context as any).linkedHestiaUser);
       const res = await this.transport.executeCommand('v-list-web-domain', [orgUser, domain, 'json']);
       if (res.returnCode === 0) {
         const parsed = JSON.parse(res.output);
@@ -417,7 +436,7 @@ export class HostingManagementService {
       throw new InvalidPhpVersionError(phpVersion);
     }
 
-    const orgUser = this.sanitizeUser(context.organizationId);
+    const orgUser = this.sanitizeUser(context.organizationId, (context as any).linkedHestiaUser);
     const tpl = `PHP-${phpVersion.replace('.', '_')}`;
     await this.transport.executeCommand('v-change-web-domain-backend-tpl', [orgUser, cleanDomain, tpl]);
 
@@ -458,7 +477,7 @@ export class HostingManagementService {
   }
 
   async createDatabase(spec: CreateDatabaseSpec, context: AuthorizedContext): Promise<DatabaseDetail> {
-    const orgUser = this.sanitizeUser(context.organizationId);
+    const orgUser = this.sanitizeUser(context.organizationId, (context as any).linkedHestiaUser);
     const fullDbName = `${orgUser}_${spec.databaseName.toLowerCase().replace(/[^a-z0-9_]/g, '')}`;
     const fullDbUser = `${orgUser}_${spec.dbUser.toLowerCase().replace(/[^a-z0-9_]/g, '')}`;
 
@@ -506,9 +525,12 @@ export class HostingManagementService {
       throw new CrossTenantViolationError(context.organizationId, site.organizationId);
     }
 
-    const orgUser = this.sanitizeUser(context.organizationId);
+    const orgUser = this.sanitizeUser(context.organizationId, (context as any).linkedHestiaUser);
     const account = spec.account.toLowerCase().replace(/[^a-z0-9._-]/g, '');
     const email = `${account}@${cleanDomain}`;
+
+    // Ensure mail domain exists in hosting engine first
+    await this.runIdempotent('v-add-mail-domain', [orgUser, cleanDomain]);
 
     await this.runIdempotent('v-add-mail-account', [
       orgUser,
