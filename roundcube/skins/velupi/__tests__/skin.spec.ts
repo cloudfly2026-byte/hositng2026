@@ -351,6 +351,11 @@ describe('Velupi Mail skin — Roundcube Elastic child skin', () => {
       expect(existsSync(asset('thumbnail.png'))).toBe(true);
     });
 
+    it('ships the official Velupi favicon', () => {
+      expect(existsSync(asset('images/favicon.ico'))).toBe(true);
+      expect(existsSync(asset('images/favicon.png'))).toBe(true);
+    });
+
     it('references the logo only from the skin folder (no CDN)', () => {
       const all = ['templates/includes/layout.html', 'css/login.css', 'css/layout.css', 'css/mail.css'];
       for (const f of all) {

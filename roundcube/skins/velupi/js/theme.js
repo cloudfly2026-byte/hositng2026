@@ -122,13 +122,33 @@
     }
   }
 
+  function setupFavicon() {
+    var doc = global.document;
+    if (!doc) return;
+    var links = doc.querySelectorAll("link[rel*='icon']");
+    if (links && links.length > 0) {
+      for (var i = 0; i < links.length; i++) {
+        links[i].href = '/skins/velupi/images/favicon.ico';
+      }
+    } else {
+      var link = doc.createElement('link');
+      link.type = 'image/x-icon';
+      link.rel = 'shortcut icon';
+      link.href = '/skins/velupi/images/favicon.ico';
+      var head = doc.getElementsByTagName('head')[0] || doc.documentElement;
+      head.appendChild(link);
+    }
+  }
+
   function init() {
     apply(resolveMode());
     setupBrandSanitizer();
+    setupFavicon();
     if (global.document.readyState === 'loading') {
       global.document.addEventListener('DOMContentLoaded', function () {
         injectBrand();
         setupBrandSanitizer();
+        setupFavicon();
       });
     } else {
       injectBrand();
