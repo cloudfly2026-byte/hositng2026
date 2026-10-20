@@ -1,0 +1,108 @@
+/* ============================================================================
+ * Velupi Mail — login screen
+ * Targets the real Elastic 1.6 login markup:
+ *   body.task-login > #layout > #layout-content > (#logo, #login-form)
+ * using the centralized tokens.
+ * ========================================================================== */
+
+body.task-login {
+  background: var(--background-alt);
+  min-height: 100vh;
+  font-family: var(--font-body);
+}
+
+body.task-login #layout-content {
+  background: var(--background-alt);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+}
+
+/* The Velupi logo rendered by the login template */
+body.task-login #logo {
+  height: 72px;
+  width: auto;
+  margin-bottom: 1.5rem;
+}
+
+/* The Elastic login card */
+body.task-login #login-form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 380px;
+}
+
+/* Velupi brand injected above the form by js/theme.js */
+body.task-login .velupi-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+body.task-login .velupi-brand img {
+  height: 56px;
+  width: auto;
+}
+
+/* Inputs */
+body.task-login #login-form input[type="text"],
+body.task-login #login-form input[type="password"] {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-primary);
+  padding: 0.6rem 0.75rem;
+  width: 100%;
+  font-family: var(--font-body);
+}
+
+body.task-login #login-form input[type="text"]:focus,
+body.task-login #login-form input[type="password"]:focus {
+  border-color: var(--brand-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15);
+}
+
+/* Submit button */
+body.task-login #rcmloginsubmit,
+body.task-login #login-form .button.mainaction {
+  background: var(--brand-primary);
+  color: var(--text-on-brand);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  width: 100%;
+  padding: 0.65rem;
+}
+
+body.task-login #rcmloginsubmit:hover,
+body.task-login #login-form .button.mainaction:hover {
+  background: var(--brand-primary-dark);
+}
+
+/* Error / message stack */
+body.task-login #messagestack .alert,
+body.task-login .alert {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+/* Footer links */
+body.task-login #login-footer {
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 1rem;
+}
+
+body.task-login a {
+  color: var(--brand-primary);
+}

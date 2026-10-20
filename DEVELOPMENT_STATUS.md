@@ -959,6 +959,33 @@ Se cumplió de forma estricta la **regla de no creación manual**: todos los rec
   - `apps/web/src/components/Navigation.spec.tsx`: **5/5 pruebas aprobadas**.
   - **Suite Global del Monorepo**: **56 suites ejecutadas, 461 pruebas aprobadas (100% GREEN, 0 fallidas)**.
 
+---
+
+## P. Sprint Velupi Mail (20 de Octubre de 2026): Skin Profesional para Roundcube Webmail
+
+### 1. Auditoría Inicial (Fase 1)
+- **Roundcube en vivo verificado** (solo lectura) en `https://webmail.velupi.com/` (alias de `mail.velupi.com`, HestiaCP `89.117.147.134`):
+  - Versión: **Roundcube 1.6.17** (`rcversion: 10617`), skin **Elastic** activa, `dark_mode_support: true`.
+  - Login estándar (`#rcmloginuser`, `#rcmloginpwd`, `#rcmloginsubmit`, `#login-form`, `#messagestack`). Listado de directorios servido con HTTP 403 (correcto).
+  - Endpoint SSO existente del Control Plane: `GET /hosting/sso/webmail` (sin cambios; no se implementa SSO nuevo).
+- **Branding**: fuente única `VELUPI_TOKENS` (`apps/web/src/theme/ThemeRegistry.tsx`) + logo oficial `apps/web/public/velupi-logo.png` (nube+sol con "V" y wordmark), reutilizado en la skin.
+
+### 2. Implementación TDD (RED → GREEN → REFACTOR)
+- **Nueva skin child de Elastic**: `roundcube/skins/velupi/` (`meta.json` con `extends: "elastic"`; cero modificación del core de Roundcube; todas las funcionalidades, plugins y plantillas se heredan de Elastic).
+- **Tokens centralizados** en `css/variables.css` (único archivo a editar para rebranding futuro): paleta Warm Solar Light completa (`#FF6B00`, `#E85A00`, `#FF9100`, `#FFB800`, `#FFD54A`, `#FFFDF9`, `#FFF8ED`, `#FFFFFF`, `#F2E8DC`, `#2D1B17`, `#667085`, estados semánticos) + tipografías `Poppins`/`Inter` + elevaciones y radios.
+- **Parciales**: `layout.css` (shell), `login.css` (pantalla de login con logo oficial), `mail.css` (bandeja/lista/lectura), `compose.css` (redactor), `responsive.css` (3 paneles → tablet/móvil), `dark.css` (dark mode por `data-theme='dark'` persistido y por `prefers-color-scheme`).
+- **Runtime** `js/theme.js`: namespace global `VelupiTheme` (`init`/`setMode`/`toggle`), persistencia en `localStorage` (`velupi:mail-theme`), fallback a preferencia del SO, inyección del logo Velupi en el login. Sin `eval`, sin CDNs, sin tocar autenticación/IMAP/SMTP.
+- **Paquete instalable**: `roundcube/velupi-skin.zip` + documentación `roundcube/README.md`, `INSTALL.md`, `BRANDING.md`, `TEST_REPORT.md` (incluye procedimiento de rollback).
+
+### 3. Métricas de Calidad
+- **Suite dedicada**: `roundcube/skins/velupi/__tests__/skin.spec.ts` — **22/22 pruebas (100% GREEN)**. RED verificado primero (ENOENT sobre `css/variables.css`).
+- **Suite Global del Monorepo**: **57 suites, 483 pruebas aprobadas (100% GREEN, 0 fallos)**. `pnpm typecheck`: 0 errores.
+- Cobertura de la spec: herencia Elastic, tokens oficiales, orden de imports, dark mode dual, breakpoints, assets (logo/thumbnail), white-label (sin Hestia/Traefik/Docker/CLI), CSP sin CDNs y seguridad del runtime JS.
+
+### 4. Estado de Despliegue
+- **PENDIENTE DE AUTORIZACIÓN**: la instalación en el host de correo (`/usr/share/roundcube/skins/velupi` + `$config['skin'] = 'velupi'` en `/etc/roundcube/config.inc.php`) es una mutación de infraestructura de producción y **no se ejecuta sin autorización explícita**. Procedimiento y rollback documentados en `roundcube/INSTALL.md`.
+- **QA en vivo pendiente**: la verificación visual/funcional real (login, lectura, redacción, envío, adjuntos, móvil) se ejecutará contra `https://webmail.velupi.com/` tras el despliegue autorizado y se anexará a `TEST_REPORT.md`. Ninguna prueba se marca E2E real sin ejecutarse.
+
 
 
 

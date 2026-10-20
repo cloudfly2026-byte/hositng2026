@@ -1,0 +1,54 @@
+/* ============================================================================
+ * Velupi Mail — Centralized design tokens (Warm Solar Light System)
+ * Single source of truth. Every other stylesheet consumes these variables.
+ * Source of truth for branding: apps/web/src/theme/ThemeRegistry.tsx (VELUPI_TOKENS)
+ * ========================================================================== */
+
+:root {
+  /* Brand — Solar */
+  --brand-primary: #FF6B00;
+  --brand-primary-dark: #E85A00;
+  --brand-secondary: #FF9100;
+  --brand-accent: #FFB800;
+  --brand-accent-light: #FFD54A;
+  --brand-gradient: linear-gradient(135deg, #FFD54A 0%, #FFB800 35%, #FF9100 70%, #FF6B00 100%);
+
+  /* Surfaces & backgrounds — warm solar light matching app.velupi.com */
+  --background: #FFFDF9;
+  --background-page: #FAF6F0;
+  --background-alt: #FFF8ED;
+  --surface: #FFFFFF;
+  --surface-alt: #FFFDF9;
+  --border: #F2E8DC;
+  --border-strong: #E5D7C7;
+
+  /* Typography — crisp black and dark contrast for light mode */
+  --text-primary: #2D1B17;
+  --text-dark: #1E1B18;
+  --text-black: #111827;
+  --text-secondary: #4B5563;
+  --text-muted: #667085;
+  --text-on-brand: #FFFFFF;
+
+  /* Semantic states */
+  --success: #16A34A;
+  --success-bg: #D1FAE5;
+  --success-text: #065F46;
+  --warning: #D97706;
+  --error: #DC2626;
+
+  /* Typography families (self-hosted by the portal; referenced for consistency) */
+  --font-display: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Elevation */
+  --shadow-sm: 0 2px 8px rgba(45, 27, 23, 0.04);
+  --shadow-md: 0 4px 16px rgba(45, 27, 23, 0.08);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --topbar-height: 56px;
+}

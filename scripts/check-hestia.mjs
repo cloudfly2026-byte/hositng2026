@@ -9,21 +9,20 @@ function queryHestia(cmd, args = []) {
   return runRemote(curlCmd);
 }
 
-console.log('--- 1. Check Users ---');
-const usersRes = queryHestia('v-list-users', ['json']);
-try {
-  console.log('Hestia users:', Object.keys(JSON.parse(usersRes)));
-} catch {
-  console.log('Raw users output:', usersRes);
-}
+console.log('--- Mail accounts velupi.com ---');
+console.log(queryHestia('v-list-mail-account', ['velupi', 'velupi.com', 'admin', 'json']));
 
-console.log('\n--- 2. Check Web Domains for u_45232lpw39 ---');
-const webRes = queryHestia('v-list-web-domains', ['u_45232lpw39', 'json']);
-try {
-  console.log('Web domains:', Object.keys(JSON.parse(webRes)));
-} catch {
-  console.log('Raw web output:', webRes);
-}
+console.log('--- 2. Check Mail Accounts for velupi.com ---');
+const mailAccountsVelupi = queryHestia('v-list-mail-accounts', ['velupi', 'velupi.com', 'json']);
+console.log('Mail accounts velupi.com:', mailAccountsVelupi);
+
+console.log('--- 3. Check Mail Domains for cloudfly ---');
+const mailResCloudfly = queryHestia('v-list-mail-domains', ['cloudfly', 'json']);
+console.log('Mail domains cloudfly:', mailResCloudfly);
+
+console.log('--- 4. Check Mail Accounts for cloudfly.com.co ---');
+const mailAccountsCloudfly = queryHestia('v-list-mail-accounts', ['cloudfly', 'cloudfly.com.co', 'json']);
+console.log('Mail accounts cloudfly.com.co:', mailAccountsCloudfly);
 
 console.log('\n--- 3. Check DNS Zones for u_45232lpw39 ---');
 const dnsRes = queryHestia('v-list-dns-domains', ['u_45232lpw39', 'json']);

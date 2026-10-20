@@ -1,0 +1,8 @@
+{
+  "name": "Velupi",
+  "author": "Velupi Cloud Platform",
+  "version": "1.0.0",
+  "license": "GPL-3.0+",
+  "extends": "elastic",
+  "description": "Velupi Mail — Warm Solar Light skin for Roundcube (child of Elastic)"
+}

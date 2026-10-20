@@ -1,0 +1,328 @@
+/* ============================================================================
+ * Velupi Mail — dark mode
+ * Elastic compiles its own LESS colors and does NOT consume our CSS variables,
+ * so dark mode maps the main structural selectors onto the dark tokens.
+ * Two activation paths:
+ *   1. Explicit:  <html data-theme='dark'> or <html class='dark-mode'>
+ *   2. Implicit:  @media (prefers-color-scheme: dark) unless user chose light
+ * ========================================================================== */
+
+/* ---- Shared token redefinition ---- */
+:root[data-theme='dark'],
+html.dark-mode,
+:root:not([data-theme='light']) {
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'],
+html.dark-mode {
+  --background: #141110;
+  --background-page: #141110;
+  --background-alt: #1F1916;
+  --surface: #1E1815;
+  --surface-alt: #241D19;
+  --border: #382D27;
+  --border-strong: #4A3C34;
+  --text-primary: #F5EDE7;
+  --text-dark: #FFFFFF;
+  --text-black: #FFFFFF;
+  --text-secondary: #C8B9AF;
+  --text-muted: #9C8C82;
+  --success-bg: #0B3B2A;
+  --success-text: #6EE7B7;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --background: #141110;
+    --background-page: #141110;
+    --background-alt: #1F1916;
+    --surface: #1E1815;
+    --surface-alt: #241D19;
+    --border: #382D27;
+    --border-strong: #4A3C34;
+    --text-primary: #F5EDE7;
+    --text-dark: #FFFFFF;
+    --text-black: #FFFFFF;
+    --text-secondary: #C8B9AF;
+    --text-muted: #9C8C82;
+    --success-bg: #0B3B2A;
+    --success-text: #6EE7B7;
+  }
+}
+
+/* ---- Application shell (explicit dark) ---- */
+:root[data-theme='dark'] body:not(.task-login),
+html.dark-mode body:not(.task-login),
+:root[data-theme='dark'] #layout,
+html.dark-mode #layout {
+  background: #141110 !important;
+  color: #F5EDE7 !important;
+}
+
+:root[data-theme='dark'] #layout-menu,
+html.dark-mode #layout-menu {
+  background: #191412 !important;
+  border-right-color: #382D27 !important;
+}
+
+:root[data-theme='dark'] #taskmenu,
+html.dark-mode #taskmenu {
+  background: transparent !important;
+}
+
+:root[data-theme='dark'] #layout-sidebar,
+html.dark-mode #layout-sidebar,
+:root[data-theme='dark'] #folderlist-content,
+html.dark-mode #folderlist-content {
+  background: #1E1815 !important;
+  border-right-color: #382D27 !important;
+}
+
+:root[data-theme='dark'] #mailboxlist,
+html.dark-mode #mailboxlist {
+  background: #1E1815 !important;
+}
+
+:root[data-theme='dark'] #mailboxlist li a,
+html.dark-mode #mailboxlist li a {
+  color: #E5DDD7 !important;
+}
+
+:root[data-theme='dark'] #mailboxlist li a:hover,
+html.dark-mode #mailboxlist li a:hover {
+  background: #27201C !important;
+  color: #FF9100 !important;
+}
+
+:root[data-theme='dark'] #mailboxlist li.selected > a,
+html.dark-mode #mailboxlist li.selected > a,
+:root[data-theme='dark'] #mailboxlist li.active > a,
+html.dark-mode #mailboxlist li.active > a {
+  background: rgba(255, 107, 0, 0.22) !important;
+  color: #FF9100 !important;
+  border-left-color: var(--brand-primary) !important;
+}
+
+:root[data-theme='dark'] #layout-list,
+html.dark-mode #layout-list,
+:root[data-theme='dark'] #messagelist-content,
+html.dark-mode #messagelist-content,
+:root[data-theme='dark'] #messagelist,
+html.dark-mode #messagelist {
+  background: #1E1815 !important;
+  border-right-color: #382D27 !important;
+  color: #F5EDE7 !important;
+}
+
+:root[data-theme='dark'] #messagelist-header,
+html.dark-mode #messagelist-header,
+:root[data-theme='dark'] #listcontrols,
+html.dark-mode #listcontrols,
+:root[data-theme='dark'] #mailsearchform,
+html.dark-mode #mailsearchform,
+:root[data-theme='dark'] #searchform,
+html.dark-mode #searchform {
+  background: #251E1A !important;
+  border-bottom-color: #382D27 !important;
+  color: #F5EDE7 !important;
+}
+
+:root[data-theme='dark'] #listcontrols a.button,
+html.dark-mode #listcontrols a.button,
+:root[data-theme='dark'] #listcontrols .button,
+html.dark-mode #listcontrols .button {
+  color: #E5DDD7 !important;
+}
+
+:root[data-theme='dark'] #messagelist tbody tr,
+html.dark-mode #messagelist tbody tr {
+  background: #1E1815 !important;
+  border-bottom-color: #2D241F !important;
+}
+
+:root[data-theme='dark'] #messagelist tbody tr td,
+html.dark-mode #messagelist tbody tr td {
+  color: #E5DDD7 !important;
+}
+
+:root[data-theme='dark'] #messagelist tbody tr.unseen td,
+html.dark-mode #messagelist tbody tr.unseen td,
+:root[data-theme='dark'] #messagelist tbody tr.unseen td.subject a,
+html.dark-mode #messagelist tbody tr.unseen td.subject a {
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+}
+
+:root[data-theme='dark'] #messagelist tbody tr.seen td,
+html.dark-mode #messagelist tbody tr.seen td,
+:root[data-theme='dark'] #messagelist tbody tr.seen td.subject a,
+html.dark-mode #messagelist tbody tr.seen td.subject a {
+  color: #B8A89E !important;
+}
+
+:root[data-theme='dark'] #messagelist tbody tr:hover,
+html.dark-mode #messagelist tbody tr:hover,
+:root[data-theme='dark'] #messagelist tbody tr:hover td,
+html.dark-mode #messagelist tbody tr:hover td {
+  background: #28201C !important;
+}
+
+:root[data-theme='dark'] #messagelist tbody tr.selected,
+html.dark-mode #messagelist tbody tr.selected,
+:root[data-theme='dark'] #messagelist tbody tr.selected td,
+html.dark-mode #messagelist tbody tr.selected td {
+  background: rgba(255, 107, 0, 0.20) !important;
+  color: #FFFFFF !important;
+}
+
+:root[data-theme='dark'] #layout-content,
+html.dark-mode #layout-content,
+:root[data-theme='dark'] #message-content,
+html.dark-mode #message-content,
+:root[data-theme='dark'] #messagebody,
+html.dark-mode #messagebody {
+  background: #1E1815 !important;
+  color: #F5EDE7 !important;
+}
+
+:root[data-theme='dark'] #message-header,
+html.dark-mode #message-header {
+  background: #231C18 !important;
+  border-bottom-color: #382D27 !important;
+}
+
+:root[data-theme='dark'] #message-header .subject,
+html.dark-mode #message-header .subject {
+  color: #FFFFFF !important;
+}
+
+:root[data-theme='dark'] #messagetoolbar,
+html.dark-mode #messagetoolbar,
+:root[data-theme='dark'] #mailtoolbar,
+html.dark-mode #mailtoolbar {
+  background: #251E1A !important;
+  border-bottom-color: #382D27 !important;
+}
+
+:root[data-theme='dark'] #messagetoolbar a.button,
+html.dark-mode #messagetoolbar a.button,
+:root[data-theme='dark'] #mailtoolbar a.button,
+html.dark-mode #mailtoolbar a.button {
+  background: #2A211D !important;
+  border-color: #382D27 !important;
+  color: #E5DDD7 !important;
+}
+
+:root[data-theme='dark'] #compose-content,
+html.dark-mode #compose-content {
+  background: #1E1815 !important;
+}
+
+/* ---- Application shell (OS dark, no explicit light) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not(.light-mode) body:not(.task-login),
+  :root:not([data-theme='light']):not(.light-mode) #layout {
+    background: #141110 !important;
+    color: #F5EDE7 !important;
+  }
+
+  :root:not([data-theme='light']):not(.light-mode) #layout-menu {
+    background: #191412 !important;
+    border-right-color: #382D27 !important;
+  }
+
+  :root:not([data-theme='light']):not(.light-mode) #layout-sidebar,
+  :root:not([data-theme='light']):not(.light-mode) #folderlist-content,
+  :root:not([data-theme='light']):not(.light-mode) #mailboxlist {
+    background: #1E1815 !important;
+    border-right-color: #382D27 !important;
+  }
+
+  :root:not([data-theme='light']):not(.light-mode) #layout-list,
+  :root:not([data-theme='light']):not(.light-mode) #messagelist-content,
+  :root:not([data-theme='light']):not(.light-mode) #messagelist {
+    background: #1E1815 !important;
+    border-right-color: #382D27 !important;
+  }
+
+  :root:not([data-theme='light']):not(.light-mode) #messagelist-header,
+  :root:not([data-theme='light']):not(.light-mode) #listcontrols,
+  :root:not([data-theme='light']):not(.light-mode) #mailsearchform,
+  :root:not([data-theme='light']):not(.light-mode) #searchform {
+    background: #251E1A !important;
+    border-bottom-color: #382D27 !important;
+  }
+
+  :root:not([data-theme='light']):not(.light-mode) #messagelist tbody tr {
+    background: #1E1815 !important;
+    border-bottom-color: #2D241F !important;
+  }
+
+  :root:not([data-theme='light']):not(.light-mode) #layout-content,
+  :root:not([data-theme='light']):not(.light-mode) #message-content,
+  :root:not([data-theme='light']):not(.light-mode) #messagebody {
+    background: #1E1815 !important;
+    color: #F5EDE7 !important;
+  }
+
+  :root:not([data-theme='light']):not(.light-mode) #message-header {
+    background: #231C18 !important;
+    border-bottom-color: #382D27 !important;
+  }
+
+  :root:not([data-theme='light']):not(.light-mode) #compose-content {
+    background: #1E1815 !important;
+  }
+}
+
+/* ---- Login screen in dark mode ---- */
+body.task-login,
+body.task-login #layout-content {
+  background: var(--background-alt);
+}
+
+body.task-login #login-form {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+:root[data-theme='dark'] body.task-login,
+html.dark-mode body.task-login,
+:root[data-theme='dark'] body.task-login #layout-content,
+html.dark-mode body.task-login #layout-content {
+  background: #141110 !important;
+}
+
+:root[data-theme='dark'] body.task-login #login-form,
+html.dark-mode body.task-login #login-form {
+  background: #1E1815 !important;
+  border-color: #382D27 !important;
+}
+
+:root[data-theme='dark'] body.task-login #login-form input[type='text'],
+:root[data-theme='dark'] body.task-login #login-form input[type='password'],
+:root[data-theme='dark'] #compose-headers input[type='text'],
+html.dark-mode body.task-login #login-form input[type='text'],
+html.dark-mode body.task-login #login-form input[type='password'],
+html.dark-mode #compose-headers input[type='text'] {
+  background: #27201C !important;
+  color: #FFFFFF !important;
+  border-color: #382D27 !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) body.task-login #login-form input[type='text'],
+  :root:not([data-theme='light']) body.task-login #login-form input[type='password'],
+  :root:not([data-theme='light']) #compose-headers input[type='text'] {
+    background: #27201C;
+    color: #FFFFFF;
+    border-color: #382D27;
+  }
+}

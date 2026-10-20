@@ -1,0 +1,65 @@
+/* ============================================================================
+ * Velupi Mail — responsive breakpoints
+ * Desktop-first so the three-panel layout is the default, collapsing to a
+ * single column on tablet and mobile.
+ * ========================================================================== */
+
+/* Large desktop: widest folder sidebar */
+@media (min-width: 1280px) {
+  #layout-sidebar {
+    --sidebar-width: 260px;
+    min-width: 260px;
+  }
+}
+
+/* Tablet and below: compact sidebar, reading pane stacks under the list */
+@media (max-width: 1024px) {
+  #layout-sidebar {
+    --sidebar-width: 200px;
+    min-width: 200px;
+  }
+
+  #message-content {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* Mobile: single-column stack, full-width panels */
+@media (max-width: 640px) {
+  body {
+    font-size: 15px;
+  }
+
+  #layout-sidebar {
+    --sidebar-width: 100%;
+    min-width: 100%;
+  }
+
+  #messagelist {
+    font-size: 14px;
+  }
+
+  body.task-login #login-form {
+    margin: 1rem;
+    padding: 1.75rem 1.25rem;
+  }
+
+  #taskmenu .compose,
+  .button.mainaction {
+    padding: 0.6rem 1rem;
+  }
+
+  /* Compose fields stack vertically */
+  #compose-headers .form-group {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  #compose-headers .form-group label,
+  #compose-headers .form-group .col-10 {
+    display: block;
+    width: 100%;
+    max-width: none;
+  }
+}

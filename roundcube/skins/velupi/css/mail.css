@@ -1,0 +1,117 @@
+/* ============================================================================
+ * Velupi Mail — mail interface (message list, reading pane, folders, search)
+ * Matches app.velupi.com warm solar aesthetic with high-contrast black typography.
+ * Only targets ids in Elastic 1.6 markup.
+ * ========================================================================== */
+
+/* Message list header (select / options / refresh toolbar) */
+#messagelist-header,
+#listcontrols {
+  background: var(--background-page, #FAF6F0) !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--text-dark, #1E1B18) !important;
+}
+
+#listcontrols a.button,
+#listcontrols .button {
+  color: var(--text-dark, #1E1B18) !important;
+  font-weight: 600 !important;
+}
+
+#listcontrols a.button:hover,
+#listcontrols .button:hover {
+  background: #FFF4E5 !important;
+  color: var(--brand-primary) !important;
+}
+
+/* Search bar above the message list */
+#mailsearchform,
+#searchform {
+  background: var(--background-page, #FAF6F0) !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding: 6px 10px;
+}
+
+#mailsearchform input,
+#searchform input {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm);
+  color: var(--text-dark, #1E1B18) !important;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+#mailsearchform input:focus,
+#searchform input:focus {
+  border-color: var(--brand-primary) !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15);
+}
+
+/* Message rows */
+#messagelist tr {
+  border-left: 3px solid transparent;
+}
+
+#messagelist tr.unseen {
+  border-left-color: var(--brand-primary) !important;
+}
+
+/* Stars / flags */
+#messagelist .flagged,
+#messagelist .starred {
+  color: var(--brand-accent) !important;
+}
+
+/* Reading pane toolbars */
+#messagetoolbar,
+#mailtoolbar {
+  background: var(--background-page, #FAF6F0) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+#messagetoolbar a.button,
+#mailtoolbar a.button {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text-dark, #1E1B18) !important;
+  font-weight: 600 !important;
+}
+
+#messagetoolbar a.button:hover,
+#mailtoolbar a.button:hover {
+  background: #FFF4E5 !important;
+  color: var(--brand-primary) !important;
+  border-color: var(--brand-accent) !important;
+}
+
+/* Reading pane headers */
+#message-header .header {
+  border-bottom: 1px solid var(--border) !important;
+}
+
+#message-header .header .header-summary {
+  font-weight: 700 !important;
+  color: var(--text-black, #111827) !important; /* TEXTO NEGRO */
+}
+
+#message-header .header .header-headers {
+  color: var(--text-secondary, #4B5563) !important;
+}
+
+/* Message body */
+#messagebody {
+  color: var(--text-dark, #1E1B18) !important;
+  font-family: var(--font-body);
+  background: var(--surface) !important;
+}
+
+/* Footer pagination and quota */
+.pagenav,
+.pagenav .pagenav-text,
+#quotadisplay {
+  color: var(--text-muted, #667085) !important;
+  font-size: 12px;
+}

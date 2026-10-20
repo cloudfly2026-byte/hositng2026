@@ -1,0 +1,273 @@
+/* ============================================================================
+ * Velupi Mail — structural layout overrides
+ * Restyles the Elastic application shell (task menu, folder sidebar, message
+ * list, reading pane) using the centralized tokens from css/variables.css.
+ * Matches the warm solar aesthetics and card-based dashboard of app.velupi.com.
+ * Only targets ids in Elastic 1.6 markup.
+ * ========================================================================== */
+
+/* Application frame — warm solar light matching app.velupi.com dashboard */
+body {
+  background: var(--background-page, #FAF6F0) !important;
+  color: var(--text-dark, #1E1B18);
+  font-family: var(--font-body);
+}
+
+#layout {
+  background: var(--background-page, #FAF6F0) !important;
+}
+
+/* --------------------------------------------------------------------------
+ * 1. Task navigation rail (leftmost vertical column)
+ * Warm obsidian rail with solar brand accents
+ * -------------------------------------------------------------------------- */
+#layout-menu {
+  background: #1F1A18 !important;
+  border-right: 1px solid #332B26 !important;
+}
+
+#layout-menu .popover-header {
+  background: #1F1A18 !important;
+  border-bottom: 1px solid #332B26 !important;
+}
+
+#layout-menu #logo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--brand-primary);
+  display: block;
+  margin: 12px auto;
+  filter: drop-shadow(0 2px 8px rgba(255, 107, 0, 0.25));
+}
+
+#taskmenu {
+  background: transparent !important;
+}
+
+#taskmenu a,
+#taskmenu .button {
+  color: #E5DDD7 !important;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease-in-out;
+}
+
+#taskmenu a:hover,
+#taskmenu .button:hover {
+  background: rgba(255, 107, 0, 0.15) !important;
+  color: #FF9100 !important;
+}
+
+#taskmenu li.selected a,
+#taskmenu a.selected {
+  background: rgba(255, 107, 0, 0.22) !important;
+  color: var(--brand-primary) !important;
+  font-weight: 700 !important;
+}
+
+/* Primary call-to-action (Redactar / Compose) */
+#taskmenu .compose,
+#taskmenu .compose.selected,
+.button.mainaction {
+  background: var(--brand-primary) !important;
+  color: var(--text-on-brand) !important;
+  border: none !important;
+  border-radius: var(--radius-sm) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 8px rgba(255, 107, 0, 0.35);
+  transition: background 0.15s ease-in-out, transform 0.1s ease-in-out;
+}
+
+#taskmenu .compose:hover,
+.button.mainaction:hover {
+  background: var(--brand-primary-dark) !important;
+  color: var(--text-on-brand) !important;
+  transform: translateY(-1px);
+}
+
+/* --------------------------------------------------------------------------
+ * 2. Folder / Navigation sidebar (#layout-sidebar)
+ * Clean white surface, crisp black text, solar active states
+ * -------------------------------------------------------------------------- */
+#layout-sidebar {
+  background: var(--surface) !important;
+  border-right: 1px solid var(--border) !important;
+}
+
+#folderlist-content {
+  background: var(--surface) !important;
+}
+
+#mailboxlist {
+  background: var(--surface) !important;
+  padding: 8px 6px;
+}
+
+#mailboxlist li a {
+  color: var(--text-dark, #1E1B18) !important; /* TEXTOS NEGROS */
+  font-weight: 600 !important;
+  font-size: 13.5px;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  transition: all 0.15s ease-in-out;
+}
+
+#mailboxlist li a:hover {
+  background: var(--background-alt) !important; /* #FFF8ED */
+  color: var(--brand-primary) !important;
+}
+
+/* Active / selected folder (e.g. Entrada) */
+#mailboxlist li.selected > a,
+#mailboxlist li.active > a {
+  background: #FFF4E5 !important;
+  color: var(--brand-primary) !important;
+  font-weight: 700 !important;
+  border-left: 3px solid var(--brand-primary) !important;
+}
+
+/* Unread badge */
+#mailboxlist li .count {
+  background: var(--brand-primary) !important;
+  color: var(--text-on-brand) !important;
+  border-radius: 999px !important;
+  font-weight: 700 !important;
+  padding: 2px 8px !important;
+  font-size: 11px !important;
+  box-shadow: 0 1px 4px rgba(255, 107, 0, 0.3);
+}
+
+/* --------------------------------------------------------------------------
+ * 3. Message list column (#layout-list)
+ * Clean card list, warm dashboard toolbar, high-contrast black typography
+ * -------------------------------------------------------------------------- */
+#layout-list {
+  background: var(--surface) !important;
+  border-right: 1px solid var(--border) !important;
+}
+
+#messagelist-content {
+  background: var(--surface) !important;
+}
+
+#messagelist {
+  background: var(--surface) !important;
+}
+
+#messagelist tbody tr {
+  background: var(--surface) !important;
+  border-bottom: 1px solid var(--border) !important;
+  transition: background 0.12s ease-in-out;
+}
+
+#messagelist tbody tr td {
+  color: var(--text-dark, #1E1B18) !important; /* TEXTOS NEGROS */
+  padding: 10px 12px;
+}
+
+/* Unseen / unread message rows: bold deep black with brand solar dot */
+#messagelist tbody tr.unseen {
+  background: #FFFFFF !important;
+  border-left: 3px solid var(--brand-primary) !important;
+}
+
+#messagelist tbody tr.unseen td {
+  color: var(--text-black, #111827) !important; /* TEXTO NEGRO */
+  font-weight: 700 !important;
+}
+
+#messagelist tbody tr.unseen td.subject a {
+  color: var(--text-black, #111827) !important;
+  font-weight: 700 !important;
+}
+
+#messagelist tbody tr.unseen td.from {
+  color: var(--text-black, #111827) !important;
+  font-weight: 700 !important;
+}
+
+/* Seen / read message rows: crisp dark gray, highly legible */
+#messagelist tbody tr.seen td {
+  color: var(--text-secondary, #4B5563) !important;
+  font-weight: 500 !important;
+}
+
+#messagelist tbody tr.seen td.subject a {
+  color: var(--text-secondary, #4B5563) !important;
+}
+
+#messagelist tbody tr td.date,
+#messagelist tbody tr td.size {
+  color: var(--text-muted, #667085) !important;
+  font-size: 12px;
+}
+
+#messagelist tbody tr:hover,
+#messagelist tbody tr:hover td {
+  background: var(--background-alt) !important; /* #FFF8ED */
+}
+
+#messagelist tbody tr.selected,
+#messagelist tbody tr.selected td {
+  background: #FFF4E5 !important;
+  color: var(--text-black, #111827) !important;
+}
+
+#messagelist tbody tr.selected {
+  border-left: 3px solid var(--brand-primary) !important;
+}
+
+/* --------------------------------------------------------------------------
+ * 4. Reading pane / message content (#layout-content)
+ * -------------------------------------------------------------------------- */
+#layout-content,
+#message-header,
+#message-content {
+  background: var(--surface) !important;
+}
+
+#message-header {
+  border-bottom: 1px solid var(--border) !important;
+  padding: 16px 20px;
+}
+
+#message-header .subject {
+  font-family: var(--font-display);
+  font-weight: 700 !important;
+  font-size: 20px !important;
+  color: var(--text-black, #111827) !important; /* TEXTO NEGRO */
+  margin-bottom: 6px;
+}
+
+#message-header .header-summary,
+#message-header .from,
+#message-header .to,
+#message-header .date {
+  color: var(--text-dark, #1E1B18) !important; /* TEXTOS NEGROS */
+}
+
+#message-header .header-headers {
+  color: var(--text-secondary, #4B5563) !important;
+}
+
+#messagebody {
+  color: var(--text-dark, #1E1B18) !important;
+  font-family: var(--font-body);
+}
+
+/* Generic secondary buttons */
+.button:not(.mainaction),
+.toolbar .button {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm) !important;
+  background: var(--surface) !important;
+  color: var(--text-dark, #1E1B18) !important;
+  font-weight: 600 !important;
+  transition: all 0.15s ease-in-out;
+}
+
+.button:not(.mainaction):hover,
+.toolbar .button:hover {
+  background: #FFF4E5 !important;
+  color: var(--brand-primary) !important;
+  border-color: var(--brand-accent) !important;
+}

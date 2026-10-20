@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Velupi</title>
+<style type="text/css">
+html, body { height: 100%; overflow: hidden; }
+body {
+  background: url(images/logo.svg) center no-repeat #FFFDF9;
+  background-size: 30%;
+}
+html.dark-mode body {
+  background-color: #1A1311;
+}
+</style>
+<script>
+  try {
+    if (document.cookie.indexOf('colorMode=dark') > -1
+      || (document.cookie.indexOf('colorMode=light') === -1 && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    ) {
+      document.documentElement.className += ' dark-mode';
+    }
+  } catch (e) { }
+</script>
+</head>
+<body></body>
+</html>

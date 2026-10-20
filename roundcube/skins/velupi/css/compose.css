@@ -1,0 +1,90 @@
+/* ============================================================================
+ * Velupi Mail — compose (editor) screen
+ * Real Elastic 1.6 markup: #layout-content > #compose-content,
+ * #compose-headers (#compose_from/#compose_to/...), #composebodycontainer.
+ * ========================================================================== */
+
+/* Compose form container */
+#compose-content {
+  background: var(--surface);
+}
+
+/* Compose body editor — always white, like the original Elastic skin */
+#composebody {
+  background: #FFFFFF;
+  color: #2D1B17;
+}
+
+/* To / CC / BCC address fields */
+#compose-headers input[type="text"],
+#compose-headers .input-group-text {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+#compose-headers input:focus {
+  border-color: var(--brand-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15);
+}
+
+/* Subject line */
+#compose-subject {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Editor body area — white in both light and dark (original skin behavior) */
+.editor {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #FFFFFF;
+  color: #2D1B17;
+  font-family: var(--font-body);
+}
+
+/* Compose toolbar */
+#compose-toolbar {
+  background: var(--background-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+#compose-toolbar button:hover {
+  background: rgba(255, 107, 0, 0.10);
+  color: var(--brand-primary);
+}
+
+/* Send button */
+#compose-content .button.send,
+.button.mainaction {
+  background: var(--brand-primary);
+  color: var(--text-on-brand);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+#compose-content .button.send:hover,
+.button.mainaction:hover {
+  background: var(--brand-primary-dark);
+}
+
+/* Attachments list */
+#attachment-list {
+  background: var(--background-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+/* Draft / status notices */
+#composestatusbar {
+  color: var(--success-text);
+  background: var(--success-bg);
+  border-radius: var(--radius-sm);
+}

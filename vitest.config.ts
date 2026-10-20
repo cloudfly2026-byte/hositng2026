@@ -8,6 +8,7 @@ export default defineConfig({
       'packages/**/*.{test,spec}.{ts,tsx}',
       'apps/**/*.{test,spec}.{ts,tsx}',
       'wordpress/**/*.{test,spec}.{ts,tsx}',
+      'roundcube/**/*.{test,spec}.{ts,tsx}',
     ],
     coverage: {
       provider: 'v8',
