@@ -903,6 +903,27 @@ Se cumplió de forma estricta la **regla de no creación manual**: todos los rec
 - **Resultado de Pruebas**:
   - `packages/domain/src/hosting/hosting-management.spec.ts` y `packages/deployment-adapters/src/hestia/hestia-https-transport.spec.ts`: **18/18 pruebas aprobadas (100% GREEN)**.
 
+---
+
+#### 7. Servicio y Endpoint de Baja de Cliente y Limpieza Integral (`CustomerDeprovisioningService`)
+- **Objetivo**: Proveer una operación atómica y completa para dar de baja a un cliente (`POST /auth/deprovision-customer` y `POST /auth/purge-user`), eliminando sus recursos tanto a nivel de infraestructura como de base de datos relacional y memoria.
+- **Componentes Desaprovisionados**:
+  1. **Infraestructura Hosting (HestiaCP)**:
+     - Eliminación del usuario Hestia vinculado (`v-delete-user <linkedHestiaUser>`), lo cual purga en cascada vhosts web, dominios de correo, cuentas de correo, zonas DNS, bases de datos MariaDB y directorio `/home/<user>`.
+     - Purga explícita de dominios (`v-delete-web-domain`, `v-delete-dns-domain`, `v-delete-mail-domain`).
+     - Eliminación de buzones de prueba en `cloudfly.com.co` (`v-delete-mail-account`).
+     - Protección inmutable para usuarios del sistema (`admin`, `manager`, `root`, `cloudfly`, `velupi`).
+  2. **Base de Datos (PostgreSQL)**:
+     - Eliminación en cascada de `organizations`, `memberships`, `orders`, `order_items`, `payments`, `invoices`, `customer_entitlements`, `subscriptions`, `projects`, `services`, `audit_events` y `users`.
+  3. **Memoria y Caches**:
+     - Limpieza de mapas de sitios web, bases de datos y correos en `HostingManagementService`.
+     - Limpieza de usuarios, organizaciones y códigos OTP en `AuthService`.
+- **Resultado de Pruebas**:
+  - `packages/domain/src/identity/customer-deprovisioning-service.spec.ts`: **3/3 pruebas aprobadas (100% GREEN)**.
+  - `apps/api/src/auth/auth.controller.spec.ts`: **20/20 pruebas aprobadas (100% GREEN)**.
+  - Suite Monorepo: **55 archivos de prueba, 454 pruebas aprobadas (100% GREEN)**.
+
+
 
 
 

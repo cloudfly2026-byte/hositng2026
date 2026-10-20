@@ -74,6 +74,7 @@ export interface IOrganizationRepository {
   findById(id: string): Promise<CustomerOrganization | null>;
   findBySlug(slug: string): Promise<CustomerOrganization | null>;
   listByUser(userId: string): Promise<CustomerOrganization[]>;
+  delete?(id: string): Promise<void>;
 }
 
 export interface IMembershipRepository {

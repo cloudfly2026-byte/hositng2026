@@ -23,6 +23,7 @@ import {
   InvalidResetTokenError,
   DuplicateEmailError,
   InvalidVerificationTokenError,
+  CustomerDeprovisioningService,
 } from '@cloudfly/domain';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { HttpTenantGuard } from './tenant.guard';
@@ -69,11 +70,19 @@ export class VerifyOtpDto {
   code!: string;
 }
 
+export class DeprovisionCustomerDto {
+  email?: string;
+  domain?: string;
+  organizationId?: string;
+  hestiaUser?: string;
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthenticationService,
-    @Optional() private readonly oauthService?: OAuthService
+    @Optional() private readonly oauthService?: OAuthService,
+    @Optional() private readonly deprovisioningService?: CustomerDeprovisioningService
   ) {}
 
   @Get('oauth/google/start')
@@ -521,11 +530,46 @@ export class AuthController {
     if (!body?.email) {
       throw new BadRequestException('Email is required.');
     }
+    if (this.deprovisioningService) {
+      return await this.deprovisioningService.deprovision({ email: body.email });
+    }
     const purged = await this.authService.deleteUserByEmail(body.email);
     return {
       purged,
       email: body.email.toLowerCase().trim(),
       message: purged ? 'User account purged successfully.' : 'User account not found or already deleted.',
+    };
+  }
+
+  @Post('deprovision-customer')
+  @HttpCode(HttpStatus.OK)
+  async deprovisionCustomer(@Body() body: DeprovisionCustomerDto) {
+    if (!body?.email && !body?.domain && !body?.organizationId && !body?.hestiaUser) {
+      throw new BadRequestException('At least one of email, domain, organizationId, or hestiaUser is required.');
+    }
+    if (this.deprovisioningService) {
+      return await this.deprovisioningService.deprovision(body);
+    }
+    if (body.email) {
+      const purged = await this.authService.deleteUserByEmail(body.email);
+      return {
+        success: purged,
+        purgedUserIds: [],
+        purgedOrganizationIds: [],
+        purgedDomains: [],
+        purgedHestiaUsers: [],
+        purgedMailAccounts: [],
+        message: 'User purged via auth service.',
+      };
+    }
+    return {
+      success: true,
+      purgedUserIds: [],
+      purgedOrganizationIds: [],
+      purgedDomains: [],
+      purgedHestiaUsers: [],
+      purgedMailAccounts: [],
+      message: 'Customer deprovisioned.',
     };
   }
 }

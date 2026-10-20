@@ -324,5 +324,31 @@ describe('AuthController (End-to-End API Endpoints & Security)', () => {
       await expect(controller.refreshToken({ refreshToken })).rejects.toThrow();
     });
   });
+
+  describe('Customer Deprovisioning & Cleanup (Offboarding)', () => {
+    it('deprovisions customer and all associated data via POST /auth/deprovision-customer', async () => {
+      const reg = await controller.register({
+        email: 'deprovision.test@velupi.com',
+        password: 'Password123!',
+        fullName: 'Deprovision User',
+        organizationName: 'Deprovision Org',
+      });
+
+      const res = await controller.deprovisionCustomer({
+        email: 'deprovision.test@velupi.com',
+      });
+
+      expect(res.success).toBe(true);
+
+      // Subsequent login must fail because user was purged
+      await expect(
+        controller.login({ email: 'deprovision.test@velupi.com', password: 'Password123!' })
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rejects deprovision request if no identifier is provided', async () => {
+      await expect(controller.deprovisionCustomer({})).rejects.toThrow(BadRequestException);
+    });
+  });
 });
 

@@ -37,6 +37,7 @@ import {
   AccessPolicyService,
   FileManagerService,
   MailerService,
+  CustomerDeprovisioningService,
 } from '@cloudfly/domain';
 import {
   HestiaDnsAdapter,
@@ -342,6 +343,16 @@ export const globalOrdersStore = new Map<string, Order>();
       provide: AccessPolicyService,
       useFactory: (catalog: ProductCatalogService) => new AccessPolicyService(catalog),
       inject: [ProductCatalogService],
+    },
+    {
+      provide: CustomerDeprovisioningService,
+      useFactory: (
+        authService: AuthenticationService,
+        hostingService: HostingManagementService,
+        uow: any,
+        transport: any
+      ) => new CustomerDeprovisioningService(authService, hostingService, uow, transport),
+      inject: [AuthenticationService, HostingManagementService, 'IUnitOfWork', 'HESTIA_DNS_TRANSPORT'],
     },
     PermissionsGuard,
     PlatformOperatorGuard,

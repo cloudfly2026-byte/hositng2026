@@ -21,3 +21,4 @@ export * from './security/oauth-service';
 export * from './identity/access-policy';
 export * from './hosting/file-manager-service';
 export * from './mail/mailer-service';
+export * from './identity/customer-deprovisioning-service';

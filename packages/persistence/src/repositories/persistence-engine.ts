@@ -192,6 +192,14 @@ export class PrismaOrganizationRepository implements IOrganizationRepository {
       .filter((org) => org.ownerUserId === userId)
       .map((org) => ({ ...org }));
   }
+
+  async delete(id: string): Promise<void> {
+    const org = this.storage.organizations.get(id);
+    if (org) {
+      this.storage.organizationSlugs.delete(org.slug.toLowerCase());
+      this.storage.organizations.delete(id);
+    }
+  }
 }
 
 export class PrismaMembershipRepository implements IMembershipRepository {

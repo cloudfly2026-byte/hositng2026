@@ -174,6 +174,10 @@ export class DatabaseOrganizationRepository implements IOrganizationRepository {
       createdAt: record.createdAt,
     }));
   }
+
+  async delete(id: string): Promise<void> {
+    await this.prisma.organization.delete({ where: { id } });
+  }
 }
 
 export class DatabaseMembershipRepository implements IMembershipRepository {

@@ -637,4 +637,54 @@ export class HostingManagementService {
       }
     }
   }
+
+  async purgeDomain(domain: string, hestiaUser?: string): Promise<void> {
+    const cleanDomain = domain.toLowerCase().trim();
+    this.websites.delete(cleanDomain);
+
+    for (const [key, email] of this.emailAccounts.entries()) {
+      if (email.domain.toLowerCase() === cleanDomain) {
+        this.emailAccounts.delete(key);
+      }
+    }
+
+    if (this.transport) {
+      const user = hestiaUser || 'admin';
+      try {
+        await this.transport.executeCommand('v-delete-web-domain', [user, cleanDomain]);
+      } catch {}
+      try {
+        await this.transport.executeCommand('v-delete-dns-domain', [user, cleanDomain]);
+      } catch {}
+      try {
+        await this.transport.executeCommand('v-delete-mail-domain', [user, cleanDomain]);
+      } catch {}
+    }
+  }
+
+  async purgeHestiaUser(hestiaUser: string): Promise<void> {
+    if (!hestiaUser || ['admin', 'manager', 'root'].includes(hestiaUser)) return;
+
+    for (const [domain, site] of this.websites.entries()) {
+      if (site.provisionedUser === hestiaUser) {
+        this.websites.delete(domain);
+      }
+    }
+
+    if (this.transport) {
+      try {
+        await this.transport.executeCommand('v-delete-user', [hestiaUser]);
+      } catch {}
+    }
+  }
+
+  async deleteMailAccount(user: string, domain: string, account: string): Promise<void> {
+    const emailKey = `${account}@${domain}`.toLowerCase();
+    this.emailAccounts.delete(emailKey);
+    if (this.transport) {
+      try {
+        await this.transport.executeCommand('v-delete-mail-account', [user, domain, account]);
+      } catch {}
+    }
+  }
 }
