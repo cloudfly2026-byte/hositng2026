@@ -27,7 +27,8 @@ body.task-login #logo {
   top: auto !important;
   display: block !important;
   margin: 0 auto 0.75rem auto !important;
-  height: 72px !important;
+  height: 64px !important;
+  max-width: 260px !important;
   width: auto !important;
   filter: drop-shadow(0 4px 12px rgba(255, 107, 0, 0.2));
 }
