@@ -687,4 +687,26 @@ export class HostingManagementService {
       } catch {}
     }
   }
+
+  async suspendUser(hestiaUser: string): Promise<void> {
+    if (!hestiaUser || ['admin', 'manager', 'root', 'cloudfly', 'velupi'].includes(hestiaUser)) return;
+    if (this.transport) {
+      try {
+        await this.transport.executeCommand('v-suspend-user', [hestiaUser]);
+      } catch (err) {
+        console.warn(`[HostingManagementService] Failed to suspend Hestia user ${hestiaUser}:`, err);
+      }
+    }
+  }
+
+  async unsuspendUser(hestiaUser: string): Promise<void> {
+    if (!hestiaUser || ['admin', 'manager', 'root', 'cloudfly', 'velupi'].includes(hestiaUser)) return;
+    if (this.transport) {
+      try {
+        await this.transport.executeCommand('v-unsuspend-user', [hestiaUser]);
+      } catch (err) {
+        console.warn(`[HostingManagementService] Failed to unsuspend Hestia user ${hestiaUser}:`, err);
+      }
+    }
+  }
 }

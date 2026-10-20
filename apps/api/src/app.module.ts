@@ -14,6 +14,7 @@ import { BillingController } from './billing/billing.controller';
 import { DashboardController } from './dashboard/dashboard.controller';
 import { OrdersController } from './orders/orders.controller';
 import { MeController } from './me/me.controller';
+import { AdminCustomersController } from './admin/customers.controller';
 import { PermissionsGuard } from './auth/permissions.guard';
 import { PlatformOperatorGuard } from './auth/platform-operator.guard';
 import {
@@ -67,6 +68,7 @@ export const globalOrdersStore = new Map<string, Order>();
     DashboardController,
     OrdersController,
     MeController,
+    AdminCustomersController,
   ],
   providers: [
     {

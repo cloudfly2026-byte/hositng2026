@@ -209,4 +209,37 @@ describe('VELUPI — Dynamic Navigation & Capabilities Enforcement (Frontend TDD
     expect(screen.getAllByText('Cloud Apps').length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText('Billing & Invoices')).toBeNull();
   });
+
+  it('renders Clientes module exclusively for Super Administrator and hides it for normal tenants', () => {
+    // 1. Normal customer tenant (OWNER of their company)
+    const customerCaps: EffectiveCapabilities = {
+      organization: { id: 'org-customer', name: 'Customer Corp', slug: 'customer-corp', isInternalPilot: false },
+      role: 'OWNER',
+      permissions: ['hosting.read', 'hosting.manage', 'billing.read'],
+      visibleModules: ['dashboard', 'hosting', 'billing', 'account'],
+      enabledActions: ['hosting:read'],
+      contractedCapabilities: ['web_hosting'],
+      servicesStatus: { hasActivePlan: true, subscriptionStatus: 'ACTIVE', gracePeriod: false, suspended: false, activePlans: ['web-pro'] },
+      isOperator: false,
+    };
+
+    const { rerender } = render(<Sidebar capabilities={customerCaps} />);
+    expect(screen.queryByText('Clientes')).toBeNull();
+
+    // 2. Super Administrator / Platform Operator
+    const operatorCaps: EffectiveCapabilities = {
+      organization: { id: 'org-velupi-internal', name: 'Velupi Platform Operator', slug: 'org-velupi-internal', isInternalPilot: true },
+      role: 'SUPER_ADMIN',
+      permissions: ['platform.nodes.manage', 'platform.tenants.manage', 'hosting.manage'],
+      visibleModules: ['dashboard', 'admin-customers', 'hosting', 'account'],
+      enabledActions: ['platform:tenants:manage'],
+      contractedCapabilities: ['platform_administration'],
+      servicesStatus: { hasActivePlan: true, subscriptionStatus: 'ACTIVE', gracePeriod: false, suspended: false, activePlans: ['platform-internal'] },
+      isOperator: true,
+      platformRole: 'SUPER_ADMIN',
+    };
+
+    rerender(<Sidebar capabilities={operatorCaps} />);
+    expect(screen.getAllByText('Clientes').length).toBeGreaterThanOrEqual(1);
+  });
 });

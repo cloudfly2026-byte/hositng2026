@@ -10,8 +10,8 @@ import {
 } from './module-registry';
 
 describe('Module Registry & White-Label Architecture (TDD)', () => {
-  it('should register exactly the 13 required Velupi modules', () => {
-    expect(MODULE_REGISTRY).toHaveLength(13);
+  it('should register the 14 Velupi platform and administration modules', () => {
+    expect(MODULE_REGISTRY).toHaveLength(14);
 
     const moduleIds = MODULE_REGISTRY.map((m) => m.id);
     const expectedIds = [
@@ -28,6 +28,7 @@ describe('Module Registry & White-Label Architecture (TDD)', () => {
       'studio',
       'billing',
       'account',
+      'admin-customers',
     ];
 
     expectedIds.forEach((id) => {

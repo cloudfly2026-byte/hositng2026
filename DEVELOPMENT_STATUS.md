@@ -923,6 +923,43 @@ Se cumplió de forma estricta la **regla de no creación manual**: todos los rec
   - `apps/api/src/auth/auth.controller.spec.ts`: **20/20 pruebas aprobadas (100% GREEN)**.
   - Suite Monorepo: **55 archivos de prueba, 454 pruebas aprobadas (100% GREEN)**.
 
+---
+
+#### 8. Módulo de Gestión de Clientes para el Super Administrador (`/admin/customers`)
+- **Objetivo**: Proveer al Super Administrador de una interfaz administrativa y operativa completa para gestionar el ciclo de vida de todos los clientes de la plataforma.
+- **Backend (`AdminCustomersController` — `apps/api/src/admin/customers.controller.ts`)**:
+  - Protegido por `JwtAuthGuard` y `PlatformOperatorGuard` (requiere `isOperator === true` o rol `SUPER_ADMIN`/`OPERATOR`).
+  - `GET /admin/customers`: Retorna la lista consolidada de clientes con su organización, rol, usuario Hestia vinculado, plan comercial y estado operativo (`ACTIVE` o `SUSPENDED`).
+  - `POST /admin/customers`: Crea un nuevo cliente con verificación automática de correo y organización asociada.
+  - `GET /admin/customers/:id`: Detalle completo con sitios web y suscripciones activas.
+  - `PATCH /admin/customers/:id`: Modificación de nombre y correo electrónico.
+  - `POST /admin/customers/:id/suspend`: Ejecuta `v-suspend-user` en HestiaCP y marca suscripciones como `SUSPENDED`.
+  - `POST /admin/customers/:id/reactivate`: Ejecuta `v-unsuspend-user` en HestiaCP y reactiva suscripciones.
+  - `DELETE /admin/customers/:id`: Ejecuta la baja definitiva mediante `CustomerDeprovisioningService.deprovision`.
+- **Frontend (`apps/web/src/app/admin/customers/page.tsx` & `MODULE_REGISTRY`)**:
+  - Añadido al menú lateral (`Sidebar.tsx`) bajo la categoría de Administración con ícono `PeopleRoundedIcon` y badge `Admin`.
+  - Visible **exclusivamente** para sesiones de operador (`isOperator: true` / `SUPER_ADMIN`). Oculto e inaccesible para clientes regulares (`OWNER`/`ADMIN`).
+  - Tabla de datos interactiva con filtro de búsqueda en tiempo real por nombre, correo, organización o usuario Hestia.
+  - Botones de acción con iconos interactivos:
+    - 👁️ **Ver**: Modal con ficha técnica, ID, estado, sitios web aprovisionados y suscripciones.
+    - ✏️ **Editar**: Modal para modificar nombre completo y correo electrónico.
+    - ⏸️ / ▶️ **Suspender / Reactivar**: Suspensión/reactivación del usuario HestiaCP y suscripciones.
+    - 🗑️ **Dar de baja (Eliminar)**: Modal de confirmación destructiva que ejecuta desaprovisionamiento completo y purga en cascada.
+    - **+ Nuevo Cliente**: Modal para dar de alta clientes directamente desde el panel.
+- **Credenciales del Super Administrador**:
+  - **Correo electrónico**: `admin@velupi.com`
+  - **Contraseña**: `Velupi2026AdminSecure!`
+  - **Rol**: `SUPER_ADMIN` (`isOperator: true`)
+  - **Organización**: `org-velupi-internal` (*Velupi Cloud Platform*)
+  - **Base de datos**: Sembrado y verificado en PostgreSQL en el VPS `169.58.220.244`.
+- **Métricas de Calidad y Pruebas**:
+  - `apps/api/src/admin/customers.controller.spec.ts`: **6/6 pruebas aprobadas**.
+  - `apps/web/src/components/DynamicNavigation.spec.tsx`: **6/6 pruebas aprobadas** (incluyendo verificación de visibilidad de Clientes para Super Admin y ocultamiento para tenants).
+  - `apps/web/src/modules/module-registry.spec.ts`: **7/7 pruebas aprobadas**.
+  - `apps/web/src/components/Navigation.spec.tsx`: **5/5 pruebas aprobadas**.
+  - **Suite Global del Monorepo**: **56 suites ejecutadas, 461 pruebas aprobadas (100% GREEN, 0 fallidas)**.
+
+
 
 
 

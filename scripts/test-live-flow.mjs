@@ -24,10 +24,14 @@ function signToken(payload, secret = 'velupi_jwt_secure_key_2026_super_secret') 
 }
 
 async function run() {
+  const orgId = 'org-1792414145232-lpw39';
+  const userId = 'usr-1792414145232-aiwhl';
+  const customerEmail = 'proeba1@cloudfly.com.co';
+
   const token = signToken({
-    sub: 'usr-wompi-val',
-    email: 'proeba1@cloudfly.com.co',
-    organizationId: 'org-wompi-val',
+    sub: userId,
+    email: customerEmail,
+    organizationId: orgId,
   });
 
   console.log('--- Step 1: Create Order for easysnotes.com ---');
@@ -35,7 +39,7 @@ async function run() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      organizationId: 'org-wompi-val',
+      organizationId: orgId,
       currency: 'COP',
       billingCycle: 'ANNUAL',
       items: [{ planVersionId: 'ver-wp-starter-v1', quantity: 1 }],

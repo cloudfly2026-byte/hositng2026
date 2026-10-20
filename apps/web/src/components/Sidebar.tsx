@@ -32,6 +32,7 @@ import AltRouteRoundedIcon from '@mui/icons-material/AltRouteRounded';
 import AccountTreeRoundedIcon from '@mui/icons-material/AccountTreeRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded';
+import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
 import ExpandLessRoundedIcon from '@mui/icons-material/ExpandLessRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -61,6 +62,7 @@ const ICON_MAP: Record<string, React.ReactElement> = {
   AccountTreeRounded: <AccountTreeRoundedIcon fontSize="small" />,
   ReceiptLongRounded: <ReceiptLongRoundedIcon fontSize="small" />,
   AdminPanelSettingsRounded: <AdminPanelSettingsRoundedIcon fontSize="small" />,
+  PeopleRounded: <PeopleRoundedIcon fontSize="small" />,
 };
 
 interface SidebarProps {

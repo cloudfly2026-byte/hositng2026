@@ -66,6 +66,7 @@ export interface IUserRepository {
   save(user: CustomerUser): Promise<void>;
   findById(id: string): Promise<CustomerUser | null>;
   findByEmail(email: string): Promise<CustomerUser | null>;
+  listAll?(): Promise<CustomerUser[]>;
   delete(id: string): Promise<void>;
 }
 
@@ -74,6 +75,7 @@ export interface IOrganizationRepository {
   findById(id: string): Promise<CustomerOrganization | null>;
   findBySlug(slug: string): Promise<CustomerOrganization | null>;
   listByUser(userId: string): Promise<CustomerOrganization[]>;
+  listAll?(): Promise<CustomerOrganization[]>;
   delete?(id: string): Promise<void>;
 }
 
@@ -82,6 +84,7 @@ export interface IMembershipRepository {
   findById(id: string): Promise<Membership | null>;
   findByUserAndOrg(userId: string, organizationId: string): Promise<Membership | null>;
   listByOrganization(organizationId: string): Promise<Membership[]>;
+  listByUser?(userId: string): Promise<Membership[]>;
   delete(id: string): Promise<void>;
 }
 

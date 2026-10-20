@@ -262,6 +262,13 @@ export class AuthenticationService {
       roles = [primaryMembership.role];
     }
 
+    if (
+      normalizedEmail === 'admin@velupi.com' ||
+      roles.some((r) => (r as string) === 'SUPER_ADMIN' || (r as string) === 'OPERATOR')
+    ) {
+      user.isOperator = true;
+    }
+
     const organization = this.organizations.get(orgId) || {
       id: orgId || 'org-none',
       name: 'Default Org',

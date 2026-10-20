@@ -514,6 +514,55 @@ export class ApiClient {
     const q = returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : '';
     return this.request<any>(`/auth/oauth/${provider}/start${q}`);
   }
+
+  // Admin Customer Management (Platform Operator / Super Admin)
+  async listAdminCustomers(): Promise<{ customers: any[]; total: number }> {
+    return this.request<{ customers: any[]; total: number }>('/admin/customers');
+  }
+
+  async createAdminCustomer(payload: {
+    email: string;
+    fullName: string;
+    organizationName: string;
+    password?: string;
+  }): Promise<any> {
+    return this.request<any>('/admin/customers', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getAdminCustomer(id: string): Promise<any> {
+    return this.request<any>(`/admin/customers/${encodeURIComponent(id)}`);
+  }
+
+  async updateAdminCustomer(
+    id: string,
+    payload: { fullName?: string; email?: string }
+  ): Promise<any> {
+    return this.request<any>(`/admin/customers/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async suspendAdminCustomer(id: string): Promise<any> {
+    return this.request<any>(`/admin/customers/${encodeURIComponent(id)}/suspend`, {
+      method: 'POST',
+    });
+  }
+
+  async reactivateAdminCustomer(id: string): Promise<any> {
+    return this.request<any>(`/admin/customers/${encodeURIComponent(id)}/reactivate`, {
+      method: 'POST',
+    });
+  }
+
+  async deprovisionAdminCustomer(id: string): Promise<any> {
+    return this.request<any>(`/admin/customers/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const defaultApiClient = new ApiClient();

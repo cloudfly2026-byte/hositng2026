@@ -287,6 +287,21 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
       { id: 'account-audit', title: 'Registro de Auditoría', path: '/account/audit', requiredPermission: Permissions.AUDIT_READ },
     ],
   },
+
+  // 14. Clientes (Super Administrador)
+  {
+    id: 'admin-customers',
+    title: 'Clientes',
+    path: '/admin/customers',
+    icon: 'PeopleRounded',
+    description: 'Gestión global de clientes, organizaciones, aprovisionamiento, suspensión y baja.',
+    category: 'ADMINISTRATION',
+    badge: 'Admin',
+    badgeColor: 'warning',
+    requiredRoles: ['SUPER_ADMIN', 'OPERATOR'] as any,
+    visibilityRule: (capabilities: EffectiveCapabilities) =>
+      Boolean(capabilities.isOperator || capabilities.role === 'SUPER_ADMIN' || capabilities.role === 'OPERATOR'),
+  },
 ];
 
 /**

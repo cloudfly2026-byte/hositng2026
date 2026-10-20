@@ -98,8 +98,8 @@ describe('Modular Navigation & White-Label Components', () => {
     expect(screen.getByText('Contenido Exitoso')).toBeDefined();
   });
 
-  it('verifies all 13 modules have valid routes and titles', () => {
-    expect(MODULE_REGISTRY.length).toBe(13);
+  it('verifies all 14 modules have valid routes and titles', () => {
+    expect(MODULE_REGISTRY.length).toBe(14);
     for (const mod of MODULE_REGISTRY) {
       expect(mod.id).toBeTruthy();
       expect(mod.title).toBeTruthy();

@@ -153,6 +153,10 @@ export class PrismaUserRepository implements IUserRepository {
     return this.findById(id);
   }
 
+  async listAll(): Promise<CustomerUser[]> {
+    return Array.from(this.storage.users.values()).map((u) => ({ ...u }));
+  }
+
   async delete(id: string): Promise<void> {
     const user = this.storage.users.get(id);
     if (user) {
@@ -193,6 +197,10 @@ export class PrismaOrganizationRepository implements IOrganizationRepository {
       .map((org) => ({ ...org }));
   }
 
+  async listAll(): Promise<CustomerOrganization[]> {
+    return Array.from(this.storage.organizations.values()).map((org) => ({ ...org }));
+  }
+
   async delete(id: string): Promise<void> {
     const org = this.storage.organizations.get(id);
     if (org) {
@@ -230,6 +238,12 @@ export class PrismaMembershipRepository implements IMembershipRepository {
   async listByOrganization(organizationId: string): Promise<Membership[]> {
     return Array.from(this.storage.memberships.values())
       .filter((m) => m.organizationId === organizationId)
+      .map((m) => ({ ...m }));
+  }
+
+  async listByUser(userId: string): Promise<Membership[]> {
+    return Array.from(this.storage.memberships.values())
+      .filter((m) => m.userId === userId)
       .map((m) => ({ ...m }));
   }
 

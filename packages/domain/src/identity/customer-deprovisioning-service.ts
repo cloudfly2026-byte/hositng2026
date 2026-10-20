@@ -1,4 +1,4 @@
-import { AuthService } from '../security/auth-service';
+import { AuthenticationService } from '../security/auth-service';
 import { HostingManagementService } from '../hosting/hosting-management';
 import { IUnitOfWork } from '../repositories/interfaces';
 
@@ -23,7 +23,7 @@ const PROTECTED_SYSTEM_USERS = new Set(['admin', 'manager', 'root', 'cloudfly', 
 
 export class CustomerDeprovisioningService {
   constructor(
-    private readonly authService: AuthService,
+    private readonly authService: AuthenticationService,
     private readonly hostingService?: HostingManagementService,
     private readonly uow?: IUnitOfWork,
     private readonly transport?: { executeCommand(command: string, args: string[]): Promise<any> }

@@ -26,3 +26,6 @@ Thumbs.db
 *.tsbuildinfo
 *.zip
 scratch/
+playwright-report/
+playwright-results.json
+test-results/

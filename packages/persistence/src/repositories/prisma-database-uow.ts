@@ -101,6 +101,20 @@ export class DatabaseUserRepository implements IUserRepository {
     };
   }
 
+  async listAll(): Promise<CustomerUser[]> {
+    const records = await this.prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    return records.map((record: any) => ({
+      id: record.id,
+      email: record.email,
+      fullName: record.fullName,
+      emailVerified: record.emailVerified,
+      passwordHash: record.passwordHash || undefined,
+      createdAt: record.createdAt,
+    }));
+  }
+
   async delete(id: string): Promise<void> {
     await this.prisma.user.delete({ where: { id } });
   }
@@ -175,6 +189,20 @@ export class DatabaseOrganizationRepository implements IOrganizationRepository {
     }));
   }
 
+  async listAll(): Promise<CustomerOrganization[]> {
+    const records = await this.prisma.organization.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    return records.map((record: any) => ({
+      id: record.id,
+      name: record.name,
+      slug: record.slug,
+      ownerUserId: record.ownerUserId,
+      isInternalPilot: record.isInternalPilot,
+      createdAt: record.createdAt,
+    }));
+  }
+
   async delete(id: string): Promise<void> {
     await this.prisma.organization.delete({ where: { id } });
   }
@@ -232,6 +260,20 @@ export class DatabaseMembershipRepository implements IMembershipRepository {
   async listByOrganization(organizationId: string): Promise<Membership[]> {
     const records = await this.prisma.membership.findMany({
       where: { organizationId },
+    });
+    return records.map((r: any) => ({
+      id: r.id,
+      userId: r.userId,
+      organizationId: r.organizationId,
+      role: r.role as any,
+      linkedHestiaUser: r.linkedHestiaUser || undefined,
+      createdAt: r.createdAt,
+    }));
+  }
+
+  async listByUser(userId: string): Promise<Membership[]> {
+    const records = await this.prisma.membership.findMany({
+      where: { userId },
     });
     return records.map((r: any) => ({
       id: r.id,
