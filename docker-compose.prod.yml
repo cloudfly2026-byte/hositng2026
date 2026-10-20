@@ -107,6 +107,12 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://api.velupi.com/auth/oauth/google/callback}
+      SMTP_HOST: ${SMTP_HOST:-89.117.147.134}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-admin@velupi.com}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-Velupi2026AdminSecure!}
+      MAIL_FROM: ${MAIL_FROM:-admin@velupi.com}
+      FROM_NAME: ${FROM_NAME:-Velupi Cloud Platform}
     depends_on:
       postgres:
         condition: service_healthy

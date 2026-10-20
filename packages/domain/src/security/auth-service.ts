@@ -483,6 +483,9 @@ export class AuthenticationService {
       fullName: input.fullName,
     });
 
+    // Always log OTP code for operational observability
+    console.log(`[AUTH OTP CODE] ${normalizedEmail} -> ${code} (isNewUser: ${isNewUser})`);
+
     // Send email via mailer if provided
     if (this.mailer) {
       try {
@@ -501,8 +504,6 @@ export class AuthenticationService {
       } catch (mailErr) {
         console.error('[AUTH OTP] Error sending email via mailer:', mailErr);
       }
-    } else {
-      console.log(`[AUTH OTP CODE] ${normalizedEmail} -> ${code} (isNewUser: ${isNewUser})`);
     }
 
     return {
