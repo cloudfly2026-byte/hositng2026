@@ -18,11 +18,11 @@ sh("sed -i '/# Velupi Mail skin (global default for all customers)/,$d' /etc/rou
 sh('tail -3 /etc/roundcube/config.inc.php');
 
 // 2. Append the correct snippet via base64 (quoting-safe)
-const snippet = "\n# Velupi Mail skin (global default for all customers)\n$config['skin'] = 'velupi';\n";
+const snippet = "\n# Velupi Mail skin and branding (global default for all customers)\n$config['skin'] = 'velupi';\n$config['product_name'] = 'Velupi';\n";
 const b64 = Buffer.from(snippet, 'utf-8').toString('base64');
 sh(`echo ${b64} | base64 -d >> /etc/roundcube/config.inc.php`);
-sh('tail -4 /etc/roundcube/config.inc.php');
-sh("grep -n \"'skin'\" /etc/roundcube/config.inc.php");
+sh('tail -6 /etc/roundcube/config.inc.php');
+sh("grep -n \"'skin'\\|'product_name'\" /etc/roundcube/config.inc.php");
 
 // 3. PHP syntax check — abort loudly if broken
 console.log('\n=== PHP LINT ===');

@@ -1,45 +1,65 @@
 /* ============================================================================
  * Velupi Mail — login screen
  * Targets the real Elastic 1.6 login markup:
- *   body.task-login > #layout > #layout-content > (#logo, #login-form)
+ *   body.task-login > #layout > #layout-content > (#logo, .login-subtitle, #login-form)
  * using the centralized tokens.
  * ========================================================================== */
 
 body.task-login {
-  background: var(--background-alt);
+  background: var(--background) !important;
   min-height: 100vh;
   font-family: var(--font-body);
 }
 
 body.task-login #layout-content {
-  background: var(--background-alt);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  background: var(--background) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
   min-height: 100vh;
   padding: 2rem 1rem;
 }
 
-/* The Velupi logo rendered by the login template */
+/* The Velupi logo rendered by the login template - directly above subtitle */
 body.task-login #logo {
-  height: 72px;
-  width: auto;
-  margin-bottom: 1.5rem;
+  position: static !important;
+  top: auto !important;
+  display: block !important;
+  margin: 0 auto 0.75rem auto !important;
+  height: 72px !important;
+  width: auto !important;
+  filter: drop-shadow(0 4px 12px rgba(255, 107, 0, 0.2));
+}
+
+/* Subtitle directly below logo */
+body.task-login .login-subtitle {
+  position: static !important;
+  top: auto !important;
+  font-family: var(--font-display, "Poppins", sans-serif);
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-dark, #1E1B18);
+  margin: 0 auto 1.5rem auto !important;
+  text-align: center !important;
+  letter-spacing: -0.2px;
 }
 
 /* The Elastic login card */
 body.task-login #login-form {
+  position: static !important;
+  top: auto !important;
+  margin: 0 auto !important;
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  padding: 2.5rem 2rem;
+  border: 1px solid var(--border, #F2E8DC);
+  border-radius: var(--radius-md, 12px);
+  box-shadow: var(--shadow-md, 0 4px 20px rgba(0, 0, 0, 0.06));
+  padding: 2.25rem 2rem 1.75rem 2rem;
   width: 100%;
-  max-width: 380px;
+  max-width: 400px;
 }
 
-/* Velupi brand injected above the form by js/theme.js */
+/* Velupi brand injected above the form by js/theme.js (if template has no #logo) */
 body.task-login .velupi-brand {
   display: flex;
   flex-direction: column;
@@ -53,40 +73,135 @@ body.task-login .velupi-brand img {
   width: auto;
 }
 
-/* Inputs */
-body.task-login #login-form input[type="text"],
-body.task-login #login-form input[type="password"] {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--text-primary);
-  padding: 0.6rem 0.75rem;
+/* --------------------------------------------------------------------------
+ * Inputs and icons side-by-side (Icon prepended seamlessly to the left of the input)
+ * -------------------------------------------------------------------------- */
+body.task-login #login-form table {
   width: 100%;
-  font-family: var(--font-body);
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-bottom: 1.25rem;
 }
 
-body.task-login #login-form input[type="text"]:focus,
-body.task-login #login-form input[type="password"]:focus {
-  border-color: var(--brand-primary);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15);
+body.task-login #login-form table tbody tr {
+  display: block !important;
+  width: 100% !important;
+  margin-bottom: 14px !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Hide screen-reader title cell (Elastic provides input-group icons) */
+body.task-login #login-form table td.title {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+}
+
+/* Input group container: icon on left and input on right joined seamlessly */
+body.task-login #login-form table td.input.input-group {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  position: relative !important;
+  border-radius: var(--radius-sm, 8px) !important;
+  transition: box-shadow 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+/* Icon prepended on the left */
+body.task-login #login-form table .input-group-prepend {
+  display: flex !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+body.task-login #login-form table .input-group-prepend .input-group-text {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 46px !important;
+  min-width: 46px !important;
+  padding: 0 !important;
+  background: var(--background-alt, #FFF8ED) !important;
+  border: 1px solid var(--border, #F2E8DC) !important;
+  border-right: none !important;
+  border-radius: var(--radius-sm, 8px) 0 0 var(--radius-sm, 8px) !important;
+  color: var(--brand-primary, #FF6B00) !important;
+  font-size: 16px !important;
+  transition: all 0.15s ease-in-out;
+}
+
+/* Input field attached to the right of the icon */
+body.task-login #login-form input[type="text"],
+body.task-login #login-form input[type="password"] {
+  display: block !important;
+  flex: 1 1 auto !important;
+  width: 1% !important;
+  min-width: 0 !important;
+  height: 46px !important;
+  margin: 0 !important;
+  padding: 0.65rem 0.85rem !important;
+  border: 1px solid var(--border, #F2E8DC) !important;
+  border-left: none !important;
+  border-radius: 0 var(--radius-sm, 8px) var(--radius-sm, 8px) 0 !important;
+  background: var(--surface, #FFFFFF) !important;
+  color: var(--text-dark, #1E1B18) !important;
+  font-family: var(--font-body);
+  font-size: 14px !important;
+  transition: all 0.15s ease-in-out;
+}
+
+body.task-login #login-form input::placeholder {
+  color: #9CA3AF !important;
+  opacity: 1;
+  font-size: 14px;
+}
+
+/* Unified focus state on the input group */
+body.task-login #login-form table td.input.input-group:focus-within {
+  box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.18) !important;
+}
+
+body.task-login #login-form table td.input.input-group:focus-within .input-group-text {
+  border-color: var(--brand-primary, #FF6B00) !important;
+  background: #FFF4E5 !important;
+  color: var(--brand-primary, #FF6B00) !important;
+}
+
+body.task-login #login-form table td.input.input-group:focus-within input {
+  border-color: var(--brand-primary, #FF6B00) !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
 /* Submit button */
 body.task-login #rcmloginsubmit,
 body.task-login #login-form .button.mainaction {
   background: var(--brand-primary);
-  color: var(--text-on-brand);
+  color: var(--text-on-brand, #FFFFFF);
   border: none;
-  border-radius: var(--radius-sm);
-  font-weight: 600;
+  border-radius: var(--radius-sm, 8px);
+  font-weight: 700;
   width: 100%;
-  padding: 0.65rem;
+  padding: 0.75rem;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(255, 107, 0, 0.35);
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
 }
 
 body.task-login #rcmloginsubmit:hover,
 body.task-login #login-form .button.mainaction:hover {
-  background: var(--brand-primary-dark);
+  background: var(--brand-primary-dark, #E85A00);
+  transform: translateY(-1px);
 }
 
 /* Error / message stack */
@@ -94,15 +209,77 @@ body.task-login #messagestack .alert,
 body.task-login .alert {
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
+  margin-bottom: 1rem;
 }
 
-/* Footer links */
+/* Footer links and branding */
 body.task-login #login-footer {
-  color: var(--text-muted);
+  color: var(--text-muted, #667085);
+  font-size: 13px;
+  font-weight: 500;
   text-align: center;
-  margin-top: 1rem;
+  margin-top: 1.25rem;
 }
 
 body.task-login a {
   color: var(--brand-primary);
+}
+
+/* --------------------------------------------------------------------------
+ * Dark mode overrides for login card and input groups
+ * -------------------------------------------------------------------------- */
+:root[data-theme='dark'] body.task-login,
+html.dark-mode body.task-login,
+:root[data-theme='dark'] body.task-login #layout-content,
+html.dark-mode body.task-login #layout-content {
+  background: #141110 !important;
+}
+
+:root[data-theme='dark'] body.task-login .login-subtitle,
+html.dark-mode body.task-login .login-subtitle {
+  color: #F5EDE7 !important;
+}
+
+:root[data-theme='dark'] body.task-login #login-form,
+html.dark-mode body.task-login #login-form {
+  background: #1E1815 !important;
+  border-color: #382D27 !important;
+}
+
+:root[data-theme='dark'] body.task-login #login-form table .input-group-text,
+html.dark-mode body.task-login #login-form table .input-group-text {
+  background: #2A221E !important;
+  border-color: #382D27 !important;
+  color: #FF9100 !important;
+}
+
+:root[data-theme='dark'] body.task-login #login-form input[type="text"],
+:root[data-theme='dark'] body.task-login #login-form input[type="password"],
+html.dark-mode body.task-login #login-form input[type="text"],
+html.dark-mode body.task-login #login-form input[type="password"] {
+  background: #241C18 !important;
+  border-color: #382D27 !important;
+  color: #FFFFFF !important;
+}
+
+:root[data-theme='dark'] body.task-login #login-form input::placeholder,
+html.dark-mode body.task-login #login-form input::placeholder {
+  color: #8A7D75 !important;
+}
+
+:root[data-theme='dark'] body.task-login #login-form table td.input.input-group:focus-within .input-group-text,
+html.dark-mode body.task-login #login-form table td.input.input-group:focus-within .input-group-text {
+  border-color: var(--brand-primary, #FF6B00) !important;
+  background: #33261F !important;
+  color: var(--brand-primary, #FF6B00) !important;
+}
+
+:root[data-theme='dark'] body.task-login #login-form table td.input.input-group:focus-within input,
+html.dark-mode body.task-login #login-form table td.input.input-group:focus-within input {
+  border-color: var(--brand-primary, #FF6B00) !important;
+}
+
+:root[data-theme='dark'] body.task-login #login-footer,
+html.dark-mode body.task-login #login-footer {
+  color: #9C8C82 !important;
 }

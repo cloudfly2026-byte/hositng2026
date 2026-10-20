@@ -99,10 +99,37 @@
     form.insertBefore(wrap, form.firstChild);
   }
 
+  function replaceRoundcubeBrand() {
+    var doc = global.document;
+    if (!doc) return;
+    if (doc.title && /roundcube/i.test(doc.title)) {
+      doc.title = doc.title.replace(/Roundcube(?:\s+Webmail)?/gi, 'Velupi');
+    }
+  }
+
+  function setupBrandSanitizer() {
+    replaceRoundcubeBrand();
+    var doc = global.document;
+    if (!doc) return;
+    var titleEl = doc.querySelector('title');
+    if (titleEl && global.MutationObserver) {
+      try {
+        var obs = new MutationObserver(function () {
+          replaceRoundcubeBrand();
+        });
+        obs.observe(titleEl, { childList: true, characterData: true, subtree: true });
+      } catch (e) {}
+    }
+  }
+
   function init() {
     apply(resolveMode());
+    setupBrandSanitizer();
     if (global.document.readyState === 'loading') {
-      global.document.addEventListener('DOMContentLoaded', injectBrand);
+      global.document.addEventListener('DOMContentLoaded', function () {
+        injectBrand();
+        setupBrandSanitizer();
+      });
     } else {
       injectBrand();
     }
