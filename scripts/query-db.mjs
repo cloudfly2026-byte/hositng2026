@@ -48,7 +48,8 @@ SELECT id, email, "fullName", "emailVerified" FROM users WHERE email = 'admin@ve
 SELECT id, name, slug FROM organizations WHERE id = 'org-velupi-internal';
 SELECT id, "userId", "organizationId", role FROM memberships WHERE "userId" = 'usr-velupi-superadmin';
 `;
-const cmd = `plink -batch -hostkey "ssh-ed25519 255 SHA256:bTgaIzwlklC6Lw0zsIM2UU25jo0+Abx0vvAfqn2Cd/c" -pw Elian20200916 root@169.58.220.244 "docker exec -i velupi-postgres psql -U velupi_user -d velupi_production"`;
+const sshPw = process.env.VPS_SSH_PASSWORD || process.env.SSH_PASSWORD || '';
+const cmd = `plink -batch -hostkey "ssh-ed25519 255 SHA256:bTgaIzwlklC6Lw0zsIM2UU25jo0+Abx0vvAfqn2Cd/c" -pw ${sshPw} root@169.58.220.244 "docker exec -i velupi-postgres psql -U velupi_user -d velupi_production"`;
 
 const res = execSync(cmd, { encoding: 'utf-8', input: sql });
 console.log(res);

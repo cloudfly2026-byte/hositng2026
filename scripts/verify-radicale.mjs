@@ -52,13 +52,15 @@ check('Authentication realm is white-labelled', /realm="Velupi Mail"/i.test(real
 const discovery = sh('discovery', `curl -sk -o /dev/null -w '%{http_code} %{redirect_url}' 'https://webmail.velupi.com/.well-known/caldav'`);
 check('CalDAV service discovery redirect', discovery.out.startsWith('301') && discovery.out.includes('/dav/'), discovery.out.trim());
 
+const testPw = process.env.TEST_EMAIL_PASSWORD || '';
+
 // 4. Authentication relay to the mail server
-const dovecot = sh('dovecot', `doveadm auth test admin@velupi.com 'Velupi2026AdminSecure!' 2>&1 | head -1`);
+const dovecot = sh('dovecot', `doveadm auth test admin@velupi.com '${testPw}' 2>&1 | head -1`);
 check('Mail credentials accepted by the mail server', dovecot.out.includes('auth succeeded'), dovecot.out.trim());
 
 const auth = sh(
   'authenticated',
-  `curl -sk -o /dev/null -w '%{http_code}' -X PROPFIND 'https://webmail.velupi.com/dav/' -u 'admin@velupi.com:Velupi2026AdminSecure!' -H 'Depth: 0'`,
+  `curl -sk -o /dev/null -w '%{http_code}' -X PROPFIND 'https://webmail.velupi.com/dav/' -u "admin@velupi.com:${testPw}" -H 'Depth: 0'`,
 );
 check('Authenticated DAV request accepted (207)', auth.out === '207', `status ${auth.out}`);
 
@@ -109,7 +111,7 @@ check(
 // name, logo or administrative URL may be exposed.
 const branding = sh(
   'branding',
-  `curl -sk -X PROPFIND 'https://webmail.velupi.com/dav/' -u 'admin@velupi.com:Velupi2026AdminSecure!' -H 'Depth: 0' | grep -oiE 'radicale[^"< ]*' | sort -u | tr '\\n' ' '`,
+  `curl -sk -X PROPFIND 'https://webmail.velupi.com/dav/' -u "admin@velupi.com:${testPw}" -H 'Depth: 0' | grep -oiE 'radicale[^"< ]*' | sort -u | tr '\\n' ' '`,
 );
 const allowedTokens = /^(RADICALE=|radicale\.org\/ns\/|RADICALE:version>[\d.]*)$/i;
 const brandingTokens = branding.out.trim().split(/\s+/).filter(Boolean);
@@ -119,7 +121,7 @@ check(
   branding.out.trim() || 'clean',
 );
 
-const webUi = sh('web ui', `curl -sk -o /dev/null -w '%{http_code}' 'https://webmail.velupi.com/dav/' -u 'admin@velupi.com:Velupi2026AdminSecure!'`);
+const webUi = sh('web ui', `curl -sk -o /dev/null -w '%{http_code}' 'https://webmail.velupi.com/dav/' -u "admin@velupi.com:${testPw}"`);
 check('Built-in DAV web interface disabled', webUi.out === '302', `status ${webUi.out}`);
 
 const webmail = sh('webmail', `curl -sk -o /dev/null -w '%{http_code}' 'https://webmail.velupi.com/?_task=login'`);

@@ -7,7 +7,7 @@ const tls = require('tls');
 const host = '89.117.147.134';
 const port = 587;
 const user = 'admin@velupi.com';
-const password = 'Velupi2026AdminSecure!';
+const password = process.env.TEST_EMAIL_PASSWORD || process.env.SMTP_PASSWORD || '';
 const fromEmail = 'admin@velupi.com';
 const toEmail = 'admin@velupi.com';
 

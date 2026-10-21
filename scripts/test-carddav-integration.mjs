@@ -7,7 +7,8 @@ function sh(label, cmd) {
   catch (err) { console.log('ERR:', (err.stderr || err.stdout || '').trim()); }
 }
 
-sh('write temp credential file', `printf '%s' 'Velupi2026AdminSecure!' > /root/.davtest.pw && chmod 600 /root/.davtest.pw && echo ok`);
+const testPw = process.env.TEST_EMAIL_PASSWORD || '';
+sh('write temp credential file', `printf '%s' "${testPw}" > /root/.davtest.pw && chmod 600 /root/.davtest.pw && echo ok`);
 
 sh('step 1: get login form + token', `cd /tmp && rm -f rc-cookies.txt && curl -sk -c /tmp/rc-cookies.txt -o /tmp/rc-form.html -w 'get=%{http_code}\\n' 'https://webmail.velupi.com/?_task=login' && grep -o 'name="_token" value="[^"]*"' /tmp/rc-form.html | head -2; grep -o 'request_token[^,;]*' /tmp/rc-form.html | head -2`);
 

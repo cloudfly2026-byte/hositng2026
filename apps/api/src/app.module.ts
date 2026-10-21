@@ -138,7 +138,7 @@ export const globalOrdersStore = new Map<string, Order>();
           smtpHost: process.env.SMTP_HOST || '89.117.147.134',
           smtpPort: Number(process.env.SMTP_PORT || 587),
           smtpUser: process.env.SMTP_USER || 'admin@velupi.com',
-          smtpPassword: process.env.SMTP_PASSWORD || 'Velupi2026AdminSecure!',
+          smtpPassword: process.env.SMTP_PASSWORD || '',
         });
       },
     },

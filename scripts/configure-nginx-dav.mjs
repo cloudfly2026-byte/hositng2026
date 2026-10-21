@@ -48,7 +48,8 @@ sh('reload nginx', `systemctl reload nginx && sleep 2 && systemctl is-active ngi
 
 sh('unauthenticated PROPFIND over TLS (expect 401)', `curl -sk -o /dev/null -w 'code=%{http_code}\\n' -X PROPFIND 'https://webmail.velupi.com/dav/' -H 'Depth: 0'`);
 
-sh('authenticated PROPFIND over TLS (expect 207)', `curl -sk -o /tmp/dav.xml -w 'code=%{http_code}\\n' -X PROPFIND 'https://webmail.velupi.com/dav/' -u 'admin@velupi.com:Velupi2026AdminSecure!' -H 'Depth: 0'; head -c 600 /tmp/dav.xml`);
+const testPw = process.env.TEST_EMAIL_PASSWORD || '';
+sh('authenticated PROPFIND over TLS (expect 207)', `curl -sk -o /tmp/dav.xml -w 'code=%{http_code}\\n' -X PROPFIND 'https://webmail.velupi.com/dav/' -u 'admin@velupi.com:${testPw}' -H 'Depth: 0'; head -c 600 /tmp/dav.xml`);
 
 sh('well-known discovery', `curl -sk -o /dev/null -w 'caldav=%{http_code} redirect=%{redirect_url}\\n' 'https://webmail.velupi.com/.well-known/caldav'; curl -sk -o /dev/null -w 'carddav=%{http_code} redirect=%{redirect_url}\\n' 'https://webmail.velupi.com/.well-known/carddav'`);
 

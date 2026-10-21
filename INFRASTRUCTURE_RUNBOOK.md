@@ -20,7 +20,7 @@
 ## 2. Configuración Autoritativa de BIND9 y Hosting para `velupi.com`
 
 ### 2.1 Diagnóstico Real por SSH / Hestia CLI (15 de Octubre de 2026)
-- **Conectividad SSH**: Operativa en puerto `10622` (`root / Elian20200916`).
+- **Conectividad SSH**: Operativa en puerto `10622` (`root / [REDACTED_PASSWORD]`).
 - **Estado de Cuentas**:
   - Usuario administrador de Hestia: `manager`.
   - Usuarios existentes: `manager`, `cloudfly`, `ebmmetrology`, `hospita2`, `inmaculada`, `nueveluna`, `prenem`, `protor`, `pulguero`.

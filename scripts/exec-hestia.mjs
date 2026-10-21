@@ -8,7 +8,7 @@ export function runHestia(remoteCommand, input) {
     '-P',
     '10622',
     '-pw',
-    'Elian20200916',
+    process.env.HESTIA_SSH_PASSWORD || process.env.SSH_PASSWORD || '',
     'root@89.117.147.134',
     remoteCommand,
   ];

@@ -6,7 +6,7 @@ export function runRemote(remoteCommand, input) {
     '-hostkey',
     'ssh-ed25519 255 SHA256:bTgaIzwlklC6Lw0zsIM2UU25jo0+Abx0vvAfqn2Cd/c',
     '-pw',
-    'Elian20200916',
+    process.env.VPS_SSH_PASSWORD || process.env.SSH_PASSWORD || '',
     'root@169.58.220.244',
     remoteCommand,
   ];

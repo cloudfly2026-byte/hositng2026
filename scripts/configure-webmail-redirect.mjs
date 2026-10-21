@@ -8,7 +8,7 @@ function ssh(remoteCommand, input) {
     '-P',
     '10622',
     '-pw',
-    'Elian20200916',
+    process.env.HESTIA_SSH_PASSWORD || process.env.SSH_PASSWORD || '',
     'root@89.117.147.134',
     remoteCommand,
   ], { encoding: 'utf-8', input, maxBuffer: 64 * 1024 * 1024 });

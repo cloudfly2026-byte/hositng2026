@@ -7,7 +7,8 @@ function sh(label, cmd) {
   catch (err) { console.log('ERR:', (err.stderr || err.stdout || '').trim()); }
 }
 
-sh('write temp credential file', `printf '%s' 'Velupi2026AdminSecure!' > /root/.davtest.pw && chmod 600 /root/.davtest.pw && echo ok`);
+const testPw = process.env.TEST_EMAIL_PASSWORD || '';
+sh('write temp credential file', `printf '%s' "${testPw}" > /root/.davtest.pw && chmod 600 /root/.davtest.pw && echo ok`);
 
 sh('login', `cd /tmp && rm -f rc-cookies.txt && curl -sk -c /tmp/rc-cookies.txt -o /tmp/rc-form.html 'https://webmail.velupi.com/?_task=login' && PW=$(cat /root/.davtest.pw) && TOKEN=$(grep -o 'name="_token" value="[^"]*"' /tmp/rc-form.html | head -1 | sed 's/.*value="\\([^"]*\\)"/\\1/') && curl -sk -b /tmp/rc-cookies.txt -c /tmp/rc-cookies.txt -o /dev/null -w 'login=%{http_code}\\n' -X POST 'https://webmail.velupi.com/?_task=login' --data-urlencode "_token=$TOKEN" --data-urlencode '_task=login' --data-urlencode '_action=login' --data-urlencode '_timezone=America/Bogota' --data-urlencode '_url=' --data-urlencode '_user=admin@velupi.com' --data-urlencode "_pass=$PW" --data-urlencode '_remember=0'`);
 

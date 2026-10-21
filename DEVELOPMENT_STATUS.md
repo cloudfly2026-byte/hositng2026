@@ -948,7 +948,7 @@ Se cumplió de forma estricta la **regla de no creación manual**: todos los rec
     - **+ Nuevo Cliente**: Modal para dar de alta clientes directamente desde el panel.
 - **Credenciales del Super Administrador**:
   - **Correo electrónico**: `admin@velupi.com`
-  - **Contraseña**: `Velupi2026AdminSecure!`
+  - **Contraseña**: `[REDACTED_PASSWORD]` (Gestionada vía entorno seguro/secrets)
   - **Rol**: `SUPER_ADMIN` (`isOperator: true`)
   - **Organización**: `org-velupi-internal` (*Velupi Cloud Platform*)
   - **Base de datos**: Sembrado y verificado en PostgreSQL en el VPS `169.58.220.244`.
